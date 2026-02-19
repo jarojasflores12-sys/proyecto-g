@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.0
+- Upload ahora permite agregar tags personalizados además de los predefinidos.
+- Los tags personalizados se guardan por usuario y se reutilizan en futuras subidas del mismo usuario.
+
 ## 0.7.0
 - Compresión máxima en servidor al subir imágenes (calidad optimizada) y regeneración de metadata.
 - UI de upload ahora muestra tamaño del archivo seleccionado antes de enviar.

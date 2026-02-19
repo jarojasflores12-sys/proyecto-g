@@ -19,7 +19,8 @@ class CatGame_Render {
 
         switch ($page) {
             case 'upload':
-                return ['page' => $page, 'event' => $event];
+                $user_tags = is_user_logged_in() ? CatGame_Submissions::available_tags_for_user(get_current_user_id()) : CatGame_Submissions::predefined_tags();
+                return ['page' => $page, 'event' => $event, 'user_tags' => $user_tags];
             case 'feed':
                 return ['page' => $page, 'event' => $event, 'submissions' => $event ? CatGame_Submissions::list_feed((int) $event['id']) : []];
             case 'submission':

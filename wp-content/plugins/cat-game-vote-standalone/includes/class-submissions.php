@@ -5,12 +5,35 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_Submissions {
+    private const USER_CUSTOM_TAGS_META_KEY = 'catgame_custom_tags';
+
     public static function init(): void {
         add_action('admin_post_catgame_upload', [__CLASS__, 'handle_upload']);
     }
 
-    public static function allowed_tags(): array {
+    public static function predefined_tags(): array {
         return ['tag_black_cat', 'tag_night_photo', 'tag_funny_pose', 'tag_weird_place'];
+    }
+
+    public static function user_custom_tags(int $user_id): array {
+        $tags = get_user_meta($user_id, self::USER_CUSTOM_TAGS_META_KEY, true);
+        if (!is_array($tags)) {
+            return [];
+        }
+
+        $sanitized = [];
+        foreach ($tags as $tag) {
+            $clean = self::sanitize_tag($tag);
+            if ($clean !== '') {
+                $sanitized[] = $clean;
+            }
+        }
+
+        return array_values(array_unique($sanitized));
+    }
+
+    public static function available_tags_for_user(int $user_id): array {
+        return array_values(array_unique(array_merge(self::predefined_tags(), self::user_custom_tags($user_id))));
     }
 
     public static function handle_upload(): void {
@@ -67,16 +90,27 @@ class CatGame_Submissions {
 
         self::compress_uploaded_image($attachment_id);
 
+        $user_id = get_current_user_id();
         $selected_tags = wp_unslash($_POST['tags'] ?? []);
-        $allowed = self::allowed_tags();
+        $available_tags = self::available_tags_for_user($user_id);
+        $new_custom_tags = self::parse_custom_tags_input(wp_unslash($_POST['custom_tags'] ?? ''));
+        if (!empty($new_custom_tags)) {
+            $available_tags = array_values(array_unique(array_merge($available_tags, $new_custom_tags)));
+            self::save_user_custom_tags($user_id, $new_custom_tags);
+        }
+
         $filtered_tags = [];
         if (is_array($selected_tags)) {
             foreach ($selected_tags as $tag) {
-                $tag = sanitize_text_field($tag);
-                if (in_array($tag, $allowed, true)) {
+                $tag = self::sanitize_tag($tag);
+                if ($tag !== '' && in_array($tag, $available_tags, true)) {
                     $filtered_tags[] = $tag;
                 }
             }
+        }
+
+        if (!empty($new_custom_tags)) {
+            $filtered_tags = array_merge($filtered_tags, $new_custom_tags);
         }
 
         global $wpdb;
@@ -84,7 +118,7 @@ class CatGame_Submissions {
         $wpdb->insert(
             $table,
             [
-                'user_id' => get_current_user_id(),
+                'user_id' => $user_id,
                 'event_id' => (int) $event['id'],
                 'city' => $city,
                 'country' => $country,
@@ -278,5 +312,36 @@ class CatGame_Submissions {
         if (!is_wp_error($metadata) && is_array($metadata)) {
             wp_update_attachment_metadata($attachment_id, $metadata);
         }
+    }
+
+    private static function parse_custom_tags_input($raw_input): array {
+        if (!is_string($raw_input) || $raw_input === '') {
+            return [];
+        }
+
+        $parts = preg_split('/[\n,]+/', $raw_input) ?: [];
+        $parsed = [];
+        foreach ($parts as $part) {
+            $tag = self::sanitize_tag($part);
+            if ($tag !== '') {
+                $parsed[] = $tag;
+            }
+        }
+
+        return array_values(array_unique($parsed));
+    }
+
+    private static function sanitize_tag($raw_tag): string {
+        if (!is_scalar($raw_tag)) {
+            return '';
+        }
+
+        $tag = sanitize_title((string) $raw_tag);
+        return $tag !== '' ? 'tag_' . $tag : '';
+    }
+
+    private static function save_user_custom_tags(int $user_id, array $new_tags): void {
+        $merged = array_values(array_unique(array_merge(self::user_custom_tags($user_id), $new_tags)));
+        update_user_meta($user_id, self::USER_CUSTOM_TAGS_META_KEY, $merged);
     }
 }

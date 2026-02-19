@@ -1,5 +1,12 @@
 <?php
 $event = $data['event'] ?? null;
+$user_tags = $data['user_tags'] ?? [];
+$tag_labels = [
+    'tag_black_cat' => 'Gato negro (+según regla)',
+    'tag_night_photo' => 'Foto nocturna',
+    'tag_funny_pose' => 'Pose divertida',
+    'tag_weird_place' => 'Lugar raro',
+];
 ?>
 <section>
     <h2>Subir foto</h2>
@@ -15,11 +22,17 @@ $event = $data['event'] ?? null;
             <label>País <input type="text" name="country" required></label>
             <fieldset>
                 <legend>Tags</legend>
-                <label><input type="checkbox" name="tags[]" value="tag_black_cat"> Gato negro (+según regla)</label>
-                <label><input type="checkbox" name="tags[]" value="tag_night_photo"> Foto nocturna</label>
-                <label><input type="checkbox" name="tags[]" value="tag_funny_pose"> Pose divertida</label>
-                <label><input type="checkbox" name="tags[]" value="tag_weird_place"> Lugar raro</label>
+                <?php foreach ($user_tags as $tag): ?>
+                    <label>
+                        <input type="checkbox" name="tags[]" value="<?php echo esc_attr($tag); ?>">
+                        <?php echo esc_html($tag_labels[$tag] ?? ucwords(str_replace('_', ' ', str_replace('tag_', '', $tag)))); ?>
+                    </label>
+                <?php endforeach; ?>
             </fieldset>
+            <label>
+                Tags personalizados (separados por coma o salto de línea)
+                <textarea name="custom_tags" rows="3" placeholder="ej: gato_travieso, siesta_eternal"></textarea>
+            </label>
             <label>Imagen <input type="file" name="cat_image" id="catgame-cat-image" accept="image/*" required></label>
             <p id="catgame-file-size" class="cg-file-size">Tamaño seleccionado: -</p>
             <label><input type="checkbox" name="confirm_no_people" value="1" required> Confirmo que no hay personas en la foto</label>
