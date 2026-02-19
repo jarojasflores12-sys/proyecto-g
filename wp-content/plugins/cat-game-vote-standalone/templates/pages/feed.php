@@ -13,6 +13,10 @@ $items = $data['submissions'] ?? [];
                 <h3>#<?php echo (int) $item['id']; ?></h3>
                 <p><?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
                 <p>Score: <?php echo (int) $item['votes_count'] > 0 ? esc_html(number_format((float) $item['score_cached'], 2)) : 'sin votos'; ?></p>
+                <?php $size_bytes = isset($item['image_size_bytes']) ? (int) $item['image_size_bytes'] : 0; ?>
+                <?php if ($size_bytes > 0): ?>
+                    <p>Tamaño: <?php echo esc_html(number_format($size_bytes / 1024, 2)); ?> KB</p>
+                <?php endif; ?>
                 <a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $item['id'])); ?>">Ver detalle</a>
             </article>
         <?php endforeach; ?>

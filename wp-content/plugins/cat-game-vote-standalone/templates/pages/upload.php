@@ -34,7 +34,14 @@ $tag_labels = [
                 <textarea name="custom_tags" rows="3" placeholder="ej: gato_travieso, siesta_eternal"></textarea>
             </label>
             <label>Imagen <input type="file" name="cat_image" id="catgame-cat-image" accept="image/*" required></label>
-            <p id="catgame-file-size" class="cg-file-size">Tamaño seleccionado: -</p>
+            <div class="cg-compress-meta" aria-live="polite">
+                <p id="catgame-file-size-original" class="cg-file-size">Tamaño original: -</p>
+                <p id="catgame-file-size-compressed" class="cg-file-size">Tamaño comprimido: -</p>
+                <p id="catgame-file-reduction" class="cg-file-size">Reducción: -</p>
+                <p id="catgame-file-format" class="cg-file-size">Formato final: -</p>
+                <p id="catgame-compress-status" class="cg-file-size">Estado: esperando archivo</p>
+            </div>
+            <img id="catgame-image-preview" class="cg-image-preview" alt="Preview de imagen seleccionada" style="display:none;" />
             <label><input type="checkbox" name="confirm_no_people" value="1" required> Confirmo que no hay personas en la foto</label>
             <button type="submit">Enviar</button>
         </form>

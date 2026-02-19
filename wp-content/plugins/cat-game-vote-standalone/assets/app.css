@@ -19,3 +19,23 @@ button { background: #0f5bd8; color: #fff; border: 0; border-radius: 6px; paddin
 .cg-alert-success { background: #e9f8ec; color: #145c2e; border: 1px solid #b8e2c2; }
 
 .cg-file-size { margin: 4px 0 0; color: #465066; font-size: 14px; }
+
+.cg-compress-meta {
+  border: 1px solid #e3e6ef;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fafbff;
+}
+
+.cg-image-preview {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #e3e6ef;
+}
+
+button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

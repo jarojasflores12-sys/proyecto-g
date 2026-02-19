@@ -88,7 +88,7 @@ class CatGame_Submissions {
             exit;
         }
 
-        self::compress_uploaded_image($attachment_id);
+        $final_size = self::compress_uploaded_image_backup((int) $attachment_id);
 
         $user_id = get_current_user_id();
         $selected_tags = wp_unslash($_POST['tags'] ?? []);
@@ -124,13 +124,14 @@ class CatGame_Submissions {
                 'country' => $country,
                 'tags_json' => wp_json_encode(array_values(array_unique($filtered_tags))),
                 'attachment_id' => (int) $attachment_id,
+                'image_size_bytes' => $final_size > 0 ? $final_size : null,
                 'created_at' => current_time('mysql'),
                 'status' => 'active',
                 'score_cached' => 0,
                 'votes_count' => 0,
                 'votes_sum' => 0,
             ],
-            ['%d', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%f', '%d', '%d']
+            ['%d', '%d', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%f', '%d', '%d']
         );
 
         self::clear_leaderboard_cache();
@@ -288,30 +289,74 @@ class CatGame_Submissions {
         update_option('catgame_leaderboard_cache_keys', [], false);
     }
 
-    private static function compress_uploaded_image(int $attachment_id): void {
+    private static function compress_uploaded_image_backup(int $attachment_id): int {
         $file = get_attached_file($attachment_id);
         if (!$file || !file_exists($file)) {
-            return;
+            return 0;
+        }
+
+        $current_size = (int) filesize($file);
+        if ($current_size <= 2 * 1024 * 1024) {
+            return $current_size;
         }
 
         $editor = wp_get_image_editor($file);
         if (is_wp_error($editor)) {
-            return;
+            return $current_size;
         }
 
+        $editor->resize(1280, 1280, false);
         if (method_exists($editor, 'set_quality')) {
-            $editor->set_quality(30);
+            $editor->set_quality(82);
         }
 
-        $saved = $editor->save($file);
+        $prefer_webp = self::is_editor_mime_supported($editor, 'image/webp');
+        $target_mime = $prefer_webp ? 'image/webp' : 'image/jpeg';
+        $target_extension = $prefer_webp ? 'webp' : 'jpg';
+        $target_file = preg_replace('/\.[^.]+$/', '.' . $target_extension, $file);
+        if (!is_string($target_file) || $target_file === '') {
+            $target_file = $file;
+        }
+
+        $saved = $editor->save($target_file, $target_mime);
         if (is_wp_error($saved)) {
-            return;
+            return $current_size;
         }
 
-        $metadata = wp_generate_attachment_metadata($attachment_id, $file);
+        $saved_path = is_array($saved) && !empty($saved['path']) ? (string) $saved['path'] : $file;
+        if ($saved_path !== $file && file_exists($file)) {
+            @unlink($file);
+        }
+
+        update_attached_file($attachment_id, $saved_path);
+        $mime = is_array($saved) && !empty($saved['mime-type']) ? (string) $saved['mime-type'] : $target_mime;
+        wp_update_post([
+            'ID' => $attachment_id,
+            'post_mime_type' => $mime,
+        ]);
+
+        $metadata = wp_generate_attachment_metadata($attachment_id, $saved_path);
         if (!is_wp_error($metadata) && is_array($metadata)) {
             wp_update_attachment_metadata($attachment_id, $metadata);
         }
+
+        if (!file_exists($saved_path)) {
+            return 0;
+        }
+
+        return (int) filesize($saved_path);
+    }
+
+    private static function is_editor_mime_supported($editor, string $mime): bool {
+        if (!is_object($editor)) {
+            return false;
+        }
+
+        if (method_exists($editor, 'supports_mime_type')) {
+            return (bool) $editor->supports_mime_type($mime);
+        }
+
+        return false;
     }
 
     private static function parse_custom_tags_input($raw_input): array {

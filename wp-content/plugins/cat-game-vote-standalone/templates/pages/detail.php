@@ -11,6 +11,8 @@ if (!$submission):
     <p>Ubicación: <?php echo esc_html($submission['city'] . ', ' . $submission['country']); ?></p>
     <p>Score: <?php echo (int) $submission['votes_count'] > 0 ? esc_html(number_format((float) $submission['score_cached'], 2)) : 'sin votos'; ?></p>
     <p>Votos: <?php echo (int) $submission['votes_count']; ?> (suma <?php echo (int) $submission['votes_sum']; ?>)</p>
+    <?php $size_bytes = isset($submission['image_size_bytes']) ? (int) $submission['image_size_bytes'] : 0; ?>
+    <p>Tamaño imagen: <?php echo $size_bytes > 0 ? esc_html(number_format($size_bytes / 1024, 2)) . ' KB' : 'N/D'; ?></p>
     <h3>Breakdown de bonos</h3>
     <ul>
         <?php foreach ($rules as $tag => $bonus): ?>

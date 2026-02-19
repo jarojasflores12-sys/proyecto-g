@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.0
+- Compresión client-side en upload: resize máx 1280px, WEBP (fallback JPEG), iteración de calidad hasta objetivo de peso.
+- Upload muestra tamaño original, tamaño comprimido, reducción, formato final y estado de compresión; incluye preview.
+- Fallback server-side: si el archivo final subido supera 2MB se recomprime en servidor (1280px, calidad 82, preferencia WEBP).
+- Se guarda `image_size_bytes` en submissions y se muestra tamaño en detalle (y feed).
+- Migración de esquema segura con versionado para agregar `image_size_bytes`.
+
 ## 0.8.0
 - Upload ahora permite agregar tags personalizados además de los predefinidos.
 - Los tags personalizados se guardan por usuario y se reutilizan en futuras subidas del mismo usuario.

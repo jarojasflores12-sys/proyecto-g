@@ -80,3 +80,15 @@ En admin: **Cat Game > Moderation**.
 ## Limitaciones
 - Sin detección IA de contenido.
 - La validación de “no personas” depende del checkbox del usuario + moderación manual.
+
+## Compresión de imágenes (upload)
+- Client-side (navegador):
+  - Resize proporcional a máximo `1280x1280`.
+  - Formato preferido `WEBP`; fallback `JPEG`.
+  - Calidad inicial `0.82` con pasos descendentes (`0.78`, `0.72`, `0.66`, `0.60`) hasta aproximar objetivo `<= 900KB`.
+- Server-side (backup):
+  - Si el archivo recibido queda en más de `2MB`, se recomprime con `WP_Image_Editor` a `1280px` y calidad `82`, priorizando `WEBP` y fallback `JPEG`.
+- Persistencia:
+  - Se guarda `image_size_bytes` en DB y se muestra en el detalle de la submission.
+
+Para ajustar parámetros, edita constantes en `assets/app.js` (`TARGET_MAX_SIDE`, `TARGET_MAX_BYTES`, `QUALITY_STEPS`) y el umbral/calidad de backup en `includes/class-submissions.php`.

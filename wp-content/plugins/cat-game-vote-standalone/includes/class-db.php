@@ -5,8 +5,11 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_DB {
+    private const SCHEMA_VERSION = '2';
+    private const SCHEMA_OPTION_KEY = 'catgame_schema_version';
+
     public static function init(): void {
-        // Reserved for future migrations.
+        self::maybe_upgrade();
     }
 
     public static function table(string $name): string {
@@ -16,6 +19,7 @@ class CatGame_DB {
 
     public static function activate(): void {
         self::create_tables();
+        update_option(self::SCHEMA_OPTION_KEY, self::SCHEMA_VERSION, false);
         CatGame_Router::add_rewrite_rules();
         flush_rewrite_rules();
     }
@@ -54,6 +58,7 @@ class CatGame_DB {
             country VARCHAR(120) NOT NULL,
             tags_json LONGTEXT NULL,
             attachment_id BIGINT UNSIGNED NOT NULL,
+            image_size_bytes BIGINT UNSIGNED NULL,
             created_at DATETIME NOT NULL,
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             score_cached DECIMAL(5,2) NOT NULL DEFAULT 0,
@@ -80,5 +85,15 @@ class CatGame_DB {
         foreach ($sql as $statement) {
             dbDelta($statement);
         }
+    }
+
+    private static function maybe_upgrade(): void {
+        $installed = (string) get_option(self::SCHEMA_OPTION_KEY, '0');
+        if ($installed === self::SCHEMA_VERSION) {
+            return;
+        }
+
+        self::create_tables();
+        update_option(self::SCHEMA_OPTION_KEY, self::SCHEMA_VERSION, false);
     }
 }
