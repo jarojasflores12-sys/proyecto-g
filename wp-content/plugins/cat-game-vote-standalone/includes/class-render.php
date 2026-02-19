@@ -37,14 +37,26 @@ class CatGame_Render {
                 $items = $event ? CatGame_Submissions::leaderboard((int) $event['id'], $scope, $country, $city, 20) : [];
                 return ['page' => $page, 'event' => $event, 'scope' => $scope, 'country' => $country, 'city' => $city, 'items' => $items];
             case 'profile':
+                $register_error = sanitize_text_field(wp_unslash($_GET['register_error'] ?? ''));
+                $registered = isset($_GET['registered']) ? (int) $_GET['registered'] : 0;
+
                 if (!is_user_logged_in()) {
-                    return ['page' => $page, 'event' => $event, 'requires_login' => true];
+                    return [
+                        'page' => $page,
+                        'event' => $event,
+                        'requires_login' => true,
+                        'register_error' => $register_error,
+                        'registered' => $registered,
+                    ];
                 }
+
                 $user_id = get_current_user_id();
                 return [
                     'page' => $page,
                     'event' => $event,
                     'requires_login' => false,
+                    'register_error' => $register_error,
+                    'registered' => $registered,
                     'items' => CatGame_Submissions::list_user_submissions($user_id),
                     'stats' => CatGame_Submissions::user_stats($user_id),
                 ];

@@ -13,3 +13,7 @@ body { margin: 0; font-family: Arial, sans-serif; background: #f7f7fb; color: #1
 .cg-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
 .cg-table th, .cg-table td { border: 1px solid #e3e6ef; padding: 8px; text-align: left; }
 button { background: #0f5bd8; color: #fff; border: 0; border-radius: 6px; padding: 9px 12px; cursor: pointer; }
+
+.cg-alert { padding: 10px 12px; border-radius: 6px; margin: 10px 0; }
+.cg-alert-error { background: #ffe8e8; color: #9f1d1d; border: 1px solid #f3b6b6; }
+.cg-alert-success { background: #e9f8ec; color: #145c2e; border: 1px solid #b8e2c2; }

@@ -18,7 +18,7 @@ Si `/catgame/*` no responde:
 - `/catgame/feed` feed
 - `/catgame/submission/{id}` detalle + votar
 - `/catgame/leaderboard` rankings
-- `/catgame/profile` perfil/progreso
+- `/catgame/profile` perfil/progreso (y registro si no hay sesión)
 
 Estas páginas son renderizadas por el plugin en `template_redirect` con layout HTML propio (sin depender del theme).
 
@@ -45,9 +45,16 @@ Solo un evento activo a la vez.
 
 ## Uso
 1. Crear y activar evento.
-2. Usuarios suben fotos en `/catgame/upload` con ciudad/país manuales, tags y checkbox obligatorio de no personas.
-3. Comunidad vota 1-5 estrellas en detalle.
-4. El score se recalcula y se refleja en feed/leaderboard.
+2. Si no estás logueado, entra a `/catgame/profile` para crear cuenta y login automático.
+3. Usuarios suben fotos en `/catgame/upload` con ciudad/país manuales, tags y checkbox obligatorio de no personas.
+4. Comunidad vota 1-5 estrellas en detalle.
+5. El score se recalcula y se refleja en feed/leaderboard.
+
+## Registro en la misma ruta del perfil
+- La ruta `/catgame/profile` cumple doble función:
+  - sin sesión: muestra formulario de registro
+  - con sesión: muestra el panel de progreso (mis submissions y estadísticas)
+- Al registrar usuario, el plugin inicia sesión automáticamente y redirige al mismo `/catgame/profile`.
 
 ## Scoring
 - `score_base = (votes_sum / votes_count) * 2`

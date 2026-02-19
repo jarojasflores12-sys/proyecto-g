@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0
+- Profile route `/catgame/profile` ahora soporta registro de usuario con login automático.
+- Nuevo handler seguro de registro (nonce, validaciones, sanitización y mensajes de error).
+- Si no hay sesión en profile, se muestra formulario de alta; tras registro exitoso se redirige al mismo perfil autenticado.
+
 ## 0.5.0
 - Fase 5: documentación README completa.
 
