@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.3
+- Fix de etiquetas en detalle: ahora se muestran todas las etiquetas combinando `tags_json` y `tags_text` para compatibilidad histórica.
+- Se robusteció el guardado de etiquetas seleccionadas en upload para no perder opciones elegidas por el usuario.
+
 ## 0.10.2
 - Fix de normalización de etiquetas para evitar duplicación de prefijos (`tag_tag_*`).
 - En detalle/feed, etiquetas históricas como `tag_tag_hermosa` ahora se muestran como `Hermosa` (sin "Tag").

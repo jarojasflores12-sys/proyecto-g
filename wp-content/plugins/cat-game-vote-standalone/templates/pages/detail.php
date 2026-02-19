@@ -4,7 +4,7 @@ if (!$submission):
 ?>
 <p>Submission no encontrada.</p>
 <?php return; endif;
-$tags = CatGame_Submissions::parse_tags_json($submission['tags_json'] ?? '[]');
+$tags = CatGame_Submissions::submission_tags($submission);
 ?>
 <section>
     <h2>Submission #<?php echo (int) $submission['id']; ?></h2>

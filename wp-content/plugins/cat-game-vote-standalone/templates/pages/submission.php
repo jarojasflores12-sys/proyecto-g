@@ -4,7 +4,7 @@ if (!$submission):
 ?>
 <p>Submission no encontrada.</p>
 <?php return; endif; ?>
-<?php $tags = CatGame_Submissions::parse_tags_json($submission['tags_json'] ?? '[]'); ?>
+<?php $tags = CatGame_Submissions::submission_tags($submission); ?>
 <section>
     <h2>Submission #<?php echo (int) $submission['id']; ?></h2>
     <div class="cg-detail-image"><?php echo wp_get_attachment_image((int) $submission['attachment_id'], 'large'); ?></div>

@@ -122,6 +122,29 @@ class CatGame_Submissions {
         return array_values(array_unique($normalized));
     }
 
+    public static function parse_tags_text($tags_text): array {
+        if (!is_string($tags_text) || trim($tags_text) === '') {
+            return [];
+        }
+
+        $parts = array_filter(explode(',', $tags_text));
+        $normalized = [];
+        foreach ($parts as $tag) {
+            $slug = self::normalize_tag($tag);
+            if ($slug !== '') {
+                $normalized[] = $slug;
+            }
+        }
+
+        return array_values(array_unique($normalized));
+    }
+
+    public static function submission_tags(array $submission): array {
+        $from_json = self::parse_tags_json($submission['tags_json'] ?? '[]');
+        $from_text = self::parse_tags_text($submission['tags_text'] ?? '');
+        return array_values(array_unique(array_merge($from_json, $from_text)));
+    }
+
     public static function tags_text_from_list(array $tags): string {
         if (empty($tags)) {
             return '';
@@ -199,7 +222,7 @@ class CatGame_Submissions {
         if (is_array($selected_tags)) {
             foreach ($selected_tags as $tag) {
                 $tag = self::normalize_tag($tag);
-                if ($tag !== '' && in_array($tag, $available_tags, true)) {
+                if ($tag !== '') {
                     $filtered_tags[] = $tag;
                 }
             }
