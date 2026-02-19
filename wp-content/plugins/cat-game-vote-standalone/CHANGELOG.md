@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.0
+- Submission: si el usuario ya votó, se oculta la UI de votación y se muestra "✅ Ya votaste en esta foto."
+- Nueva UI de votación por 5 estrellas clickeables (1 a 5), reemplazando el selector numérico.
+- Se agrega comprobación previa al envío para exigir rating válido (1..5) antes de votar.
+
 ## 0.10.3
 - Fix de etiquetas en detalle: ahora se muestran todas las etiquetas combinando `tags_json` y `tags_text` para compatibilidad histórica.
 - Se robusteció el guardado de etiquetas seleccionadas en upload para no perder opciones elegidas por el usuario.

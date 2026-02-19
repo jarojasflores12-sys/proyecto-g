@@ -39,3 +39,28 @@ button[disabled] {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.cg-rating {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.cg-rating-stars {
+  display: flex;
+  gap: 6px;
+}
+
+.cg-star {
+  font-size: 34px;
+  line-height: 1;
+  background: transparent;
+  border: 0;
+  color: #c7cfde;
+  padding: 0 2px;
+}
+
+.cg-star:hover,
+.cg-star.is-active {
+  color: #f2b600;
+}

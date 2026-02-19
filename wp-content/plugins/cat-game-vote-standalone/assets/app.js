@@ -212,3 +212,79 @@
     }
   });
 })();
+
+(function () {
+  const voteForm = document.getElementById('catgame-vote-form');
+  if (!voteForm) {
+    return;
+  }
+
+  const stars = Array.from(voteForm.querySelectorAll('.cg-star'));
+  const ratingInput = document.getElementById('catgame-rating-value');
+  const errorEl = document.getElementById('catgame-vote-error');
+  const alreadyVotedEl = document.getElementById('catgame-already-voted');
+
+  if (!stars.length || !ratingInput) {
+    return;
+  }
+
+  const paintStars = (rating) => {
+    stars.forEach((star) => {
+      const value = Number(star.getAttribute('data-rating') || '0');
+      const active = value <= rating;
+      star.classList.toggle('is-active', active);
+      star.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  };
+
+  const showError = (message) => {
+    if (!errorEl) return;
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+  };
+
+  const clearError = () => {
+    if (!errorEl) return;
+    errorEl.textContent = '';
+    errorEl.style.display = 'none';
+  };
+
+  stars.forEach((star) => {
+    star.addEventListener('click', () => {
+      const value = Number(star.getAttribute('data-rating') || '0');
+      ratingInput.value = String(value);
+      paintStars(value);
+      clearError();
+    });
+
+    star.addEventListener('mouseenter', () => {
+      const value = Number(star.getAttribute('data-rating') || '0');
+      paintStars(value);
+    });
+  });
+
+  const starsWrap = voteForm.querySelector('.cg-rating-stars');
+  if (starsWrap) {
+    starsWrap.addEventListener('mouseleave', () => {
+      paintStars(Number(ratingInput.value || '0'));
+    });
+  }
+
+  voteForm.addEventListener('submit', (event) => {
+    const rating = Number(ratingInput.value || '0');
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      event.preventDefault();
+      showError('Selecciona una valoración de 1 a 5 antes de enviar.');
+      return;
+    }
+
+    clearError();
+  });
+
+  if (window.location.search.includes('catgame_error=duplicate_vote')) {
+    voteForm.style.display = 'none';
+    if (alreadyVotedEl) {
+      alreadyVotedEl.style.display = 'block';
+    }
+  }
+})();

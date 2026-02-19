@@ -11,6 +11,24 @@ class CatGame_Votes {
         add_action('admin_post_catgame_vote', [__CLASS__, 'handle_vote']);
     }
 
+    public static function has_user_voted(int $submission_id, int $user_id): bool {
+        if ($submission_id <= 0 || $user_id <= 0) {
+            return false;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('votes');
+        $existing = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT id FROM {$table} WHERE submission_id = %d AND user_id = %d LIMIT 1",
+                $submission_id,
+                $user_id
+            )
+        );
+
+        return !empty($existing);
+    }
+
     public static function handle_vote(): void {
         if (!is_user_logged_in()) {
             wp_die('Debes iniciar sesión para votar.');
@@ -26,7 +44,8 @@ class CatGame_Votes {
             exit;
         }
 
-        if (!self::within_daily_limit(get_current_user_id())) {
+        $current_user = get_current_user_id();
+        if (!self::within_daily_limit($current_user)) {
             wp_safe_redirect(add_query_arg('catgame_error', 'vote_limit', wp_get_referer() ?: home_url('/catgame/feed')));
             exit;
         }
@@ -37,27 +56,19 @@ class CatGame_Votes {
             exit;
         }
 
-        global $wpdb;
-        $table = CatGame_DB::table('votes');
-
-        $existing = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT id FROM {$table} WHERE submission_id = %d AND user_id = %d LIMIT 1",
-                $submission_id,
-                get_current_user_id()
-            )
-        );
-
-        if ($existing) {
+        if (self::has_user_voted($submission_id, $current_user)) {
             wp_safe_redirect(add_query_arg('catgame_error', 'duplicate_vote', home_url('/catgame/submission/' . $submission_id)));
             exit;
         }
+
+        global $wpdb;
+        $table = CatGame_DB::table('votes');
 
         $inserted = $wpdb->insert(
             $table,
             [
                 'submission_id' => $submission_id,
-                'user_id' => get_current_user_id(),
+                'user_id' => $current_user,
                 'rating' => $rating,
                 'created_at' => current_time('mysql'),
             ],
@@ -69,7 +80,7 @@ class CatGame_Votes {
             exit;
         }
 
-        self::increment_daily_count(get_current_user_id());
+        self::increment_daily_count($current_user);
 
         $subs_table = CatGame_DB::table('submissions');
         $wpdb->query(

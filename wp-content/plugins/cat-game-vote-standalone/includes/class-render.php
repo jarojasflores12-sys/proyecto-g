@@ -37,7 +37,17 @@ class CatGame_Render {
             case 'submission':
                 $submission_id = (int) get_query_var('submission_id');
                 $submission = CatGame_Submissions::get_submission($submission_id);
-                return ['page' => $page, 'event' => $event, 'submission' => $submission];
+                $already_voted = false;
+                if ($submission && is_user_logged_in()) {
+                    $already_voted = CatGame_Votes::has_user_voted((int) $submission['id'], get_current_user_id());
+                }
+
+                return [
+                    'page' => $page,
+                    'event' => $event,
+                    'submission' => $submission,
+                    'already_voted' => $already_voted,
+                ];
             case 'leaderboard':
                 $scope = sanitize_text_field($_GET['scope'] ?? 'global');
                 $country = sanitize_text_field(wp_unslash($_GET['country'] ?? ''));
