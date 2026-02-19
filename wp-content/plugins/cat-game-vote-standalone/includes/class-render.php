@@ -22,12 +22,22 @@ class CatGame_Render {
                 $user_tags = is_user_logged_in() ? CatGame_Submissions::available_tags_for_user(get_current_user_id()) : CatGame_Submissions::predefined_tags();
                 return ['page' => $page, 'event' => $event, 'user_tags' => $user_tags];
             case 'feed':
-                return ['page' => $page, 'event' => $event, 'submissions' => $event ? CatGame_Submissions::list_feed((int) $event['id']) : []];
+                $filter_tag = CatGame_Submissions::normalize_tag(wp_unslash($_GET['tag'] ?? ''));
+                $feed_tags = is_user_logged_in()
+                    ? CatGame_Submissions::available_tags_for_user(get_current_user_id())
+                    : CatGame_Submissions::predefined_tags();
+
+                return [
+                    'page' => $page,
+                    'event' => $event,
+                    'selected_tag' => $filter_tag,
+                    'feed_tags' => $feed_tags,
+                    'submissions' => $event ? CatGame_Submissions::list_feed((int) $event['id'], 20, 0, $filter_tag) : [],
+                ];
             case 'submission':
                 $submission_id = (int) get_query_var('submission_id');
                 $submission = CatGame_Submissions::get_submission($submission_id);
-                $rules = $submission ? CatGame_Events::decode_rules(CatGame_Events::get_event((int) $submission['event_id'])['rules_json'] ?? null) : [];
-                return ['page' => $page, 'event' => $event, 'submission' => $submission, 'rules' => $rules];
+                return ['page' => $page, 'event' => $event, 'submission' => $submission];
             case 'leaderboard':
                 $scope = sanitize_text_field($_GET['scope'] ?? 'global');
                 $country = sanitize_text_field(wp_unslash($_GET['country'] ?? ''));
@@ -40,6 +50,7 @@ class CatGame_Render {
             case 'profile':
                 $register_error = sanitize_text_field(wp_unslash($_GET['register_error'] ?? ''));
                 $registered = isset($_GET['registered']) ? (int) $_GET['registered'] : 0;
+                $tag_deleted = isset($_GET['tag_deleted']) ? (int) $_GET['tag_deleted'] : 0;
 
                 if (!is_user_logged_in()) {
                     return [
@@ -58,8 +69,10 @@ class CatGame_Render {
                     'requires_login' => false,
                     'register_error' => $register_error,
                     'registered' => $registered,
+                    'tag_deleted' => $tag_deleted,
                     'items' => CatGame_Submissions::list_user_submissions($user_id),
                     'stats' => CatGame_Submissions::user_stats($user_id),
+                    'custom_tags' => CatGame_Submissions::user_custom_tag_map($user_id),
                 ];
             case 'home':
             default:

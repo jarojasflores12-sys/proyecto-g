@@ -1,6 +1,7 @@
 <?php
 $register_error = !empty($data['register_error']) ? CatGame_Auth::registration_error_message((string) $data['register_error']) : '';
 $registered = !empty($data['registered']);
+$tag_deleted = !empty($data['tag_deleted']);
 
 if (!empty($data['requires_login'])): ?>
 <section>
@@ -34,6 +35,7 @@ if (!empty($data['requires_login'])): ?>
 <?php return; endif;
 $stats = $data['stats'] ?? ['total_submissions' => 0, 'best_score' => 0, 'avg_score' => 0];
 $items = $data['items'] ?? [];
+$custom_tags = $data['custom_tags'] ?? [];
 ?>
 <section>
     <h2>Mi perfil</h2>
@@ -42,11 +44,34 @@ $items = $data['items'] ?? [];
         <p class="cg-alert cg-alert-success">¡Cuenta creada! Ya estás dentro.</p>
     <?php endif; ?>
 
+    <?php if ($tag_deleted): ?>
+        <p class="cg-alert cg-alert-success">Etiqueta eliminada del catálogo personal.</p>
+    <?php endif; ?>
+
     <ul>
         <li>Total submissions: <?php echo (int) $stats['total_submissions']; ?></li>
         <li>Mejor score: <?php echo esc_html(number_format((float) $stats['best_score'], 2)); ?></li>
         <li>Score promedio: <?php echo esc_html(number_format((float) $stats['avg_score'], 2)); ?></li>
     </ul>
+
+    <h3>Mis etiquetas personalizadas</h3>
+    <?php if (empty($custom_tags)): ?>
+        <p>No tienes etiquetas personalizadas.</p>
+    <?php else: ?>
+        <ul>
+            <?php foreach ($custom_tags as $tag => $label): ?>
+                <li>
+                    <strong><?php echo esc_html($label); ?></strong> (<?php echo esc_html($tag); ?>)
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline" onsubmit="return confirm('¿Eliminar etiqueta?');">
+                        <?php wp_nonce_field('catgame_delete_custom_tag'); ?>
+                        <input type="hidden" name="action" value="catgame_delete_custom_tag">
+                        <input type="hidden" name="tag" value="<?php echo esc_attr($tag); ?>">
+                        <button type="submit">Eliminar</button>
+                    </form>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
 
     <h3>Mis submissions</h3>
     <div class="cg-grid">

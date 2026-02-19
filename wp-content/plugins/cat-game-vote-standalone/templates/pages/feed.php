@@ -1,11 +1,28 @@
 <?php
 $items = $data['submissions'] ?? [];
+$feed_tags = $data['feed_tags'] ?? [];
+$selected_tag = $data['selected_tag'] ?? '';
 ?>
 <section>
     <h2>Feed del evento</h2>
+
+    <form method="get" action="<?php echo esc_url(home_url('/catgame/feed')); ?>" class="cg-form-inline">
+        <label>Etiqueta
+            <select name="tag">
+                <option value="">Todas</option>
+                <?php foreach ($feed_tags as $tag): ?>
+                    <option value="<?php echo esc_attr($tag); ?>" <?php selected($selected_tag, $tag); ?>>
+                        <?php echo esc_html(CatGame_Submissions::label_for_tag($tag, get_current_user_id())); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+        <button type="submit">Filtrar</button>
+    </form>
+
     <div class="cg-grid">
         <?php if (!$items): ?>
-            <p>No hay submissions todavía.</p>
+            <p>No hay submissions para el filtro seleccionado.</p>
         <?php endif; ?>
         <?php foreach ($items as $item): ?>
             <article class="cg-card">

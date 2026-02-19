@@ -59,7 +59,7 @@ Solo un evento activo a la vez.
 
 ## Scoring
 - `score_base = (votes_sum / votes_count) * 2`
-- `score_final = min(10, score_base + suma_bonos_tags)`
+- `score_final = min(10, score_base) // sin bonos por etiquetas`
 - Sin votos: score `0` y texto `sin votos`.
 
 ## Seguridad
@@ -92,3 +92,9 @@ En admin: **Cat Game > Moderation**.
   - Se guarda `image_size_bytes` en DB y se muestra en el detalle de la submission.
 
 Para ajustar parámetros, edita constantes en `assets/app.js` (`TARGET_MAX_SIDE`, `TARGET_MAX_BYTES`, `QUALITY_STEPS`) y el umbral/calidad de backup en `includes/class-submissions.php`.
+
+## Etiquetas
+- Las etiquetas (predefinidas y personalizadas) se usan para agrupar y filtrar submissions.
+- No alteran el score; el puntaje depende únicamente de votos.
+- El catálogo personal de etiquetas se guarda en user_meta (`catgame_custom_tags`).
+- Al eliminar una etiqueta desde perfil, se quita del catálogo personal pero no se borra de submissions históricas.

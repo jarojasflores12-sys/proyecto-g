@@ -1,10 +1,11 @@
 <?php
 $submission = $data['submission'] ?? null;
-$rules = $data['rules'] ?? [];
 if (!$submission):
 ?>
 <p>Submission no encontrada.</p>
-<?php return; endif; ?>
+<?php return; endif;
+$tags = CatGame_Submissions::parse_tags_json($submission['tags_json'] ?? '[]');
+?>
 <section>
     <h2>Submission #<?php echo (int) $submission['id']; ?></h2>
     <div class="cg-detail-image"><?php echo wp_get_attachment_image((int) $submission['attachment_id'], 'large'); ?></div>
@@ -13,12 +14,17 @@ if (!$submission):
     <p>Votos: <?php echo (int) $submission['votes_count']; ?> (suma <?php echo (int) $submission['votes_sum']; ?>)</p>
     <?php $size_bytes = isset($submission['image_size_bytes']) ? (int) $submission['image_size_bytes'] : 0; ?>
     <p>Tamaño imagen: <?php echo $size_bytes > 0 ? esc_html(number_format($size_bytes / 1024, 2)) . ' KB' : 'N/D'; ?></p>
-    <h3>Breakdown de bonos</h3>
-    <ul>
-        <?php foreach ($rules as $tag => $bonus): ?>
-            <li><?php echo esc_html($tag . ': +' . $bonus); ?></li>
-        <?php endforeach; ?>
-    </ul>
+
+    <h3>Etiquetas</h3>
+    <?php if (empty($tags)): ?>
+        <p>Sin etiquetas.</p>
+    <?php else: ?>
+        <ul>
+            <?php foreach ($tags as $tag): ?>
+                <li><?php echo esc_html(CatGame_Submissions::label_for_tag($tag, (int) ($submission['user_id'] ?? 0))); ?></li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
 
     <?php if (is_user_logged_in()): ?>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form">

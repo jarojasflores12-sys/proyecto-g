@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.0
+- Etiquetas sin bonos: el score ahora depende solo de votos (0..10) y se elimina el breakdown de bonos.
+- Upload/Detail/Profile usan la terminología y visualización de etiquetas.
+- Feed agrega filtro por etiqueta (Todas + catálogo del usuario + predefinidas).
+- Profile permite eliminar etiquetas personalizadas del catálogo personal (sin afectar submissions históricas).
+- Persistencia: nueva columna `tags_text` para filtrado por etiqueta.
+
 ## 0.9.1
 - Fix upload submit: se elimina el envío por `fetch` en compresión client-side para evitar rutas de error/404 al redireccionar.
 - Ahora, al enviar, se reemplaza el `input[type=file]` con el archivo comprimido usando `DataTransfer` y se mantiene submit HTML nativo.
