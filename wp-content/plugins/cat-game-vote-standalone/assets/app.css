@@ -17,3 +17,5 @@ button { background: #0f5bd8; color: #fff; border: 0; border-radius: 6px; paddin
 .cg-alert { padding: 10px 12px; border-radius: 6px; margin: 10px 0; }
 .cg-alert-error { background: #ffe8e8; color: #9f1d1d; border: 1px solid #f3b6b6; }
 .cg-alert-success { background: #e9f8ec; color: #145c2e; border: 1px solid #b8e2c2; }
+
+.cg-file-size { margin: 4px 0 0; color: #465066; font-size: 14px; }

@@ -20,7 +20,8 @@ $event = $data['event'] ?? null;
                 <label><input type="checkbox" name="tags[]" value="tag_funny_pose"> Pose divertida</label>
                 <label><input type="checkbox" name="tags[]" value="tag_weird_place"> Lugar raro</label>
             </fieldset>
-            <label>Imagen <input type="file" name="cat_image" accept="image/*" required></label>
+            <label>Imagen <input type="file" name="cat_image" id="catgame-cat-image" accept="image/*" required></label>
+            <p id="catgame-file-size" class="cg-file-size">Tamaño seleccionado: -</p>
             <label><input type="checkbox" name="confirm_no_people" value="1" required> Confirmo que no hay personas en la foto</label>
             <button type="submit">Enviar</button>
         </form>

@@ -65,6 +65,8 @@ class CatGame_Submissions {
             exit;
         }
 
+        self::compress_uploaded_image($attachment_id);
+
         $selected_tags = wp_unslash($_POST['tags'] ?? []);
         $allowed = self::allowed_tags();
         $filtered_tags = [];
@@ -250,5 +252,31 @@ class CatGame_Submissions {
             }
         }
         update_option('catgame_leaderboard_cache_keys', [], false);
+    }
+
+    private static function compress_uploaded_image(int $attachment_id): void {
+        $file = get_attached_file($attachment_id);
+        if (!$file || !file_exists($file)) {
+            return;
+        }
+
+        $editor = wp_get_image_editor($file);
+        if (is_wp_error($editor)) {
+            return;
+        }
+
+        if (method_exists($editor, 'set_quality')) {
+            $editor->set_quality(30);
+        }
+
+        $saved = $editor->save($file);
+        if (is_wp_error($saved)) {
+            return;
+        }
+
+        $metadata = wp_generate_attachment_metadata($attachment_id, $file);
+        if (!is_wp_error($metadata) && is_array($metadata)) {
+            wp_update_attachment_metadata($attachment_id, $metadata);
+        }
     }
 }

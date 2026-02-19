@@ -48,7 +48,8 @@ Solo un evento activo a la vez.
 2. Si no estás logueado, entra a `/catgame/profile` para crear cuenta y login automático.
 3. Usuarios suben fotos en `/catgame/upload` con ciudad/país manuales, tags y checkbox obligatorio de no personas.
 4. Comunidad vota 1-5 estrellas en detalle.
-5. El score se recalcula y se refleja en feed/leaderboard.
+5. En upload, se muestra el tamaño del archivo antes de enviar.
+6. El score se recalcula y se refleja en feed/leaderboard.
 
 ## Registro en la misma ruta del perfil
 - La ruta `/catgame/profile` cumple doble función:
@@ -66,6 +67,7 @@ Solo un evento activo a la vez.
 - Sanitización de city/country.
 - rating validado 1..5.
 - Archivo validado como `image/*` y máximo 3MB.
+- Tras subir, el plugin aplica compresión fuerte en servidor y actualiza metadata de adjunto.
 - Menús admin solo para `manage_options`.
 - Anti voto duplicado por lógica + índice único `(submission_id,user_id)`.
 - Rate limit: 50 votos/día por usuario.

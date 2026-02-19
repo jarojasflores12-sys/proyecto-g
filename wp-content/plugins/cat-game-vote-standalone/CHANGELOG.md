@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0
+- Compresión máxima en servidor al subir imágenes (calidad optimizada) y regeneración de metadata.
+- UI de upload ahora muestra tamaño del archivo seleccionado antes de enviar.
+
 ## 0.6.0
 - Profile route `/catgame/profile` ahora soporta registro de usuario con login automático.
 - Nuevo handler seguro de registro (nonce, validaciones, sanitización y mensajes de error).
