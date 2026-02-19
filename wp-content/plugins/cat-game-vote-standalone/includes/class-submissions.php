@@ -35,8 +35,10 @@ class CatGame_Submissions {
             return '';
         }
 
-        if (strpos($slug, 'tag-') === 0) {
-            $slug = substr($slug, 4);
+        $slug = preg_replace('/^tag[-_\s]+/i', '', $slug);
+        $slug = is_string($slug) ? trim($slug, '-_ ') : '';
+        if ($slug === '') {
+            return '';
         }
 
         return 'tag_' . str_replace('-', '_', $slug);

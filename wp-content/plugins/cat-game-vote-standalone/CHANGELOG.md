@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.2
+- Fix de normalización de etiquetas para evitar duplicación de prefijos (`tag_tag_*`).
+- En detalle/feed, etiquetas históricas como `tag_tag_hermosa` ahora se muestran como `Hermosa` (sin "Tag").
+
 ## 0.10.1
 - UI de etiquetas: se oculta cualquier prefijo visual "Tag" en upload y perfil, mostrando solo nombres legibles (ej: "Tierna").
 - Perfil ya no muestra slugs técnicos (`tag_*`) en la lista de etiquetas personalizadas.
