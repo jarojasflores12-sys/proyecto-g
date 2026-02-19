@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.1
+- UI de etiquetas: se oculta cualquier prefijo visual "Tag" en upload y perfil, mostrando solo nombres legibles (ej: "Tierna").
+- Perfil ya no muestra slugs técnicos (`tag_*`) en la lista de etiquetas personalizadas.
+
 ## 0.10.0
 - Etiquetas sin bonos: el score ahora depende solo de votos (0..10) y se elimina el breakdown de bonos.
 - Upload/Detail/Profile usan la terminología y visualización de etiquetas.

@@ -61,7 +61,7 @@ $custom_tags = $data['custom_tags'] ?? [];
         <ul>
             <?php foreach ($custom_tags as $tag => $label): ?>
                 <li>
-                    <strong><?php echo esc_html($label); ?></strong> (<?php echo esc_html($tag); ?>)
+                    <strong><?php echo esc_html(CatGame_Submissions::label_for_tag($tag, get_current_user_id())); ?></strong>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline" onsubmit="return confirm('¿Eliminar etiqueta?');">
                         <?php wp_nonce_field('catgame_delete_custom_tag'); ?>
                         <input type="hidden" name="action" value="catgame_delete_custom_tag">

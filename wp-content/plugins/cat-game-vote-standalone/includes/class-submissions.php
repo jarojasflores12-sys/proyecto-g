@@ -46,6 +46,13 @@ class CatGame_Submissions {
         return ucwords(str_replace('_', ' ', preg_replace('/^tag_/', '', $tag)));
     }
 
+    private static function clean_tag_label(string $label): string {
+        $clean = sanitize_text_field($label);
+        $clean = preg_replace('/^tag[\s:_-]+/i', '', $clean);
+        $clean = is_string($clean) ? trim($clean) : '';
+        return $clean;
+    }
+
     public static function user_custom_tag_map(int $user_id): array {
         $raw = get_user_meta($user_id, self::USER_CUSTOM_TAGS_META_KEY, true);
         if (!is_array($raw)) {
@@ -56,7 +63,7 @@ class CatGame_Submissions {
         foreach ($raw as $key => $value) {
             if (is_string($key) && $key !== '') {
                 $slug = self::normalize_tag($key);
-                $label = sanitize_text_field((string) $value);
+                $label = self::clean_tag_label((string) $value);
             } else {
                 $slug = self::normalize_tag($value);
                 $label = '';
@@ -89,7 +96,7 @@ class CatGame_Submissions {
         if ($user_id > 0) {
             $custom = self::user_custom_tag_map($user_id);
             if (isset($custom[$tag])) {
-                return $custom[$tag];
+                return self::clean_tag_label((string) $custom[$tag]) ?: self::humanize_tag($tag);
             }
         }
 
@@ -474,7 +481,7 @@ class CatGame_Submissions {
         $parts = preg_split('/[\n,]+/', $raw_input) ?: [];
         $parsed = [];
         foreach ($parts as $part) {
-            $label = sanitize_text_field(trim((string) $part));
+            $label = self::clean_tag_label(trim((string) $part));
             $slug = self::normalize_tag($label);
             if ($slug !== '') {
                 $parsed[$slug] = $label !== '' ? $label : self::humanize_tag($slug);
@@ -492,7 +499,7 @@ class CatGame_Submissions {
                 continue;
             }
 
-            $safe_label = sanitize_text_field((string) $label);
+            $safe_label = self::clean_tag_label((string) $label);
             $current[$normalized] = $safe_label !== '' ? $safe_label : self::humanize_tag($normalized);
         }
 
