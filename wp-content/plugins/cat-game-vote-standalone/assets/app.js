@@ -184,7 +184,7 @@
     }
   });
 
-  form.addEventListener('submit', async (event) => {
+  form.addEventListener('submit', (event) => {
     if (compressing) {
       event.preventDefault();
       return;
@@ -194,31 +194,21 @@
       return;
     }
 
-    event.preventDefault();
-
     try {
-      setState('Estado: subiendo...', true);
-      const formData = new FormData(form);
-      formData.set('cat_image', compressedFile, compressedFile.name);
-
-      const response = await fetch(form.action, {
-        method: 'POST',
-        body: formData,
-        credentials: 'same-origin',
-        redirect: 'follow',
-      });
-
-      if (response.url) {
-        window.location.href = response.url;
+      if (typeof DataTransfer !== 'function') {
         return;
       }
 
-      form.submit();
+      const dt = new DataTransfer();
+      dt.items.add(compressedFile);
+      input.files = dt.files;
+      setState('Estado: enviando archivo comprimido...', true);
+
+      window.setTimeout(() => {
+        setState('Estado: listo para enviar', false);
+      }, 1200);
     } catch (err) {
       console.warn('CatGame submit fallback:', err);
-      form.submit();
-    } finally {
-      setState('Estado: listo para enviar', false);
     }
   });
 })();

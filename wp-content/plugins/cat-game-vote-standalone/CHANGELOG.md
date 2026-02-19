@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+- Fix upload submit: se elimina el envío por `fetch` en compresión client-side para evitar rutas de error/404 al redireccionar.
+- Ahora, al enviar, se reemplaza el `input[type=file]` con el archivo comprimido usando `DataTransfer` y se mantiene submit HTML nativo.
+
 ## 0.9.0
 - Compresión client-side en upload: resize máx 1280px, WEBP (fallback JPEG), iteración de calidad hasta objetivo de peso.
 - Upload muestra tamaño original, tamaño comprimido, reducción, formato final y estado de compresión; incluye preview.
