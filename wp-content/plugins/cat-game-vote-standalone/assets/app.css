@@ -415,3 +415,45 @@ body.cg-has-custom-bg .cg-main {
     margin: 0 auto;
   }
 }
+
+.catgame-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 90px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  padding: 12px 14px;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  font-size: 14px;
+  max-width: 90%;
+  width: fit-content;
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.catgame-toast.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-6px);
+}
+
+.catgame-toast.is-success {
+  border: 1px solid rgba(181, 234, 215, 0.9);
+}
+
+.catgame-toast.is-error {
+  border: 1px solid rgba(247, 183, 195, 0.9);
+}
+
+.catgame-toast.is-info {
+  border: 1px solid rgba(199, 206, 234, 0.9);
+}
+
+@media (min-width: 768px) {
+  .catgame-toast {
+    bottom: 24px;
+  }
+}

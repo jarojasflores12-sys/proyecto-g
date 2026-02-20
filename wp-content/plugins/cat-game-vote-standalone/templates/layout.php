@@ -49,6 +49,7 @@ if ($has_background) {
             </a>
         <?php endforeach; ?>
     </nav>
+<div id="catgame-toast" class="catgame-toast" aria-live="polite" aria-atomic="true"></div>
 <script src="<?php echo esc_url(CATGAME_PLUGIN_URL . 'assets/app.js'); ?>?v=<?php echo esc_attr(CATGAME_VERSION); ?>"></script>
 </body>
 </html>

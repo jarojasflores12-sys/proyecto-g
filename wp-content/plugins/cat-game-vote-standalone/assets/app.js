@@ -1,10 +1,50 @@
 (function () {
+  window.catgameToast = function catgameToast(message, type = 'info', timeout = 2200) {
+    const el = document.getElementById('catgame-toast');
+    if (!el || !message) {
+      return;
+    }
+
+    el.className = `catgame-toast is-visible is-${type}`;
+    el.textContent = message;
+
+    window.clearTimeout(el._t);
+    el._t = window.setTimeout(() => {
+      el.className = 'catgame-toast';
+      el.textContent = '';
+    }, timeout);
+  };
+
   const params = new URLSearchParams(window.location.search);
+  const uploaded = params.get('uploaded');
+  const voted = params.get('voted');
   const error = params.get('catgame_error');
-  if (error) {
-    console.warn('CatGame warning:', error);
+
+  if (voted === '1') {
+    window.catgameToast('Gracias por tu voto', 'success');
   }
 
+  if (uploaded === '1') {
+    window.catgameToast('Foto subida correctamente', 'success');
+  }
+
+  if (error) {
+    console.warn('CatGame warning:', error);
+    window.catgameToast('Ocurrió un error. Intenta nuevamente.', 'error');
+  }
+
+  const shouldClean = voted === '1' || uploaded === '1' || !!error;
+  if (shouldClean && window.history && typeof window.history.replaceState === 'function') {
+    params.delete('voted');
+    params.delete('uploaded');
+    params.delete('catgame_error');
+    const nextQuery = params.toString();
+    const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
+    window.history.replaceState({}, '', nextUrl);
+  }
+})();
+
+(function () {
   const form = document.querySelector('form.cg-form input[name="action"][value="catgame_upload"]')?.closest('form');
   const input = document.getElementById('catgame-cat-image');
   if (!form || !input) {
@@ -190,6 +230,8 @@
       return;
     }
 
+    window.catgameToast?.('Subiendo foto…', 'info', 2600);
+
     if (!compressedFile) {
       return;
     }
@@ -278,6 +320,7 @@
       return;
     }
 
+    window.catgameToast?.('Enviando voto…', 'info', 2600);
     clearError();
   });
 

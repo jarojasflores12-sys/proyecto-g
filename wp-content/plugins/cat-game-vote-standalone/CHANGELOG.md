@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.15.0
+- Se agregan notificaciones toast en frontend standalone (éxito/error/info) con contenedor global en layout y estilos mobile-first sobre la barra inferior.
+- Integración en flujo de voto y subida: mensajes "Enviando voto…", "Subiendo foto…", "Gracias por tu voto", "Foto subida correctamente" y error genérico.
+- Se limpian parámetros de mensaje en la URL tras mostrar el toast para evitar repeticiones al recargar.
+
 ## 0.14.1
 - Nueva navegación inferior fija tipo app móvil (Inicio, Subir, Feed, Ranking, Perfil) con pestaña activa resaltada automáticamente.
 - Botón "Subir" destacado en el centro y ajustes de espaciado para evitar superposición con el contenido.
