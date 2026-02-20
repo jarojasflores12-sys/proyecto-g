@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.2
+- Fix definitivo en ajustes admin: el botón "Seleccionar desde biblioteca" ahora usa script dedicado encolado (`assets/admin-settings.js`) y abre correctamente la Media Library.
+- Se elimina el script inline de la vista de ajustes para evitar problemas de carga/orden de ejecución.
+
 ## 0.13.1
 - Fix admin ajustes: el botón "Seleccionar desde biblioteca" vuelve a funcionar al asegurar la carga de `wp_enqueue_media()` en la pantalla correcta (`page=catgame-settings`).
 

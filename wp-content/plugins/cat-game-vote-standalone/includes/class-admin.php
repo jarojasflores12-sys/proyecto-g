@@ -23,7 +23,7 @@ class CatGame_Admin {
         add_submenu_page('catgame-events', 'Ajustes', 'Ajustes', 'manage_options', 'catgame-settings', [__CLASS__, 'settings_page']);
     }
 
-    public static function enqueue_admin_assets(string $hook): void {
+    public static function enqueue_admin_assets(): void {
         $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
 
         if ($page !== 'catgame-settings') {
@@ -31,6 +31,13 @@ class CatGame_Admin {
         }
 
         wp_enqueue_media();
+        wp_enqueue_script(
+            'catgame-admin-settings',
+            CATGAME_PLUGIN_URL . 'assets/admin-settings.js',
+            ['jquery'],
+            CATGAME_VERSION,
+            true
+        );
     }
 
     public static function permalink_notice(): void {
@@ -226,43 +233,6 @@ class CatGame_Admin {
                 <?php submit_button('Guardar ajustes'); ?>
             </form>
         </div>
-        <script>
-            (function(){
-                const selectButton = document.getElementById('catgame_select_background');
-                const clearButton = document.getElementById('catgame_clear_background');
-                const idInput = document.getElementById('catgame_background_image_id');
-                const urlInput = document.getElementById('catgame_background_image_url');
-                let frame;
-
-                if (!selectButton || !clearButton || !idInput || !urlInput || !window.wp || !wp.media) {
-                    return;
-                }
-
-                selectButton.addEventListener('click', function() {
-                    if (!frame) {
-                        frame = wp.media({
-                            title: 'Seleccionar imagen de fondo',
-                            library: { type: 'image' },
-                            button: { text: 'Usar imagen' },
-                            multiple: false
-                        });
-
-                        frame.on('select', function() {
-                            const attachment = frame.state().get('selection').first().toJSON();
-                            idInput.value = attachment.id || '';
-                            urlInput.value = attachment.url || '';
-                        });
-                    }
-
-                    frame.open();
-                });
-
-                clearButton.addEventListener('click', function() {
-                    idInput.value = '';
-                    urlInput.value = '';
-                });
-            })();
-        </script>
         <?php
     }
 
