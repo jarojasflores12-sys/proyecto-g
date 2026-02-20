@@ -44,7 +44,16 @@ class CatGame_Render {
         switch ($page) {
             case 'upload':
                 $user_tags = is_user_logged_in() ? CatGame_Submissions::available_tags_for_user(get_current_user_id()) : CatGame_Submissions::predefined_tags();
-                return ['page' => $page, 'event' => $event, 'user_tags' => $user_tags];
+                $upload_defaults = [
+                    'default_city' => '',
+                    'default_country' => '',
+                ];
+                if (is_user_logged_in()) {
+                    $uid = get_current_user_id();
+                    $upload_defaults['default_city'] = (string) get_user_meta($uid, 'catgame_default_city', true);
+                    $upload_defaults['default_country'] = (string) get_user_meta($uid, 'catgame_default_country', true);
+                }
+                return ['page' => $page, 'event' => $event, 'user_tags' => $user_tags, 'upload_defaults' => $upload_defaults];
             case 'feed':
                 $filter_tag = CatGame_Submissions::normalize_tag(wp_unslash($_GET['tag'] ?? ''));
                 $feed_tags = is_user_logged_in()
@@ -114,6 +123,11 @@ class CatGame_Render {
                 $register_error = sanitize_text_field(wp_unslash($_GET['register_error'] ?? ''));
                 $registered = isset($_GET['registered']) ? (int) $_GET['registered'] : 0;
                 $tag_deleted = isset($_GET['tag_deleted']) ? (int) $_GET['tag_deleted'] : 0;
+                $profile_saved = isset($_GET['profile_saved']) ? (int) $_GET['profile_saved'] : 0;
+                $scope = sanitize_key(wp_unslash($_GET['scope'] ?? 'event'));
+                if (!in_array($scope, ['event', 'global'], true)) {
+                    $scope = 'event';
+                }
 
                 if (!is_user_logged_in()) {
                     return [
@@ -126,8 +140,12 @@ class CatGame_Render {
                 }
 
                 $user_id = get_current_user_id();
+                $event_id = ($scope === 'event' && $event) ? (int) $event['id'] : 0;
+                $items = CatGame_Submissions::list_user_submissions($user_id, $event_id);
+                $stats = CatGame_Submissions::user_stats($user_id, $event_id);
+
                 $top_position_for_user = null;
-                if (!empty($top3_positions)) {
+                if (!empty($top3_positions) && $event) {
                     $top_items = CatGame_Submissions::leaderboard((int) $event['id'], 'global', '', '', 3);
                     foreach ($top_items as $idx => $top_item) {
                         if ((int) ($top_item['user_id'] ?? 0) === $user_id) {
@@ -144,12 +162,21 @@ class CatGame_Render {
                     'register_error' => $register_error,
                     'registered' => $registered,
                     'tag_deleted' => $tag_deleted,
-                    'items' => CatGame_Submissions::list_user_submissions($user_id),
-                    'stats' => CatGame_Submissions::user_stats($user_id),
+                    'profile_saved' => $profile_saved,
+                    'scope' => $scope,
+                    'items' => $items,
+                    'stats' => $stats,
                     'custom_tags' => CatGame_Submissions::user_custom_tag_map($user_id),
                     'top3_positions' => $top3_positions,
                     'current_user_id' => $current_user_id,
                     'top_position_for_user' => $top_position_for_user,
+                    'profile_prefs' => [
+                        'display_name' => (string) get_user_meta($user_id, 'catgame_display_name', true),
+                        'avatar_color' => (string) get_user_meta($user_id, 'catgame_avatar_color', true),
+                        'default_city' => (string) get_user_meta($user_id, 'catgame_default_city', true),
+                        'default_country' => (string) get_user_meta($user_id, 'catgame_default_country', true),
+                        'language' => (string) get_user_meta($user_id, 'catgame_language', true),
+                    ],
                 ];
             case 'home':
                 $top_items = $event ? CatGame_Submissions::leaderboard((int) $event['id'], 'global', '', '', 3) : [];

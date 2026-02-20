@@ -9,6 +9,7 @@ class CatGame_Auth {
         add_action('admin_post_nopriv_catgame_register', [__CLASS__, 'handle_register']);
         add_action('admin_post_catgame_register', [__CLASS__, 'handle_register']);
         add_action('admin_post_catgame_logout', [__CLASS__, 'handle_logout']);
+        add_action('admin_post_catgame_profile_update', [__CLASS__, 'handle_profile_update']);
     }
 
     public static function handle_register(): void {
@@ -75,6 +76,41 @@ class CatGame_Auth {
         wp_set_current_user(0);
 
         wp_safe_redirect(home_url('/catgame/profile'));
+        exit;
+    }
+
+    public static function handle_profile_update(): void {
+        if (!is_user_logged_in()) {
+            wp_safe_redirect(home_url('/catgame/profile'));
+            exit;
+        }
+
+        check_admin_referer('catgame_profile_update');
+
+        $user_id = get_current_user_id();
+        $display_name = sanitize_text_field(wp_unslash($_POST['display_name'] ?? ''));
+        $avatar_color = sanitize_key(wp_unslash($_POST['avatar_color'] ?? 'rose'));
+        $default_city = sanitize_text_field(wp_unslash($_POST['default_city'] ?? ''));
+        $default_country = sanitize_text_field(wp_unslash($_POST['default_country'] ?? ''));
+        $language = sanitize_key(wp_unslash($_POST['language'] ?? 'es'));
+
+        $allowed_avatar_colors = ['rose', 'mint', 'lavender', 'yellow', 'sky'];
+        if (!in_array($avatar_color, $allowed_avatar_colors, true)) {
+            $avatar_color = 'rose';
+        }
+
+        $allowed_languages = ['es'];
+        if (!in_array($language, $allowed_languages, true)) {
+            $language = 'es';
+        }
+
+        update_user_meta($user_id, 'catgame_display_name', $display_name);
+        update_user_meta($user_id, 'catgame_avatar_color', $avatar_color);
+        update_user_meta($user_id, 'catgame_default_city', $default_city);
+        update_user_meta($user_id, 'catgame_default_country', $default_country);
+        update_user_meta($user_id, 'catgame_language', $language);
+
+        wp_safe_redirect(add_query_arg('profile_saved', '1', home_url('/catgame/profile')));
         exit;
     }
 

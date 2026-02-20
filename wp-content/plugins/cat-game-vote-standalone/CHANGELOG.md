@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.22.0
+- Perfil: header con avatar por inicial y color pastel seleccionable, edición de nombre visible y botón de cerrar sesión interno del plugin.
+- Perfil: nuevas preferencias guardables (ciudad/país por defecto e idioma), selector de alcance Evento activo/Global y estadísticas ampliadas.
+- Perfil: nueva sección "Tu mejor foto", acciones de compartir (copiar/share) e integración de enlace a Instagram.
+- App: autor `@username` visible en Inicio/Publicaciones/Ranking/Detalle y destacados visuales para publicaciones propias/Top 3 del evento activo.
+
 ## 0.21.0
 - Perfil: nuevo bloque de usuario `@username` con botón "Cerrar sesión" del flujo interno del plugin y aviso destacado si el usuario está en Top 3 del evento activo.
 - Perfil: mejora en "Mis publicaciones" con imágenes más nítidas (solo en perfil) y puntaje con estrellas + promedio decimal `/5` o "Sin votos".

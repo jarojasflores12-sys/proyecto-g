@@ -366,3 +366,42 @@
     img.addEventListener('error', markError, { once: true });
   });
 })();
+
+(function () {
+  const profileButton = document.querySelector('.js-share-profile');
+  const bestButton = document.querySelector('.js-share-best');
+
+  const copyText = async (text) => {
+    if (!text) return false;
+    try {
+      await navigator.clipboard.writeText(text);
+      window.catgameToast?.('Enlace copiado', 'success');
+      return true;
+    } catch (_) {
+      window.catgameToast?.('No se pudo copiar', 'error');
+      return false;
+    }
+  };
+
+  if (profileButton) {
+    profileButton.addEventListener('click', async () => {
+      const url = profileButton.getAttribute('data-url') || window.location.href;
+      await copyText(url);
+    });
+  }
+
+  if (bestButton) {
+    bestButton.addEventListener('click', async () => {
+      const url = bestButton.getAttribute('data-url') || window.location.href;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Cat Game Vote', text: 'Mira esta publicación', url });
+          return;
+        } catch (_) {
+          // fallback copy
+        }
+      }
+      await copyText(url);
+    });
+  }
+})();

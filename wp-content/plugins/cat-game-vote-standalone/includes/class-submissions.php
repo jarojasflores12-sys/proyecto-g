@@ -342,30 +342,50 @@ class CatGame_Submissions {
         self::clear_leaderboard_cache();
     }
 
-    public static function list_user_submissions(int $user_id): array {
+    public static function list_user_submissions(int $user_id, int $event_id = 0): array {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
+
+        if ($event_id > 0) {
+            return $wpdb->get_results(
+                $wpdb->prepare("SELECT * FROM {$table} WHERE user_id = %d AND event_id = %d ORDER BY created_at DESC", $user_id, $event_id),
+                ARRAY_A
+            );
+        }
+
         return $wpdb->get_results(
             $wpdb->prepare("SELECT * FROM {$table} WHERE user_id = %d ORDER BY created_at DESC", $user_id),
             ARRAY_A
         );
     }
 
-    public static function user_stats(int $user_id): array {
+    public static function user_stats(int $user_id, int $event_id = 0): array {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
-        $row = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT COUNT(*) AS total_submissions, MAX(score_cached) AS best_score, AVG(score_cached) AS avg_score FROM {$table} WHERE user_id = %d",
-                $user_id
-            ),
-            ARRAY_A
-        );
+
+        $where = 'user_id = %d';
+        $params = [$user_id];
+        if ($event_id > 0) {
+            $where .= ' AND event_id = %d';
+            $params[] = $event_id;
+        }
+
+        $sql = "SELECT COUNT(*) AS total_submissions, MAX(score_cached) AS best_score, AVG(score_cached) AS avg_score, SUM(votes_count) AS total_votes FROM {$table} WHERE {$where}";
+        $row = $wpdb->get_row($wpdb->prepare($sql, ...$params), ARRAY_A);
+
+        $sql_most_voted = "SELECT * FROM {$table} WHERE {$where} ORDER BY votes_count DESC, score_cached DESC, created_at DESC, id DESC LIMIT 1";
+        $most_voted = $wpdb->get_row($wpdb->prepare($sql_most_voted, ...$params), ARRAY_A);
+
+        $sql_best = "SELECT * FROM {$table} WHERE {$where} AND votes_count > 0 ORDER BY score_cached DESC, votes_count DESC, created_at DESC, id DESC LIMIT 1";
+        $best_ranked = $wpdb->get_row($wpdb->prepare($sql_best, ...$params), ARRAY_A);
 
         return [
             'total_submissions' => (int) ($row['total_submissions'] ?? 0),
             'best_score' => round((float) ($row['best_score'] ?? 0), 2),
             'avg_score' => round((float) ($row['avg_score'] ?? 0), 2),
+            'total_votes' => (int) ($row['total_votes'] ?? 0),
+            'most_voted' => is_array($most_voted) ? $most_voted : null,
+            'best_ranked' => is_array($best_ranked) ? $best_ranked : null,
         ];
     }
 
