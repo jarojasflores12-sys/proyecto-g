@@ -92,6 +92,14 @@ class CatGame_Render {
                     'custom_tags' => CatGame_Submissions::user_custom_tag_map($user_id),
                 ];
             case 'home':
+                $top_items = $event ? CatGame_Submissions::leaderboard((int) $event['id'], 'global', '', '', 3) : [];
+                $latest_items = $event ? CatGame_Submissions::list_feed((int) $event['id'], 5, 0) : [];
+                return [
+                    'page' => 'home',
+                    'event' => $event,
+                    'top_items' => $top_items,
+                    'latest_items' => $latest_items,
+                ];
             default:
                 return ['page' => 'home', 'event' => $event];
         }
