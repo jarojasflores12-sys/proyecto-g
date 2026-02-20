@@ -110,3 +110,19 @@ button[disabled] {
     white-space: nowrap;
   }
 }
+
+
+.catgame-image {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 20px auto;
+}
+
+.catgame-image img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.10);
+}

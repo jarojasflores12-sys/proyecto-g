@@ -10,7 +10,7 @@ $already_voted = !empty($data['already_voted']);
 ?>
 <section>
     <h2>Publicación #<?php echo (int) $submission['id']; ?></h2>
-    <div class="cg-detail-image"><?php echo wp_get_attachment_image((int) $submission['attachment_id'], 'large'); ?></div>
+    <div class="catgame-image"><?php echo wp_get_attachment_image((int) $submission['attachment_id'], 'large', false, ['loading' => 'lazy']); ?></div>
     <p>Ubicación: <?php echo esc_html($submission['city'] . ', ' . $submission['country']); ?></p>
     <p>Puntaje: <?php echo (int) $submission['votes_count'] > 0 ? esc_html(number_format((float) $submission['score_cached'], 2)) : 'sin votos'; ?></p>
     <p>Votos: <span id="catgame-votes-count"><?php echo (int) $submission['votes_count']; ?></span> (suma <span id="catgame-votes-sum"><?php echo (int) $submission['votes_sum']; ?></span>)</p>

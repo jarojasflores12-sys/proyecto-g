@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.1
+- Página de detalle de publicación (`/catgame/submission/{id}`): imagen principal responsive para móvil y desktop.
+- Se agrega contenedor con ancho máximo, centrado, `loading="lazy"`, borde redondeado y sombra ligera.
+
 ## 0.12.0
 - Navegación frontend traducida al español: Inicio, Subir, Publicaciones, Clasificación, Mi perfil.
 - Pestaña activa destacada en el menú con estilo visible y navegación adaptada a móvil (wrap/scroll + sticky header).
