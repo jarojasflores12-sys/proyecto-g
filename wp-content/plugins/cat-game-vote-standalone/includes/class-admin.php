@@ -24,7 +24,9 @@ class CatGame_Admin {
     }
 
     public static function enqueue_admin_assets(string $hook): void {
-        if ($hook !== 'cat-game_page_catgame-settings') {
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+
+        if ($page !== 'catgame-settings') {
             return;
         }
 

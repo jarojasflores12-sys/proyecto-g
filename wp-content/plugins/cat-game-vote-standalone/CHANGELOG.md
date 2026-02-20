@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.13.1
+- Fix admin ajustes: el botón "Seleccionar desde biblioteca" vuelve a funcionar al asegurar la carga de `wp_enqueue_media()` en la pantalla correcta (`page=catgame-settings`).
+
 ## 0.13.0
 - Nuevo submenú **Ajustes** en admin de Cat Game con opción para cargar/quitar imagen de fondo.
 - Integración con Media Library de WordPress para seleccionar fondo desde la biblioteca.
