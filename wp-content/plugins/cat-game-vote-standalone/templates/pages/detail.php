@@ -7,13 +7,26 @@ if (!$submission):
 $tags = CatGame_Submissions::submission_tags($submission);
 $title = trim((string) ($submission['title'] ?? ''));
 $title_label = $title !== '' ? $title : 'Publicación #' . (int) $submission['id'];
+$votes_count = (int) ($submission['votes_count'] ?? 0);
+$score_10 = (float) ($submission['score_cached'] ?? 0);
+$stars = $votes_count > 0 ? max(0, min(5, (int) round($score_10 / 2))) : 0;
 ?>
 <section>
     <h2><?php echo esc_html($title_label); ?></h2>
     <p><span class="cg-badge">#<?php echo (int) $submission['id']; ?></span></p>
     <div class="cg-detail-image"><?php echo wp_get_attachment_image((int) $submission['attachment_id'], 'large'); ?></div>
     <p>Ubicación: <?php echo esc_html($submission['city'] . ', ' . $submission['country']); ?></p>
-    <p>Puntaje: <?php echo (int) $submission['votes_count'] > 0 ? esc_html(number_format((float) $submission['score_cached'], 2)) : 'sin votos'; ?></p>
+    <div class="cg-score-row">
+        <span class="cg-score-label"><?php echo $votes_count > 0 ? 'Puntaje:' : 'Puntaje: sin votos'; ?></span>
+        <span class="cg-stars" aria-label="Puntaje <?php echo (int) $stars; ?> de 5">
+            <?php for ($i = 1; $i <= 5; $i++): ?>
+                <span class="cg-star <?php echo $i <= $stars ? 'is-filled' : ''; ?>">★</span>
+            <?php endfor; ?>
+        </span>
+        <?php if ($votes_count > 0): ?>
+            <small class="cg-score-value">(<?php echo (int) $stars; ?>/5)</small>
+        <?php endif; ?>
+    </div>
     <p>Votos: <?php echo (int) $submission['votes_count']; ?> (suma <?php echo (int) $submission['votes_sum']; ?>)</p>
     <?php $size_bytes = isset($submission['image_size_bytes']) ? (int) $submission['image_size_bytes'] : 0; ?>
     <p>Tamaño imagen: <?php echo $size_bytes > 0 ? esc_html(number_format($size_bytes / 1024, 2)) . ' KB' : 'N/D'; ?></p>
@@ -22,7 +35,7 @@ $title_label = $title !== '' ? $title : 'Publicación #' . (int) $submission['id
     <?php if (empty($tags)): ?>
         <p>Sin etiquetas.</p>
     <?php else: ?>
-        <div class="cg-chip-row" aria-label="Etiquetas de la publicación">
+        <div class="cg-chip-row cg-chip-row--detail" aria-label="Etiquetas de la publicación">
             <?php foreach ($tags as $tag): ?>
                 <span class="cg-chip"><?php echo esc_html(CatGame_Submissions::label_for_tag($tag, (int) ($submission['user_id'] ?? 0))); ?></span>
             <?php endforeach; ?>

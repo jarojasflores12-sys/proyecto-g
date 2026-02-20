@@ -36,6 +36,8 @@ if (!empty($data['requires_login'])): ?>
 $stats = $data['stats'] ?? ['total_submissions' => 0, 'best_score' => 0, 'avg_score' => 0];
 $items = $data['items'] ?? [];
 $custom_tags = $data['custom_tags'] ?? [];
+$best_score_5 = max(0, min(5, (int) round(((float) ($stats['best_score'] ?? 0)) / 2)));
+$avg_score_5 = max(0, ((float) ($stats['avg_score'] ?? 0)) / 2);
 ?>
 <section>
     <h2>Mi perfil</h2>
@@ -50,8 +52,8 @@ $custom_tags = $data['custom_tags'] ?? [];
 
     <ul>
         <li>Total publicaciones: <?php echo (int) $stats['total_submissions']; ?></li>
-        <li>Mejor puntaje: <?php echo esc_html(number_format((float) $stats['best_score'], 2)); ?></li>
-        <li>Puntaje promedio: <?php echo esc_html(number_format((float) $stats['avg_score'], 2)); ?></li>
+        <li>Mejor puntaje: <?php echo (int) $best_score_5; ?>/5</li>
+        <li>Puntaje promedio: <?php echo esc_html(number_format($avg_score_5, 2)); ?>/5</li>
     </ul>
 
     <h3>Mis etiquetas personalizadas</h3>

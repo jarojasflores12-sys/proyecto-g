@@ -695,3 +695,8 @@ body.cg-has-custom-bg .cg-main {
   font-size: 12px;
   color: #7a7a7a;
 }
+
+
+.cg-chip-row--detail {
+  margin: 8px 0 12px;
+}

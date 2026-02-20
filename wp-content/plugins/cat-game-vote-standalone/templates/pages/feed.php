@@ -56,14 +56,14 @@ $selected_tag = $data['selected_tag'] ?? '';
                         <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
                     </div>
                     <div class="cg-score-row">
-                        <span class="cg-score-label"><?php echo $votes_count > 0 ? 'Puntaje:' : 'Sin votos'; ?></span>
+                        <span class="cg-score-label"><?php echo $votes_count > 0 ? 'Puntaje:' : 'Puntaje: sin votos'; ?></span>
                         <span class="cg-stars" aria-label="Puntaje <?php echo (int) $stars; ?> de 5">
                             <?php for ($i = 1; $i <= 5; $i++): ?>
                                 <span class="cg-star <?php echo $i <= $stars ? 'is-filled' : ''; ?>">★</span>
                             <?php endfor; ?>
                         </span>
                         <?php if ($votes_count > 0): ?>
-                            <small class="cg-score-value">(<?php echo esc_html(number_format($score_10, 1)); ?>/10)</small>
+                            <small class="cg-score-value">(<?php echo (int) $stars; ?>/5)</small>
                         <?php endif; ?>
                     </div>
                 </div>
