@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.0
+- Nuevo submenú **Ajustes** en admin de Cat Game con opción para cargar/quitar imagen de fondo.
+- Integración con Media Library de WordPress para seleccionar fondo desde la biblioteca.
+- Se guarda la configuración en opción del plugin y se aplica en el frontend standalone (`/catgame/*`).
+
 ## 0.12.1
 - Página de detalle de publicación (`/catgame/submission/{id}`): imagen principal responsive para móvil y desktop.
 - Se agrega contenedor con ancho máximo, centrado, `loading="lazy"`, borde redondeado y sombra ligera.

@@ -5,10 +5,14 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_Admin {
+    private const SETTINGS_OPTION_KEY = 'catgame_settings';
+
     public static function init(): void {
         add_action('admin_menu', [__CLASS__, 'menu']);
         add_action('admin_post_catgame_save_event', [__CLASS__, 'save_event']);
         add_action('admin_post_catgame_toggle_submission', [__CLASS__, 'toggle_submission']);
+        add_action('admin_post_catgame_save_settings', [__CLASS__, 'save_settings']);
+        add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_assets']);
         add_action('admin_notices', [__CLASS__, 'permalink_notice']);
     }
 
@@ -16,6 +20,15 @@ class CatGame_Admin {
         add_menu_page('Cat Game', 'Cat Game', 'manage_options', 'catgame-events', [__CLASS__, 'events_page'], 'dashicons-pets', 56);
         add_submenu_page('catgame-events', 'Events', 'Events', 'manage_options', 'catgame-events', [__CLASS__, 'events_page']);
         add_submenu_page('catgame-events', 'Moderation', 'Moderation', 'manage_options', 'catgame-moderation', [__CLASS__, 'moderation_page']);
+        add_submenu_page('catgame-events', 'Ajustes', 'Ajustes', 'manage_options', 'catgame-settings', [__CLASS__, 'settings_page']);
+    }
+
+    public static function enqueue_admin_assets(string $hook): void {
+        if ($hook !== 'cat-game_page_catgame-settings') {
+            return;
+        }
+
+        wp_enqueue_media();
     }
 
     public static function permalink_notice(): void {
@@ -178,5 +191,112 @@ class CatGame_Admin {
 
         wp_safe_redirect(admin_url('admin.php?page=catgame-moderation'));
         exit;
+    }
+
+    public static function settings_page(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        $settings = self::get_settings();
+        $background_id = (int) ($settings['background_image_id'] ?? 0);
+        $background_url = (string) ($settings['background_image_url'] ?? '');
+        ?>
+        <div class="wrap">
+            <h1>Cat Game - Ajustes</h1>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <?php wp_nonce_field('catgame_save_settings'); ?>
+                <input type="hidden" name="action" value="catgame_save_settings" />
+                <table class="form-table">
+                    <tr>
+                        <th><label for="catgame_background_image_url">Imagen de fondo</label></th>
+                        <td>
+                            <input type="hidden" name="background_image_id" id="catgame_background_image_id" value="<?php echo esc_attr((string) $background_id); ?>" />
+                            <input class="regular-text" type="url" name="background_image_url" id="catgame_background_image_url" value="<?php echo esc_url($background_url); ?>" placeholder="https://..." />
+                            <p>
+                                <button type="button" class="button" id="catgame_select_background">Seleccionar desde biblioteca</button>
+                                <button type="button" class="button" id="catgame_clear_background">Quitar fondo</button>
+                            </p>
+                            <p class="description">Se aplica como fondo del sitio en las páginas públicas de Cat Game.</p>
+                        </td>
+                    </tr>
+                </table>
+                <?php submit_button('Guardar ajustes'); ?>
+            </form>
+        </div>
+        <script>
+            (function(){
+                const selectButton = document.getElementById('catgame_select_background');
+                const clearButton = document.getElementById('catgame_clear_background');
+                const idInput = document.getElementById('catgame_background_image_id');
+                const urlInput = document.getElementById('catgame_background_image_url');
+                let frame;
+
+                if (!selectButton || !clearButton || !idInput || !urlInput || !window.wp || !wp.media) {
+                    return;
+                }
+
+                selectButton.addEventListener('click', function() {
+                    if (!frame) {
+                        frame = wp.media({
+                            title: 'Seleccionar imagen de fondo',
+                            library: { type: 'image' },
+                            button: { text: 'Usar imagen' },
+                            multiple: false
+                        });
+
+                        frame.on('select', function() {
+                            const attachment = frame.state().get('selection').first().toJSON();
+                            idInput.value = attachment.id || '';
+                            urlInput.value = attachment.url || '';
+                        });
+                    }
+
+                    frame.open();
+                });
+
+                clearButton.addEventListener('click', function() {
+                    idInput.value = '';
+                    urlInput.value = '';
+                });
+            })();
+        </script>
+        <?php
+    }
+
+    public static function save_settings(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        check_admin_referer('catgame_save_settings');
+
+        $background_id = isset($_POST['background_image_id']) ? (int) $_POST['background_image_id'] : 0;
+        $background_url = esc_url_raw(wp_unslash($_POST['background_image_url'] ?? ''));
+
+        if ($background_id > 0) {
+            $attachment_url = wp_get_attachment_image_url($background_id, 'full');
+            if (is_string($attachment_url) && $attachment_url !== '') {
+                $background_url = $attachment_url;
+            }
+        }
+
+        update_option(
+            self::SETTINGS_OPTION_KEY,
+            [
+                'background_image_id' => $background_id,
+                'background_image_url' => $background_url,
+            ],
+            false
+        );
+
+        wp_safe_redirect(admin_url('admin.php?page=catgame-settings'));
+        exit;
+    }
+
+    public static function get_settings(): array {
+        $settings = get_option(self::SETTINGS_OPTION_KEY, []);
+
+        return is_array($settings) ? $settings : [];
     }
 }

@@ -11,6 +11,13 @@ class CatGame_Render {
     public static function render_layout(string $page): void {
         $data = self::page_data($page);
         $title = 'Cat Game';
+        $settings = CatGame_Admin::get_settings();
+        $background_url = '';
+
+        if (!empty($settings['background_image_url']) && is_string($settings['background_image_url'])) {
+            $background_url = esc_url_raw($settings['background_image_url']);
+        }
+
         include CATGAME_PLUGIN_DIR . 'templates/layout.php';
     }
 

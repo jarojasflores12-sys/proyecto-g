@@ -3,6 +3,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 $current_page = $data['page'] ?? 'home';
+$background_style = '';
+$has_background = !empty($background_url) && is_string($background_url);
+
+if ($has_background) {
+    $background_style = sprintf('--catgame-bg-image:url(%s);', esc_url($background_url));
+}
 ?><!doctype html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -11,7 +17,7 @@ $current_page = $data['page'] ?? 'home';
     <title><?php echo esc_html($title); ?></title>
     <link rel="stylesheet" href="<?php echo esc_url(CATGAME_PLUGIN_URL . 'assets/app.css'); ?>?v=<?php echo esc_attr(CATGAME_VERSION); ?>">
 </head>
-<body>
+<body class="<?php echo $has_background ? 'cg-has-custom-bg' : ''; ?>" style="<?php echo esc_attr($background_style); ?>">
 <div class="cg-shell">
     <header class="cg-header">
         <h1>🐱 Cat Game Vote</h1>
