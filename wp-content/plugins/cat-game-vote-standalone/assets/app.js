@@ -331,3 +331,27 @@
     }
   }
 })();
+
+(function () {
+  const wrappers = Array.from(document.querySelectorAll('.cg-img-wrap'));
+  if (!wrappers.length) {
+    return;
+  }
+
+  wrappers.forEach((wrapper) => {
+    const img = wrapper.querySelector('.cg-img');
+    if (!img) {
+      return;
+    }
+
+    const markLoaded = () => wrapper.classList.add('is-loaded');
+
+    if (img.complete && img.naturalWidth > 0) {
+      markLoaded();
+      return;
+    }
+
+    img.addEventListener('load', markLoaded, { once: true });
+    img.addEventListener('error', markLoaded, { once: true });
+  });
+})();

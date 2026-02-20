@@ -23,7 +23,7 @@ $items = $data['items'] ?? [];
         <thead><tr><th>#</th><th>Publicación</th><th>Lugar</th><th>Puntaje</th><th>Votos</th></tr></thead>
         <tbody>
         <?php if (!$items): ?>
-            <tr><td colspan="5">Sin resultados.</td></tr>
+            <tr><td colspan="5" class="cg-empty-state">Aún no hay ranking disponible. Cuando existan votos, aparecerá aquí.</td></tr>
         <?php endif; ?>
         <?php foreach ($items as $idx => $item): ?>
             <tr>

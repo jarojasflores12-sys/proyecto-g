@@ -22,11 +22,23 @@ $selected_tag = $data['selected_tag'] ?? '';
 
     <div class="cg-grid">
         <?php if (!$items): ?>
-            <p>No hay publicaciones para el filtro seleccionado.</p>
+            <p class="cg-empty-state">Aún no hay publicaciones en este evento. Sé la primera persona en subir una foto.</p>
         <?php endif; ?>
         <?php foreach ($items as $item): ?>
             <article class="cg-card">
-                <?php echo wp_get_attachment_image((int) $item['attachment_id'], 'medium'); ?>
+                <div class="cg-img-wrap">
+                    <div class="cg-skel cg-skel-img" aria-hidden="true"></div>
+                    <?php echo wp_get_attachment_image(
+                        (int) $item['attachment_id'],
+                        'medium',
+                        false,
+                        [
+                            'class' => 'cg-img',
+                            'loading' => 'lazy',
+                            'alt' => 'Foto de gato enviada al juego',
+                        ]
+                    ); ?>
+                </div>
                 <h3>#<?php echo (int) $item['id']; ?></h3>
                 <p><?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
                 <p>Puntaje: <?php echo (int) $item['votes_count'] > 0 ? esc_html(number_format((float) $item['score_cached'], 2)) : 'sin votos'; ?></p>
