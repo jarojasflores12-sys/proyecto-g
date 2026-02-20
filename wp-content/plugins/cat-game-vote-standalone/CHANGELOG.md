@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.1
+- Fix rutas frontend: fallback de enrutado para `/catgame/*` cuando las reglas de rewrite no están disponibles/actualizadas, evitando el error "No se encontró la página".
+- Router: resolución explícita por `REQUEST_URI` para `home`, `upload`, `feed`, `leaderboard`, `profile` y `submission/{id}` con `submission_id` seteado.
+
 ## 0.22.0
 - Perfil: header con avatar por inicial y color pastel seleccionable, edición de nombre visible y botón de cerrar sesión interno del plugin.
 - Perfil: nuevas preferencias guardables (ciudad/país por defecto e idioma), selector de alcance Evento activo/Global y estadísticas ampliadas.
