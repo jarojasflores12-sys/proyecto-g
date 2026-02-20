@@ -5,6 +5,13 @@ if (!defined('ABSPATH')) {
 $current_page = $data['page'] ?? 'home';
 $background_style = '';
 $has_background = !empty($background_url) && is_string($background_url);
+$bottom_nav_items = [
+    ['page' => 'home', 'label' => 'Inicio', 'icon' => '🏠', 'url' => home_url('/catgame/')],
+    ['page' => 'upload', 'label' => 'Subir', 'icon' => '📷', 'url' => home_url('/catgame/upload')],
+    ['page' => 'feed', 'label' => 'Feed', 'icon' => '🐱', 'url' => home_url('/catgame/feed')],
+    ['page' => 'leaderboard', 'label' => 'Ranking', 'icon' => '🏆', 'url' => home_url('/catgame/leaderboard')],
+    ['page' => 'profile', 'label' => 'Perfil', 'icon' => '👤', 'url' => home_url('/catgame/profile')],
+];
 
 if ($has_background) {
     $background_style = sprintf('--catgame-bg-image:url(%s);', esc_url($background_url));
@@ -18,7 +25,7 @@ if ($has_background) {
     <link rel="stylesheet" href="<?php echo esc_url(CATGAME_PLUGIN_URL . 'assets/app.css'); ?>?v=<?php echo esc_attr(CATGAME_VERSION); ?>">
 </head>
 <body class="<?php echo $has_background ? 'cg-has-custom-bg' : ''; ?>" style="<?php echo esc_attr($background_style); ?>">
-<div class="cg-shell">
+<div class="cg-shell catgame-layout">
     <header class="cg-header">
         <h1>🐱 Cat Game Vote</h1>
         <nav class="cg-nav" aria-label="Navegación principal">
@@ -32,6 +39,16 @@ if ($has_background) {
         <?php CatGame_Render::render_page($data['page'] ?? 'home', $data); ?>
     </main>
 </div>
+
+    <nav class="catgame-bottom-nav" aria-label="Navegación inferior">
+        <?php foreach ($bottom_nav_items as $item): ?>
+            <?php $is_bottom_active = ($current_page === $item['page']); ?>
+            <a href="<?php echo esc_url($item['url']); ?>" class="nav-item <?php echo $is_bottom_active ? 'active' : ''; ?>" aria-current="<?php echo $is_bottom_active ? 'page' : 'false'; ?>">
+                <span class="icon" aria-hidden="true"><?php echo esc_html($item['icon']); ?></span>
+                <span><?php echo esc_html($item['label']); ?></span>
+            </a>
+        <?php endforeach; ?>
+    </nav>
 <script src="<?php echo esc_url(CATGAME_PLUGIN_URL . 'assets/app.js'); ?>?v=<?php echo esc_attr(CATGAME_VERSION); ?>"></script>
 </body>
 </html>

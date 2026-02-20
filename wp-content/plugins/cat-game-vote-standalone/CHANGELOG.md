@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.1
+- Nueva navegación inferior fija tipo app móvil (Inicio, Subir, Feed, Ranking, Perfil) con pestaña activa resaltada automáticamente.
+- Botón "Subir" destacado en el centro y ajustes de espaciado para evitar superposición con el contenido.
+- Ajustes responsive para mantener compatibilidad desktop/mobile con paleta pastel.
+
 ## 0.14.0
 - Refresh visual completo en `assets/app.css` con tema pastel (variables CSS), tarjetas translúcidas, botones suaves, navegación activa en lavanda y mejoras de formularios/tablas.
 - Ajustes mobile-first de layout y componentes para mantener legibilidad en pantallas pequeñas.

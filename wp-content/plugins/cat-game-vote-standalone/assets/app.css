@@ -341,3 +341,77 @@ body.cg-has-custom-bg .cg-main {
     padding: 14px;
   }
 }
+
+.catgame-layout {
+  padding-bottom: 90px;
+}
+
+.catgame-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.08);
+  z-index: 999;
+  border-top: 1px solid var(--cg-border);
+}
+
+.catgame-bottom-nav .nav-item {
+  text-decoration: none;
+  color: #777;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: all 0.2s ease;
+}
+
+.catgame-bottom-nav .nav-item .icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.catgame-bottom-nav .nav-item.active {
+  color: var(--cg-primary);
+  font-weight: 700;
+}
+
+.catgame-bottom-nav .nav-item:nth-child(2) {
+  transform: translateY(-10px);
+}
+
+.catgame-bottom-nav .nav-item:nth-child(2) .icon {
+  background: var(--cg-secondary);
+  padding: 12px;
+  border-radius: 50%;
+  box-shadow: var(--cg-shadow);
+  font-size: 22px;
+}
+
+@media (min-width: 768px) {
+  .catgame-bottom-nav {
+    display: none;
+  }
+
+  .catgame-layout {
+    padding-bottom: 16px;
+  }
+}
+
+@media (max-width: 767px) {
+  .cg-header .cg-nav {
+    display: none;
+  }
+
+  .cg-shell {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
