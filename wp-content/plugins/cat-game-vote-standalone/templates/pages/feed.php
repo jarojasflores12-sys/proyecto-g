@@ -27,9 +27,11 @@ $selected_tag = $data['selected_tag'] ?? '';
         <?php foreach ($items as $item): ?>
             <?php
             $item_tags = CatGame_Submissions::submission_tags($item);
-            $score_label = (int) $item['votes_count'] > 0
-                ? esc_html(number_format((float) $item['score_cached'], 1)) . '/10'
-                : 'sin votos';
+            $votes_count = (int) ($item['votes_count'] ?? 0);
+            $score_10 = (float) ($item['score_cached'] ?? 0);
+            $stars = $votes_count > 0 ? max(0, min(5, (int) round($score_10 / 2))) : 0;
+            $title = trim((string) ($item['title'] ?? ''));
+            $title_label = $title !== '' ? $title : 'Publicación #' . (int) $item['id'];
             ?>
             <article class="cg-card">
                 <div class="cg-img-wrap">
@@ -50,9 +52,20 @@ $selected_tag = $data['selected_tag'] ?? '';
                 <div class="cg-card-meta">
                     <div class="cg-card-header">
                         <span class="cg-badge">#<?php echo (int) $item['id']; ?></span>
+                        <p class="cg-title"><?php echo esc_html($title_label); ?></p>
                         <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
                     </div>
-                    <p class="cg-score <?php echo (int) $item['votes_count'] > 0 ? 'is-highlight' : 'is-muted'; ?>">Puntaje: <?php echo $score_label; ?></p>
+                    <div class="cg-score-row">
+                        <span class="cg-score-label"><?php echo $votes_count > 0 ? 'Puntaje:' : 'Sin votos'; ?></span>
+                        <span class="cg-stars" aria-label="Puntaje <?php echo (int) $stars; ?> de 5">
+                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <span class="cg-star <?php echo $i <= $stars ? 'is-filled' : ''; ?>">★</span>
+                            <?php endfor; ?>
+                        </span>
+                        <?php if ($votes_count > 0): ?>
+                            <small class="cg-score-value">(<?php echo esc_html(number_format($score_10, 1)); ?>/10)</small>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
                 <?php if (!empty($item_tags)): ?>

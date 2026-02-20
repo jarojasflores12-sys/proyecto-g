@@ -14,6 +14,7 @@ $user_tags = $data['user_tags'] ?? [];
             <input type="hidden" name="action" value="catgame_upload">
             <label>Ciudad <input type="text" name="city" required></label>
             <label>País <input type="text" name="country" required></label>
+            <label>Título (opcional) <input type="text" name="title" maxlength="80" placeholder="Ej: Michi, Pelusa, Tom"></label>
             <fieldset>
                 <legend>Etiquetas</legend>
                 <?php foreach ($user_tags as $tag): ?>

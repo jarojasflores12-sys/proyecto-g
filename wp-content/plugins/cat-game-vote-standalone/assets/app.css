@@ -540,8 +540,8 @@ body.cg-has-custom-bg .cg-main {
 .cg-card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .cg-badge {
@@ -562,6 +562,7 @@ body.cg-has-custom-bg .cg-main {
   margin: 0;
   font-size: 14px;
   color: #6a6a6a;
+  width: 100%;
 }
 
 .cg-score {
@@ -652,4 +653,45 @@ body.cg-has-custom-bg .cg-main {
   padding: 6px 10px;
   border-radius: 10px;
   line-height: 1.2;
+}
+
+
+.cg-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cg-text);
+}
+
+.cg-score-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.cg-score-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6a6a6a;
+}
+
+.cg-stars {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.cg-score-row .cg-star {
+  font-size: 19px;
+  line-height: 1;
+  color: #e0e0e0;
+}
+
+.cg-score-row .cg-star.is-filled {
+  color: #FFD166;
+}
+
+.cg-score-value {
+  font-size: 12px;
+  color: #7a7a7a;
 }

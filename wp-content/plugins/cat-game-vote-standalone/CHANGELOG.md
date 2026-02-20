@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.18.0
+- Feed: el puntaje ahora se muestra como estrellas (1..5) con fallback "Sin votos" y valor numérico opcional en pequeño.
+- Feed y detalle: se muestra el título de la publicación cuando existe, con fallback "Publicación #ID".
+- Detalle: las etiquetas se renderizan como chips reutilizando la misma estética visual del feed.
+- Upload: nuevo campo "Título (opcional)" y guardado seguro del título sanitizado (máximo 80 caracteres).
+- Base de datos: nueva columna nullable `title` en submissions con migración de esquema.
+
 ## 0.17.2
 - Feed: ajustes visuales app-like en cards con header consistente, badge de ID, ubicación, puntaje y chips con mejor espaciado.
 - Feed: CTA "Ver detalle" reforzado como botón táctil con estado activo en móvil.

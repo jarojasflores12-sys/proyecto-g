@@ -5,9 +5,12 @@ if (!$submission):
 <p>Publicación no encontrada.</p>
 <?php return; endif;
 $tags = CatGame_Submissions::submission_tags($submission);
+$title = trim((string) ($submission['title'] ?? ''));
+$title_label = $title !== '' ? $title : 'Publicación #' . (int) $submission['id'];
 ?>
 <section>
-    <h2>Publicación #<?php echo (int) $submission['id']; ?></h2>
+    <h2><?php echo esc_html($title_label); ?></h2>
+    <p><span class="cg-badge">#<?php echo (int) $submission['id']; ?></span></p>
     <div class="cg-detail-image"><?php echo wp_get_attachment_image((int) $submission['attachment_id'], 'large'); ?></div>
     <p>Ubicación: <?php echo esc_html($submission['city'] . ', ' . $submission['country']); ?></p>
     <p>Puntaje: <?php echo (int) $submission['votes_count'] > 0 ? esc_html(number_format((float) $submission['score_cached'], 2)) : 'sin votos'; ?></p>
@@ -19,11 +22,11 @@ $tags = CatGame_Submissions::submission_tags($submission);
     <?php if (empty($tags)): ?>
         <p>Sin etiquetas.</p>
     <?php else: ?>
-        <ul>
+        <div class="cg-chip-row" aria-label="Etiquetas de la publicación">
             <?php foreach ($tags as $tag): ?>
-                <li><?php echo esc_html(CatGame_Submissions::label_for_tag($tag, (int) ($submission['user_id'] ?? 0))); ?></li>
+                <span class="cg-chip"><?php echo esc_html(CatGame_Submissions::label_for_tag($tag, (int) ($submission['user_id'] ?? 0))); ?></span>
             <?php endforeach; ?>
-        </ul>
+        </div>
     <?php endif; ?>
 
     <?php if (is_user_logged_in()): ?>

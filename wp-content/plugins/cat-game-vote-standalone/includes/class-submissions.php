@@ -167,6 +167,9 @@ class CatGame_Submissions {
 
         $city = sanitize_text_field(wp_unslash($_POST['city'] ?? ''));
         $country = sanitize_text_field(wp_unslash($_POST['country'] ?? ''));
+        $title = sanitize_text_field(wp_unslash($_POST['title'] ?? ''));
+        $title = function_exists('mb_substr') ? mb_substr($title, 0, 80) : substr($title, 0, 80);
+
         if ($city === '' || $country === '') {
             wp_safe_redirect(add_query_arg('catgame_error', 'missing_location', home_url('/catgame/upload')));
             exit;
@@ -245,6 +248,7 @@ class CatGame_Submissions {
                 'country' => $country,
                 'tags_json' => wp_json_encode($filtered_tags),
                 'tags_text' => self::tags_text_from_list($filtered_tags),
+                'title' => $title !== '' ? $title : null,
                 'attachment_id' => (int) $attachment_id,
                 'image_size_bytes' => $final_size > 0 ? $final_size : null,
                 'created_at' => current_time('mysql'),
@@ -253,7 +257,7 @@ class CatGame_Submissions {
                 'votes_count' => 0,
                 'votes_sum' => 0,
             ],
-            ['%d', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%f', '%d', '%d']
+            ['%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%f', '%d', '%d']
         );
 
         self::clear_leaderboard_cache();
