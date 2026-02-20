@@ -64,3 +64,49 @@ button[disabled] {
 .cg-star.is-active {
   color: #f2b600;
 }
+
+.cg-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f7f7fb;
+  padding-bottom: 8px;
+}
+
+.cg-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cg-nav a {
+  margin-right: 0;
+  text-decoration: none;
+  color: #1f2430;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.cg-nav a:hover {
+  background: #eaf0ff;
+  color: #0f5bd8;
+}
+
+.cg-nav a.is-active {
+  background: #0f5bd8;
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .cg-nav {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+
+  .cg-nav a {
+    white-space: nowrap;
+  }
+}

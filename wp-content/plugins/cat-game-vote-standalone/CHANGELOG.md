@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.0
+- Navegación frontend traducida al español: Inicio, Subir, Publicaciones, Clasificación, Mi perfil.
+- Pestaña activa destacada en el menú con estilo visible y navegación adaptada a móvil (wrap/scroll + sticky header).
+- Barrido de textos visibles para reducir remanentes en inglés (p.ej. Puntaje/Publicación/Publicaciones).
+
 ## 0.11.0
 - Submission: si el usuario ya votó, se oculta la UI de votación y se muestra "✅ Ya votaste en esta foto."
 - Nueva UI de votación por 5 estrellas clickeables (1 a 5), reemplazando el selector numérico.

@@ -49,9 +49,9 @@ $custom_tags = $data['custom_tags'] ?? [];
     <?php endif; ?>
 
     <ul>
-        <li>Total submissions: <?php echo (int) $stats['total_submissions']; ?></li>
-        <li>Mejor score: <?php echo esc_html(number_format((float) $stats['best_score'], 2)); ?></li>
-        <li>Score promedio: <?php echo esc_html(number_format((float) $stats['avg_score'], 2)); ?></li>
+        <li>Total publicaciones: <?php echo (int) $stats['total_submissions']; ?></li>
+        <li>Mejor puntaje: <?php echo esc_html(number_format((float) $stats['best_score'], 2)); ?></li>
+        <li>Puntaje promedio: <?php echo esc_html(number_format((float) $stats['avg_score'], 2)); ?></li>
     </ul>
 
     <h3>Mis etiquetas personalizadas</h3>
@@ -73,16 +73,16 @@ $custom_tags = $data['custom_tags'] ?? [];
         </ul>
     <?php endif; ?>
 
-    <h3>Mis submissions</h3>
+    <h3>Mis publicaciones</h3>
     <div class="cg-grid">
         <?php if (!$items): ?>
-            <p>Aún no tienes submissions.</p>
+            <p>Aún no tienes publicaciones.</p>
         <?php endif; ?>
         <?php foreach ($items as $item): ?>
             <article class="cg-card">
                 <?php echo wp_get_attachment_image((int) $item['attachment_id'], 'thumbnail'); ?>
                 <p>#<?php echo (int) $item['id']; ?> — <?php echo esc_html($item['status']); ?></p>
-                <p>Score: <?php echo esc_html(number_format((float) $item['score_cached'], 2)); ?></p>
+                <p>Puntaje: <?php echo esc_html(number_format((float) $item['score_cached'], 2)); ?></p>
             </article>
         <?php endforeach; ?>
     </div>

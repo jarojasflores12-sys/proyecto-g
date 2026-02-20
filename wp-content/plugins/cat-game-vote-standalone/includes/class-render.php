@@ -102,11 +102,11 @@ class CatGame_Render {
 
     public static function nav_items(): array {
         return [
-            'Home' => home_url('/catgame/'),
-            'Upload' => home_url('/catgame/upload'),
-            'Feed' => home_url('/catgame/feed'),
-            'Leaderboard' => home_url('/catgame/leaderboard'),
-            'Profile' => home_url('/catgame/profile'),
+            ['label' => 'Inicio', 'url' => home_url('/catgame/'), 'page' => 'home'],
+            ['label' => 'Subir', 'url' => home_url('/catgame/upload'), 'page' => 'upload'],
+            ['label' => 'Publicaciones', 'url' => home_url('/catgame/feed'), 'page' => 'feed'],
+            ['label' => 'Clasificación', 'url' => home_url('/catgame/leaderboard'), 'page' => 'leaderboard'],
+            ['label' => 'Mi perfil', 'url' => home_url('/catgame/profile'), 'page' => 'profile'],
         ];
     }
 }

@@ -2,6 +2,7 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+$current_page = $data['page'] ?? 'home';
 ?><!doctype html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -14,9 +15,10 @@ if (!defined('ABSPATH')) {
 <div class="cg-shell">
     <header class="cg-header">
         <h1>🐱 Cat Game Vote</h1>
-        <nav>
-            <?php foreach (CatGame_Render::nav_items() as $label => $url): ?>
-                <a href="<?php echo esc_url($url); ?>"><?php echo esc_html($label); ?></a>
+        <nav class="cg-nav" aria-label="Navegación principal">
+            <?php foreach (CatGame_Render::nav_items() as $item): ?>
+                <?php $is_active = ($current_page === ($item['page'] ?? '')); ?>
+                <a class="<?php echo $is_active ? 'is-active' : ''; ?>" href="<?php echo esc_url($item['url']); ?>"><?php echo esc_html($item['label']); ?></a>
             <?php endforeach; ?>
         </nav>
     </header>

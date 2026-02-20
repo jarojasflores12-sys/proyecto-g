@@ -2,15 +2,15 @@
 $submission = $data['submission'] ?? null;
 if (!$submission):
 ?>
-<p>Submission no encontrada.</p>
+<p>Publicación no encontrada.</p>
 <?php return; endif;
 $tags = CatGame_Submissions::submission_tags($submission);
 ?>
 <section>
-    <h2>Submission #<?php echo (int) $submission['id']; ?></h2>
+    <h2>Publicación #<?php echo (int) $submission['id']; ?></h2>
     <div class="cg-detail-image"><?php echo wp_get_attachment_image((int) $submission['attachment_id'], 'large'); ?></div>
     <p>Ubicación: <?php echo esc_html($submission['city'] . ', ' . $submission['country']); ?></p>
-    <p>Score: <?php echo (int) $submission['votes_count'] > 0 ? esc_html(number_format((float) $submission['score_cached'], 2)) : 'sin votos'; ?></p>
+    <p>Puntaje: <?php echo (int) $submission['votes_count'] > 0 ? esc_html(number_format((float) $submission['score_cached'], 2)) : 'sin votos'; ?></p>
     <p>Votos: <?php echo (int) $submission['votes_count']; ?> (suma <?php echo (int) $submission['votes_sum']; ?>)</p>
     <?php $size_bytes = isset($submission['image_size_bytes']) ? (int) $submission['image_size_bytes'] : 0; ?>
     <p>Tamaño imagen: <?php echo $size_bytes > 0 ? esc_html(number_format($size_bytes / 1024, 2)) . ' KB' : 'N/D'; ?></p>

@@ -7,7 +7,7 @@ $user_tags = $data['user_tags'] ?? [];
     <?php if (!is_user_logged_in()): ?>
         <p>Debes iniciar sesión para subir fotos.</p>
     <?php elseif (!$event): ?>
-        <p>No hay evento activo para recibir submissions.</p>
+        <p>No hay evento activo para recibir publicaciones.</p>
     <?php else: ?>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data" class="cg-form">
             <?php wp_nonce_field('catgame_upload'); ?>
