@@ -466,6 +466,8 @@ body.cg-has-custom-bg .cg-main {
 
 .cg-img-wrap {
   position: relative;
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .cg-skel {
@@ -481,21 +483,41 @@ body.cg-has-custom-bg .cg-main {
 }
 
 .cg-skel-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 220px;
+  height: 100%;
+  min-height: 220px;
 }
 
 .cg-img-wrap .cg-img {
-  display: none;
   width: 100%;
   height: auto;
+  display: block;
   border-radius: 14px;
 }
 
-.cg-img-wrap.is-loaded .cg-skel {
+.cg-img-wrap.is-loaded .cg-skel-img {
   display: none;
 }
 
-.cg-img-wrap.is-loaded .cg-img {
-  display: block;
+.cg-img-error {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  color: #555;
+  font-size: 14px;
+  text-align: center;
+  padding: 12px;
+}
+
+.cg-img-wrap.is-error .cg-skel-img {
+  display: none;
+}
+
+.cg-img-wrap.is-error .cg-img-error {
+  display: flex;
 }

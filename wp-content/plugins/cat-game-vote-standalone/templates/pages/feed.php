@@ -27,7 +27,6 @@ $selected_tag = $data['selected_tag'] ?? '';
         <?php foreach ($items as $item): ?>
             <article class="cg-card">
                 <div class="cg-img-wrap">
-                    <div class="cg-skel cg-skel-img" aria-hidden="true"></div>
                     <?php echo wp_get_attachment_image(
                         (int) $item['attachment_id'],
                         'medium',
@@ -35,9 +34,11 @@ $selected_tag = $data['selected_tag'] ?? '';
                         [
                             'class' => 'cg-img',
                             'loading' => 'lazy',
-                            'alt' => 'Foto de gato enviada al juego',
+                            'alt' => 'Foto enviada al juego',
                         ]
                     ); ?>
+                    <div class="cg-skel cg-skel-img" aria-hidden="true"></div>
+                    <div class="cg-img-error" aria-hidden="true">No se pudo cargar la imagen</div>
                 </div>
                 <h3>#<?php echo (int) $item['id']; ?></h3>
                 <p><?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>

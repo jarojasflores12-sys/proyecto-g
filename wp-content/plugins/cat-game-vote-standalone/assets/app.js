@@ -344,14 +344,25 @@
       return;
     }
 
-    const markLoaded = () => wrapper.classList.add('is-loaded');
+    const markLoaded = () => {
+      wrapper.classList.remove('is-error');
+      wrapper.classList.add('is-loaded');
+    };
+    const markError = () => {
+      wrapper.classList.remove('is-loaded');
+      wrapper.classList.add('is-error');
+    };
 
-    if (img.complete && img.naturalWidth > 0) {
-      markLoaded();
+    if (img.complete) {
+      if (img.naturalWidth > 0) {
+        markLoaded();
+      } else {
+        markError();
+      }
       return;
     }
 
     img.addEventListener('load', markLoaded, { once: true });
-    img.addEventListener('error', markLoaded, { once: true });
+    img.addEventListener('error', markError, { once: true });
   });
 })();
