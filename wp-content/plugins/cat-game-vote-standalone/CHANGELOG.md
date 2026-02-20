@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.0
+- Refresh visual completo en `assets/app.css` con tema pastel (variables CSS), tarjetas translúcidas, botones suaves, navegación activa en lavanda y mejoras de formularios/tablas.
+- Ajustes mobile-first de layout y componentes para mantener legibilidad en pantallas pequeñas.
+
 ## 0.13.2
 - Fix definitivo en ajustes admin: el botón "Seleccionar desde biblioteca" ahora usa script dedicado encolado (`assets/admin-settings.js`) y abre correctamente la Media Library.
 - Se elimina el script inline de la vista de ajustes para evitar problemas de carga/orden de ejecución.
