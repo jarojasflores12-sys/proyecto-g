@@ -1,10 +1,50 @@
 (function () {
+  window.catgameToast = function catgameToast(message, type = 'info', timeout = 2200) {
+    const el = document.getElementById('catgame-toast');
+    if (!el || !message) {
+      return;
+    }
+
+    el.className = `catgame-toast is-visible is-${type}`;
+    el.textContent = message;
+
+    window.clearTimeout(el._t);
+    el._t = window.setTimeout(() => {
+      el.className = 'catgame-toast';
+      el.textContent = '';
+    }, timeout);
+  };
+
   const params = new URLSearchParams(window.location.search);
+  const uploaded = params.get('uploaded');
+  const voted = params.get('voted');
   const error = params.get('catgame_error');
-  if (error) {
-    console.warn('CatGame warning:', error);
+
+  if (voted === '1') {
+    window.catgameToast('Gracias por tu voto', 'success');
   }
 
+  if (uploaded === '1') {
+    window.catgameToast('Foto subida correctamente', 'success');
+  }
+
+  if (error) {
+    console.warn('CatGame warning:', error);
+    window.catgameToast('Ocurrió un error. Intenta nuevamente.', 'error');
+  }
+
+  const shouldClean = voted === '1' || uploaded === '1' || !!error;
+  if (shouldClean && window.history && typeof window.history.replaceState === 'function') {
+    params.delete('voted');
+    params.delete('uploaded');
+    params.delete('catgame_error');
+    const nextQuery = params.toString();
+    const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
+    window.history.replaceState({}, '', nextUrl);
+  }
+})();
+
+(function () {
   const form = document.querySelector('form.cg-form input[name="action"][value="catgame_upload"]')?.closest('form');
   const input = document.getElementById('catgame-cat-image');
   if (!form || !input) {
@@ -190,6 +230,8 @@
       return;
     }
 
+    window.catgameToast?.('Subiendo foto…', 'info', 2600);
+
     if (!compressedFile) {
       return;
     }
@@ -278,6 +320,7 @@
       return;
     }
 
+    window.catgameToast?.('Enviando voto…', 'info', 2600);
     clearError();
   });
 
@@ -286,5 +329,79 @@
     if (alreadyVotedEl) {
       alreadyVotedEl.style.display = 'block';
     }
+  }
+})();
+
+(function () {
+  const wrappers = Array.from(document.querySelectorAll('.cg-img-wrap'));
+  if (!wrappers.length) {
+    return;
+  }
+
+  wrappers.forEach((wrapper) => {
+    const img = wrapper.querySelector('.cg-img');
+    if (!img) {
+      return;
+    }
+
+    const markLoaded = () => {
+      wrapper.classList.remove('is-error');
+      wrapper.classList.add('is-loaded');
+    };
+    const markError = () => {
+      wrapper.classList.remove('is-loaded');
+      wrapper.classList.add('is-error');
+    };
+
+    if (img.complete) {
+      if (img.naturalWidth > 0) {
+        markLoaded();
+      } else {
+        markError();
+      }
+      return;
+    }
+
+    img.addEventListener('load', markLoaded, { once: true });
+    img.addEventListener('error', markError, { once: true });
+  });
+})();
+
+(function () {
+  const profileButton = document.querySelector('.js-share-profile');
+  const bestButton = document.querySelector('.js-share-best');
+
+  const copyText = async (text) => {
+    if (!text) return false;
+    try {
+      await navigator.clipboard.writeText(text);
+      window.catgameToast?.('Enlace copiado', 'success');
+      return true;
+    } catch (_) {
+      window.catgameToast?.('No se pudo copiar', 'error');
+      return false;
+    }
+  };
+
+  if (profileButton) {
+    profileButton.addEventListener('click', async () => {
+      const url = profileButton.getAttribute('data-url') || window.location.href;
+      await copyText(url);
+    });
+  }
+
+  if (bestButton) {
+    bestButton.addEventListener('click', async () => {
+      const url = bestButton.getAttribute('data-url') || window.location.href;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Cat Game Vote', text: 'Mira esta publicación', url });
+          return;
+        } catch (_) {
+          // fallback copy
+        }
+      }
+      await copyText(url);
+    });
   }
 })();

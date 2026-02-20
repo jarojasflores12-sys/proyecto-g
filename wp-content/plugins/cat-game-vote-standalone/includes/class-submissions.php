@@ -167,6 +167,9 @@ class CatGame_Submissions {
 
         $city = sanitize_text_field(wp_unslash($_POST['city'] ?? ''));
         $country = sanitize_text_field(wp_unslash($_POST['country'] ?? ''));
+        $title = sanitize_text_field(wp_unslash($_POST['title'] ?? ''));
+        $title = function_exists('mb_substr') ? mb_substr($title, 0, 80) : substr($title, 0, 80);
+
         if ($city === '' || $country === '') {
             wp_safe_redirect(add_query_arg('catgame_error', 'missing_location', home_url('/catgame/upload')));
             exit;
@@ -245,6 +248,7 @@ class CatGame_Submissions {
                 'country' => $country,
                 'tags_json' => wp_json_encode($filtered_tags),
                 'tags_text' => self::tags_text_from_list($filtered_tags),
+                'title' => $title !== '' ? $title : null,
                 'attachment_id' => (int) $attachment_id,
                 'image_size_bytes' => $final_size > 0 ? $final_size : null,
                 'created_at' => current_time('mysql'),
@@ -253,7 +257,7 @@ class CatGame_Submissions {
                 'votes_count' => 0,
                 'votes_sum' => 0,
             ],
-            ['%d', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%f', '%d', '%d']
+            ['%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%f', '%d', '%d']
         );
 
         self::clear_leaderboard_cache();
@@ -338,37 +342,67 @@ class CatGame_Submissions {
         self::clear_leaderboard_cache();
     }
 
-    public static function list_user_submissions(int $user_id): array {
+    public static function list_user_submissions(int $user_id, int $event_id = 0): array {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
+
+        if ($event_id > 0) {
+            return $wpdb->get_results(
+                $wpdb->prepare("SELECT * FROM {$table} WHERE user_id = %d AND event_id = %d ORDER BY created_at DESC", $user_id, $event_id),
+                ARRAY_A
+            );
+        }
+
         return $wpdb->get_results(
             $wpdb->prepare("SELECT * FROM {$table} WHERE user_id = %d ORDER BY created_at DESC", $user_id),
             ARRAY_A
         );
     }
 
-    public static function user_stats(int $user_id): array {
+    public static function user_stats(int $user_id, int $event_id = 0): array {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
-        $row = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT COUNT(*) AS total_submissions, MAX(score_cached) AS best_score, AVG(score_cached) AS avg_score FROM {$table} WHERE user_id = %d",
-                $user_id
-            ),
-            ARRAY_A
-        );
+
+        $where = 'user_id = %d';
+        $params = [$user_id];
+        if ($event_id > 0) {
+            $where .= ' AND event_id = %d';
+            $params[] = $event_id;
+        }
+
+        $sql = "SELECT COUNT(*) AS total_submissions, MAX(score_cached) AS best_score, AVG(score_cached) AS avg_score, SUM(votes_count) AS total_votes FROM {$table} WHERE {$where}";
+        $row = $wpdb->get_row($wpdb->prepare($sql, ...$params), ARRAY_A);
+
+        $sql_most_voted = "SELECT * FROM {$table} WHERE {$where} ORDER BY votes_count DESC, score_cached DESC, created_at DESC, id DESC LIMIT 1";
+        $most_voted = $wpdb->get_row($wpdb->prepare($sql_most_voted, ...$params), ARRAY_A);
+
+        $sql_best = "SELECT * FROM {$table} WHERE {$where} AND votes_count > 0 ORDER BY score_cached DESC, votes_count DESC, created_at DESC, id DESC LIMIT 1";
+        $best_ranked = $wpdb->get_row($wpdb->prepare($sql_best, ...$params), ARRAY_A);
 
         return [
             'total_submissions' => (int) ($row['total_submissions'] ?? 0),
             'best_score' => round((float) ($row['best_score'] ?? 0), 2),
             'avg_score' => round((float) ($row['avg_score'] ?? 0), 2),
+            'total_votes' => (int) ($row['total_votes'] ?? 0),
+            'most_voted' => is_array($most_voted) ? $most_voted : null,
+            'best_ranked' => is_array($best_ranked) ? $best_ranked : null,
         ];
     }
 
-    public static function leaderboard(int $event_id, string $scope, string $country, string $city, int $limit = 20): array {
+    public static function event_tags(int $event_id): array {
+        $items = self::list_feed($event_id, 200, 0);
+        $tags = [];
+        foreach ($items as $item) {
+            $tags = array_merge($tags, self::submission_tags($item));
+        }
+
+        return array_values(array_unique(array_filter($tags)));
+    }
+
+    public static function leaderboard(int $event_id, string $scope, string $country, string $city, int $limit = 20, array $tags = []): array {
         global $wpdb;
 
-        $cache_key = sprintf('catgame_lb_%d_%s_%s_%s_%d', $event_id, $scope, md5($country), md5($city), $limit);
+        $cache_key = sprintf('catgame_lb_%d_%s_%s_%s_%d_%s', $event_id, $scope, md5($country), md5($city), $limit, md5(implode(',', $tags)));
         $cached = get_transient($cache_key);
         if (is_array($cached)) {
             return $cached;
@@ -390,9 +424,28 @@ class CatGame_Submissions {
             $params[] = $city;
         }
 
+        $normalized_tags = [];
+        foreach ($tags as $tag) {
+            $normalized = self::normalize_tag($tag);
+            if ($normalized !== '') {
+                $normalized_tags[] = $normalized;
+            }
+        }
+        $normalized_tags = array_values(array_unique($normalized_tags));
+
+        if (!empty($normalized_tags)) {
+            $tag_clauses = [];
+            foreach ($normalized_tags as $tag) {
+                $tag_clauses[] = '(tags_text LIKE %s OR tags_json LIKE %s)';
+                $params[] = '%,' . $wpdb->esc_like($tag) . ',%';
+                $params[] = '%"' . $wpdb->esc_like($tag) . '"%';
+            }
+            $where[] = '(' . implode(' OR ', $tag_clauses) . ')';
+        }
+
         $params[] = $limit;
 
-        $sql = "SELECT * FROM {$table} WHERE " . implode(' AND ', $where) . " ORDER BY score_cached DESC, votes_count DESC, created_at ASC LIMIT %d";
+        $sql = "SELECT * FROM {$table} WHERE " . implode(' AND ', $where) . " ORDER BY score_cached DESC, votes_count DESC, created_at DESC, id DESC LIMIT %d";
         $prepared = $wpdb->prepare($sql, ...$params);
         $results = $wpdb->get_results($prepared, ARRAY_A);
 

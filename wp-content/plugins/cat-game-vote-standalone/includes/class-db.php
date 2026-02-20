@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_DB {
-    private const SCHEMA_VERSION = '3';
+    private const SCHEMA_VERSION = '4';
     private const SCHEMA_OPTION_KEY = 'catgame_schema_version';
 
     public static function init(): void {
@@ -58,6 +58,7 @@ class CatGame_DB {
             country VARCHAR(120) NOT NULL,
             tags_json LONGTEXT NULL,
             tags_text LONGTEXT NULL,
+            title VARCHAR(80) NULL,
             attachment_id BIGINT UNSIGNED NOT NULL,
             image_size_bytes BIGINT UNSIGNED NULL,
             created_at DATETIME NOT NULL,

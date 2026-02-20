@@ -1,6 +1,7 @@
 <?php
 $event = $data['event'] ?? null;
 $user_tags = $data['user_tags'] ?? [];
+$upload_defaults = $data['upload_defaults'] ?? ['default_city' => '', 'default_country' => ''];
 ?>
 <section>
     <h2>Subir foto</h2>
@@ -12,8 +13,9 @@ $user_tags = $data['user_tags'] ?? [];
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data" class="cg-form">
             <?php wp_nonce_field('catgame_upload'); ?>
             <input type="hidden" name="action" value="catgame_upload">
-            <label>Ciudad <input type="text" name="city" required></label>
-            <label>País <input type="text" name="country" required></label>
+            <label>Ciudad <input type="text" name="city" required value="<?php echo esc_attr((string) ($upload_defaults['default_city'] ?? '')); ?>"></label>
+            <label>País <input type="text" name="country" required value="<?php echo esc_attr((string) ($upload_defaults['default_country'] ?? '')); ?>"></label>
+            <label>Título (opcional) <input type="text" name="title" maxlength="80" placeholder="Ej: Michi, Pelusa, Tom"></label>
             <fieldset>
                 <legend>Etiquetas</legend>
                 <?php foreach ($user_tags as $tag): ?>
