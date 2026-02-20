@@ -4,6 +4,7 @@ $top_items = $data['top_items'] ?? [];
 $latest_items = $data['latest_items'] ?? [];
 $medals = ['🥇', '🥈', '🥉'];
 ?>
+<?php $is_logged = is_user_logged_in(); ?>
 <section class="cg-home-hero">
     <h2>¡Compite con tu gato y gana!</h2>
     <p>Participa en el evento activo y consigue el mejor puntaje.</p>
@@ -13,6 +14,16 @@ $medals = ['🥇', '🥈', '🥉'];
         <p>No hay evento activo en este momento.</p>
     <?php endif; ?>
     <a class="cg-cta" href="<?php echo esc_url(home_url('/catgame/upload')); ?>">Subir mi gato</a>
+</section>
+
+<section class="cg-home-auth cg-card">
+    <?php if ($is_logged): ?>
+        <p>¡Hola! Ya puedes subir y votar.</p>
+        <a class="cg-cta" href="<?php echo esc_url(home_url('/catgame/upload')); ?>">Subir mi gato</a>
+    <?php else: ?>
+        <p>Crea tu cuenta o inicia sesión para subir y votar.</p>
+        <a class="cg-cta" href="<?php echo esc_url(home_url('/catgame/profile')); ?>">Crear cuenta / Iniciar sesión</a>
+    <?php endif; ?>
 </section>
 
 <section class="cg-home-section">
@@ -64,8 +75,8 @@ $medals = ['🥇', '🥈', '🥉'];
 <section class="cg-home-section">
     <h3>Cómo funciona</h3>
     <div class="cg-home-steps">
-        <article class="cg-card"><strong>📷 Sube</strong><p>Publica la mejor foto de tu gato.</p></article>
-        <article class="cg-card"><strong>⭐ Vota</strong><p>La comunidad califica las publicaciones.</p></article>
-        <article class="cg-card"><strong>🏆 Gana</strong><p>Sube en el ranking y llega al top.</p></article>
+        <a class="cg-card cg-home-step-link" href="<?php echo esc_url(home_url('/catgame/upload')); ?>" aria-label="Ir a Subir"><strong>📷 Sube</strong><p>Publica la mejor foto de tu gato.</p></a>
+        <a class="cg-card cg-home-step-link" href="<?php echo esc_url(home_url('/catgame/feed')); ?>" aria-label="Ir a Publicaciones"><strong>⭐ Vota</strong><p>La comunidad califica las publicaciones.</p></a>
+        <a class="cg-card cg-home-step-link" href="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>" aria-label="Ir a Ranking"><strong>🏆 Gana</strong><p>Sube en el ranking y llega al top.</p></a>
     </div>
 </section>
