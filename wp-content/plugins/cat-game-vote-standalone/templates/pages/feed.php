@@ -25,6 +25,12 @@ $selected_tag = $data['selected_tag'] ?? '';
             <p class="cg-empty-state">Aún no hay publicaciones en este evento. Sé la primera persona en subir una foto.</p>
         <?php endif; ?>
         <?php foreach ($items as $item): ?>
+            <?php
+            $item_tags = CatGame_Submissions::submission_tags($item);
+            $score_label = (int) $item['votes_count'] > 0
+                ? esc_html(number_format((float) $item['score_cached'], 1)) . '/10'
+                : 'sin votos';
+            ?>
             <article class="cg-card">
                 <div class="cg-img-wrap">
                     <?php echo wp_get_attachment_image(
@@ -40,14 +46,22 @@ $selected_tag = $data['selected_tag'] ?? '';
                     <div class="cg-skel cg-skel-img" aria-hidden="true"></div>
                     <div class="cg-img-error" aria-hidden="true">No se pudo cargar la imagen</div>
                 </div>
-                <h3>#<?php echo (int) $item['id']; ?></h3>
-                <p><?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
-                <p>Puntaje: <?php echo (int) $item['votes_count'] > 0 ? esc_html(number_format((float) $item['score_cached'], 2)) : 'sin votos'; ?></p>
-                <?php $size_bytes = isset($item['image_size_bytes']) ? (int) $item['image_size_bytes'] : 0; ?>
-                <?php if ($size_bytes > 0): ?>
-                    <p>Tamaño: <?php echo esc_html(number_format($size_bytes / 1024, 2)); ?> KB</p>
+
+                <div class="cg-card-meta">
+                    <span class="cg-badge">#<?php echo (int) $item['id']; ?></span>
+                    <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
+                    <p class="cg-score <?php echo (int) $item['votes_count'] > 0 ? 'is-highlight' : 'is-muted'; ?>">Puntaje: <?php echo $score_label; ?></p>
+                </div>
+
+                <?php if (!empty($item_tags)): ?>
+                    <div class="cg-chip-row" aria-label="Etiquetas de la publicación">
+                        <?php foreach ($item_tags as $tag): ?>
+                            <span class="cg-chip"><?php echo esc_html(CatGame_Submissions::label_for_tag($tag, (int) ($item['user_id'] ?? 0))); ?></span>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
-                <a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $item['id'])); ?>">Ver detalle</a>
+
+                <a class="cg-cta" href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $item['id'])); ?>">Ver detalle</a>
             </article>
         <?php endforeach; ?>
     </div>
