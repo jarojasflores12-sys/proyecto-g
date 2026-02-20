@@ -738,10 +738,11 @@ body.cg-has-custom-bg .cg-main {
 }
 
 .cg-home-thumb {
-  width: 72px;
-  height: 72px;
-  object-fit: cover;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
   border-radius: 12px;
+  display: block;
 }
 
 .cg-home-latest {

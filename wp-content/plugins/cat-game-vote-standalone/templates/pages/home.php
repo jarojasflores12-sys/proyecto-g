@@ -19,7 +19,6 @@ $medals = ['🥇', '🥈', '🥉'];
 <section class="cg-home-auth cg-card">
     <?php if ($is_logged): ?>
         <p>¡Hola! Ya puedes subir y votar.</p>
-        <a class="cg-cta" href="<?php echo esc_url(home_url('/catgame/upload')); ?>">Subir mi gato</a>
     <?php else: ?>
         <p>Crea tu cuenta o inicia sesión para subir y votar.</p>
         <a class="cg-cta" href="<?php echo esc_url(home_url('/catgame/profile')); ?>">Crear cuenta / Iniciar sesión</a>
@@ -41,7 +40,7 @@ $medals = ['🥇', '🥈', '🥉'];
                 ?>
                 <a class="cg-card cg-home-top3-item" href="<?php echo esc_url(home_url('/catgame/submission/' . (int) ($item['id'] ?? 0))); ?>">
                     <span class="cg-home-medal"><?php echo esc_html($medals[$index] ?? '🏅'); ?></span>
-                    <?php echo wp_get_attachment_image((int) ($item['attachment_id'] ?? 0), 'thumbnail', false, ['class' => 'cg-home-thumb', 'loading' => 'lazy']); ?>
+                    <?php echo wp_get_attachment_image((int) ($item['attachment_id'] ?? 0), 'medium_large', false, ['class' => 'cg-home-thumb', 'loading' => 'eager']); ?>
                     <strong class="cg-title"><?php echo esc_html($title_label); ?></strong>
                     <span class="cg-stars" aria-label="Puntaje <?php echo (int) $stars; ?> de 5">
                         <?php for ($i = 1; $i <= 5; $i++): ?>
