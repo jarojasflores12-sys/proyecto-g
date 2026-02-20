@@ -8,6 +8,7 @@ class CatGame_Auth {
     public static function init(): void {
         add_action('admin_post_nopriv_catgame_register', [__CLASS__, 'handle_register']);
         add_action('admin_post_catgame_register', [__CLASS__, 'handle_register']);
+        add_action('admin_post_catgame_logout', [__CLASS__, 'handle_logout']);
     }
 
     public static function handle_register(): void {
@@ -63,7 +64,22 @@ class CatGame_Auth {
         exit;
     }
 
+    public static function handle_logout(): void {
+        if (!is_user_logged_in()) {
+            wp_safe_redirect(home_url('/catgame/profile'));
+            exit;
+        }
+
+        check_admin_referer('catgame_logout');
+        wp_logout();
+        wp_set_current_user(0);
+
+        wp_safe_redirect(home_url('/catgame/profile'));
+        exit;
+    }
+
     public static function registration_error_message(string $code): string {
+
         $messages = [
             'missing_fields' => 'Completa todos los campos.',
             'invalid_username' => 'El usuario es inválido. Usa solo letras, números, guion o guion bajo.',

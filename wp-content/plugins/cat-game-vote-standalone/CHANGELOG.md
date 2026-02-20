@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.21.0
+- Perfil: nuevo bloque de usuario `@username` con botón "Cerrar sesión" del flujo interno del plugin y aviso destacado si el usuario está en Top 3 del evento activo.
+- Perfil: mejora en "Mis publicaciones" con imágenes más nítidas (solo en perfil) y puntaje con estrellas + promedio decimal `/5` o "Sin votos".
+- Perfil: botón de eliminar etiqueta cambiado a chip compacto `✕` con `aria-label` accesible.
+- Inicio/Publicaciones/Ranking/Detalle: se muestra autor como `por @username` y se agregan badges de contexto ("Tu publicación", "Top 3", "Tú") cuando aplica.
+- Evento activo Top 3: resaltado transversal en home/feed/ranking/detalle usando posiciones del Top 3 del evento activo.
+
 ## 0.20.1
 - Home: se elimina el botón duplicado "Subir mi gato" en el bloque de usuario logueado para dejar un único CTA principal en el hero.
 - Home Top 3: mejora de nitidez de imágenes usando tamaño `medium_large` y ajuste CSS para evitar pixelación por escalado.

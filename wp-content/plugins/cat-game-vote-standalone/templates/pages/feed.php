@@ -2,6 +2,8 @@
 $items = $data['submissions'] ?? [];
 $feed_tags = $data['feed_tags'] ?? [];
 $selected_tag = $data['selected_tag'] ?? '';
+$top3_positions = $data['top3_positions'] ?? [];
+$current_user_id = (int) ($data['current_user_id'] ?? 0);
 ?>
 <section>
     <h2>Publicaciones</h2>
@@ -32,8 +34,12 @@ $selected_tag = $data['selected_tag'] ?? '';
             $stars = $votes_count > 0 ? max(0, min(5, (int) round($score_10 / 2))) : 0;
             $title = trim((string) ($item['title'] ?? ''));
             $title_label = $title !== '' ? $title : 'Publicación #' . (int) $item['id'];
+            $author = get_userdata((int) ($item['user_id'] ?? 0));
+            $author_name = $author ? (string) $author->user_login : 'usuario';
+            $position = isset($top3_positions[(int) $item['id']]) ? (int) $top3_positions[(int) $item['id']] : 0;
+            $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_user_id;
             ?>
-            <article class="cg-card">
+            <article class="cg-card <?php echo ($is_mine || $position > 0) ? 'cg-is-mine' : ''; ?>">
                 <div class="cg-img-wrap">
                     <?php echo wp_get_attachment_image(
                         (int) $item['attachment_id'],
@@ -53,6 +59,9 @@ $selected_tag = $data['selected_tag'] ?? '';
                     <div class="cg-card-header">
                         <span class="cg-badge">#<?php echo (int) $item['id']; ?></span>
                         <p class="cg-title"><?php echo esc_html($title_label); ?></p>
+                        <small class="cg-author">por @<?php echo esc_html($author_name); ?></small>
+                        <?php if ($is_mine): ?><span class="cg-inline-badge">Tu publicación</span><?php endif; ?>
+                        <?php if ($position > 0): ?><span class="cg-inline-badge">Top 3 #<?php echo (int) $position; ?></span><?php endif; ?>
                         <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
                     </div>
                     <div class="cg-score-row">

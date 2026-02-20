@@ -10,10 +10,19 @@ $title_label = $title !== '' ? $title : 'Publicación #' . (int) $submission['id
 $votes_count = (int) ($submission['votes_count'] ?? 0);
 $score_10 = (float) ($submission['score_cached'] ?? 0);
 $stars = $votes_count > 0 ? max(0, min(5, (int) round($score_10 / 2))) : 0;
+$top3_positions = $data['top3_positions'] ?? [];
+$current_user_id = (int) ($data['current_user_id'] ?? 0);
+$position = isset($top3_positions[(int) ($submission['id'] ?? 0)]) ? (int) $top3_positions[(int) ($submission['id'] ?? 0)] : 0;
+$is_mine = $current_user_id > 0 && (int) ($submission['user_id'] ?? 0) === $current_user_id;
+$author = get_userdata((int) ($submission['user_id'] ?? 0));
+$author_name = $author ? (string) $author->user_login : 'usuario';
 ?>
 <section>
     <h2><?php echo esc_html($title_label); ?></h2>
     <p><span class="cg-badge">#<?php echo (int) $submission['id']; ?></span></p>
+    <p class="cg-author">Publicado por @<?php echo esc_html($author_name); ?></p>
+    <?php if ($is_mine): ?><p><span class="cg-inline-badge">Tu publicación</span></p><?php endif; ?>
+    <?php if ($position > 0): ?><p><span class="cg-inline-badge">Top 3 #<?php echo (int) $position; ?></span></p><?php endif; ?>
     <div class="cg-detail-image"><?php echo wp_get_attachment_image((int) $submission['attachment_id'], 'large'); ?></div>
     <p>Ubicación: <?php echo esc_html($submission['city'] . ', ' . $submission['country']); ?></p>
     <div class="cg-score-row">
