@@ -1,6 +1,7 @@
 :root {
   color-scheme: light;
   --cg-primary: #F7B7C3;
+  --cg-primary-strong: #F18FA3;
   --cg-secondary: #B5EAD7;
   --cg-accent: #C7CEEA;
   --cg-yellow: #FFF5BA;
@@ -109,11 +110,11 @@ a:hover {
 }
 
 .cg-card {
-  border: 1px solid var(--cg-border);
-  border-radius: 16px;
-  padding: 14px;
   background: var(--cg-bg-card);
+  border-radius: 18px;
   box-shadow: var(--cg-shadow);
+  padding: 14px 16px;
+  border: 1px solid var(--cg-border);
   transition: all 0.2s ease;
 }
 
@@ -536,6 +537,13 @@ body.cg-has-custom-bg .cg-main {
   gap: 6px;
 }
 
+.cg-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .cg-badge {
   display: inline-flex;
   align-items: center;
@@ -574,6 +582,7 @@ body.cg-has-custom-bg .cg-main {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-top: 8px;
 }
 
 .cg-chip {
@@ -606,4 +615,41 @@ body.cg-has-custom-bg .cg-main {
 .cg-cta:hover {
   filter: brightness(0.95);
   opacity: 1;
+}
+
+.cg-cta:active {
+  transform: translateY(1px);
+}
+
+
+.cg-vote-submit {
+  background: var(--cg-primary-strong);
+  color: #fff;
+  font-weight: 600;
+}
+
+.cg-vote-submit:hover {
+  filter: brightness(0.94);
+}
+
+.cg-vote-submit:active {
+  transform: translateY(1px);
+}
+
+.cg-tag-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cg-tag-delete-form {
+  display: inline-flex;
+}
+
+.cg-tag-delete {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  line-height: 1.2;
 }

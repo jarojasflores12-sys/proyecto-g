@@ -60,13 +60,13 @@ $custom_tags = $data['custom_tags'] ?? [];
     <?php else: ?>
         <ul>
             <?php foreach ($custom_tags as $tag => $label): ?>
-                <li>
+                <li class="cg-tag-item">
                     <strong><?php echo esc_html(CatGame_Submissions::label_for_tag($tag, get_current_user_id())); ?></strong>
-                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline" onsubmit="return confirm('¿Eliminar etiqueta?');">
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-tag-delete-form" onsubmit="return confirm('¿Eliminar etiqueta?');">
                         <?php wp_nonce_field('catgame_delete_custom_tag'); ?>
                         <input type="hidden" name="action" value="catgame_delete_custom_tag">
                         <input type="hidden" name="tag" value="<?php echo esc_attr($tag); ?>">
-                        <button type="submit">Eliminar</button>
+                        <button type="submit" class="cg-tag-delete">Eliminar</button>
                     </form>
                 </li>
             <?php endforeach; ?>

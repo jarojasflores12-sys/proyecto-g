@@ -48,8 +48,10 @@ $selected_tag = $data['selected_tag'] ?? '';
                 </div>
 
                 <div class="cg-card-meta">
-                    <span class="cg-badge">#<?php echo (int) $item['id']; ?></span>
-                    <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
+                    <div class="cg-card-header">
+                        <span class="cg-badge">#<?php echo (int) $item['id']; ?></span>
+                        <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
+                    </div>
                     <p class="cg-score <?php echo (int) $item['votes_count'] > 0 ? 'is-highlight' : 'is-muted'; ?>">Puntaje: <?php echo $score_label; ?></p>
                 </div>
 

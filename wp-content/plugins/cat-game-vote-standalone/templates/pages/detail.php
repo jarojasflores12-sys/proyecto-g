@@ -40,7 +40,7 @@ $tags = CatGame_Submissions::submission_tags($submission);
                     <option value="5">5 estrellas</option>
                 </select>
             </label>
-            <button type="submit">Enviar voto</button>
+            <button type="submit" class="cg-vote-submit">Enviar voto</button>
         </form>
     <?php else: ?>
         <p>Inicia sesión para votar.</p>

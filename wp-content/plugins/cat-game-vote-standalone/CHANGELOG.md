@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.17.2
+- Feed: ajustes visuales app-like en cards con header consistente, badge de ID, ubicación, puntaje y chips con mejor espaciado.
+- Feed: CTA "Ver detalle" reforzado como botón táctil con estado activo en móvil.
+- Detalle: botón "Enviar voto" ahora usa un tono más intenso para mayor contraste visual.
+- Perfil: botón "Eliminar" de etiquetas personalizadas reducido y alineado para no invadir la UI.
+
 ## 0.17.1
 - UI idioma: en navegación inferior se reemplaza el label "Feed" por "Publicaciones" manteniendo intactas las rutas (`/catgame/feed`) y el label "Ranking".
 
