@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.22.2
+- Fix etiquetas: `normalize_tag()` elimina cualquier prefijo inicial `tag` repetido (`tag_`, `tag-tag-`, etc.) y ya no agrega `tag_` automáticamente.
+- Upload/Perfil: se evita re-prefijado de etiquetas personalizadas; persisten y se pueden re-seleccionar correctamente.
+- Compatibilidad histórica: filtros de feed/ranking aceptan tags guardados en formatos antiguos (`tag_*`, `tag_tag_*`) y nuevo formato sin prefijo.
+- Reglas por defecto (admin/eventos/README) actualizadas al formato de tags sin prefijo.
+
 ## 0.22.1
 - Fix rutas frontend: fallback de enrutado para `/catgame/*` cuando las reglas de rewrite no están disponibles/actualizadas, evitando el error "No se encontró la página".
 - Router: resolución explícita por `REQUEST_URI` para `home`, `upload`, `feed`, `leaderboard`, `profile` y `submission/{id}` con `submission_id` seteado.

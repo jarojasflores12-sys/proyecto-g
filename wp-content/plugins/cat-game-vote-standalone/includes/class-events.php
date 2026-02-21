@@ -34,10 +34,10 @@ class CatGame_Events {
 
     public static function decode_rules(?string $rules_json): array {
         $default = [
-            'tag_black_cat' => 1.0,
-            'tag_night_photo' => 0.5,
-            'tag_funny_pose' => 0.5,
-            'tag_weird_place' => 0.5,
+            'black_cat' => 1.0,
+            'night_photo' => 0.5,
+            'funny_pose' => 0.5,
+            'weird_place' => 0.5,
         ];
 
         if (!$rules_json) {

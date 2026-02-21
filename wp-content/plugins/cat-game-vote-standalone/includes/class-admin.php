@@ -65,7 +65,7 @@ class CatGame_Admin {
                     <tr><th><label for="name">Name</label></th><td><input class="regular-text" type="text" name="name" id="name" required /></td></tr>
                     <tr><th><label for="starts_at">Starts At</label></th><td><input type="datetime-local" name="starts_at" id="starts_at" required /></td></tr>
                     <tr><th><label for="ends_at">Ends At</label></th><td><input type="datetime-local" name="ends_at" id="ends_at" required /></td></tr>
-                    <tr><th><label for="rules_json">Rules JSON</label></th><td><textarea name="rules_json" id="rules_json" rows="6" cols="60">{"tag_black_cat":1.0,"tag_night_photo":0.5,"tag_funny_pose":0.5,"tag_weird_place":0.5}</textarea></td></tr>
+                    <tr><th><label for="rules_json">Rules JSON</label></th><td><textarea name="rules_json" id="rules_json" rows="6" cols="60">{"black_cat":1.0,"night_photo":0.5,"funny_pose":0.5,"weird_place":0.5}</textarea></td></tr>
                     <tr><th><label for="is_active">Active</label></th><td><input type="checkbox" name="is_active" id="is_active" value="1" /></td></tr>
                 </table>
                 <?php submit_button('Save Event'); ?>

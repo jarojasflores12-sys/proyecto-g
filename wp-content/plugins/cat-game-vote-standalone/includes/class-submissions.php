@@ -14,10 +14,10 @@ class CatGame_Submissions {
 
     public static function predefined_tag_labels(): array {
         return [
-            'tag_black_cat' => 'Gato negro',
-            'tag_night_photo' => 'Foto nocturna',
-            'tag_funny_pose' => 'Pose divertida',
-            'tag_weird_place' => 'Lugar raro',
+            'black_cat' => 'Gato negro',
+            'night_photo' => 'Foto nocturna',
+            'funny_pose' => 'Pose divertida',
+            'weird_place' => 'Lugar raro',
         ];
     }
 
@@ -35,22 +35,27 @@ class CatGame_Submissions {
             return '';
         }
 
-        $slug = preg_replace('/^tag[-_\s]+/i', '', $slug);
+        $slug = is_string($slug) ? preg_replace('/^(tag[-_\s]+)+/i', '', $slug) : '';
         $slug = is_string($slug) ? trim($slug, '-_ ') : '';
         if ($slug === '') {
             return '';
         }
 
-        return 'tag_' . str_replace('-', '_', $slug);
+        return str_replace('-', '_', $slug);
     }
 
     public static function humanize_tag(string $tag): string {
-        return ucwords(str_replace('_', ' ', preg_replace('/^tag_/', '', $tag)));
+        $normalized = self::normalize_tag($tag);
+        if ($normalized === '') {
+            return '';
+        }
+
+        return ucwords(str_replace('_', ' ', $normalized));
     }
 
     private static function clean_tag_label(string $label): string {
         $clean = sanitize_text_field($label);
-        $clean = preg_replace('/^tag[\s:_-]+/i', '', $clean);
+        $clean = preg_replace('/^(tag[\s:_-]+)+/i', '', $clean);
         $clean = is_string($clean) ? trim($clean) : '';
         return $clean;
     }
@@ -303,9 +308,16 @@ class CatGame_Submissions {
         $params = [$event_id];
 
         if ($tag !== '') {
-            $where[] = '(tags_text LIKE %s OR tags_json LIKE %s)';
-            $params[] = '%,' . $wpdb->esc_like($tag) . ',%';
-            $params[] = '%"' . $wpdb->esc_like($tag) . '"%';
+            $search_tags = self::tag_storage_variants($tag);
+            if (!empty($search_tags)) {
+                $tag_clauses = [];
+                foreach ($search_tags as $search_tag) {
+                    $tag_clauses[] = '(tags_text LIKE %s OR tags_json LIKE %s)';
+                    $params[] = '%,' . $wpdb->esc_like($search_tag) . ',%';
+                    $params[] = '%"' . $wpdb->esc_like($search_tag) . '"%';
+                }
+                $where[] = '(' . implode(' OR ', $tag_clauses) . ')';
+            }
         }
 
         $params[] = $limit;
@@ -436,9 +448,12 @@ class CatGame_Submissions {
         if (!empty($normalized_tags)) {
             $tag_clauses = [];
             foreach ($normalized_tags as $tag) {
-                $tag_clauses[] = '(tags_text LIKE %s OR tags_json LIKE %s)';
-                $params[] = '%,' . $wpdb->esc_like($tag) . ',%';
-                $params[] = '%"' . $wpdb->esc_like($tag) . '"%';
+                $search_tags = self::tag_storage_variants($tag);
+                foreach ($search_tags as $search_tag) {
+                    $tag_clauses[] = '(tags_text LIKE %s OR tags_json LIKE %s)';
+                    $params[] = '%,' . $wpdb->esc_like($search_tag) . ',%';
+                    $params[] = '%"' . $wpdb->esc_like($search_tag) . '"%';
+                }
             }
             $where[] = '(' . implode(' OR ', $tag_clauses) . ')';
         }
@@ -567,6 +582,19 @@ class CatGame_Submissions {
         }
 
         return $parsed;
+    }
+
+    private static function tag_storage_variants(string $tag): array {
+        $normalized = self::normalize_tag($tag);
+        if ($normalized === '') {
+            return [];
+        }
+
+        return array_values(array_unique([
+            $normalized,
+            'tag_' . $normalized,
+            'tag_tag_' . $normalized,
+        ]));
     }
 
     private static function save_user_custom_tags(int $user_id, array $new_tags): void {
