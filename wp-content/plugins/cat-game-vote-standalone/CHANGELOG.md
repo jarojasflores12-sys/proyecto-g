@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.23.1
+- Gestión de eventos (admin): reglas del evento ahora se editan con UI de campos numéricos por criterio, eliminando la edición manual de JSON.
+- Reglas: labels y ayudas en español para cada criterio (gato negro, foto nocturna, pose divertida, lugar raro).
+- Guardado: normalización segura de reglas (rango 0..10, soporte coma/punto decimal) y persistencia compatible en `rules_json`.
+- UI/UX: nuevo bloque visual para reglas con cards responsive en el formulario de creación/edición.
+
 ## 0.23.0
 - Admin/Eventos: rediseño UI/UX del gestor con paneles de listado, creación/edición, detalle y calendario en una sola vista.
 - Eventos: ahora se puede editar un evento existente desde el listado y guardar cambios sin recrearlo.

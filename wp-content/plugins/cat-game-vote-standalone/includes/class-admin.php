@@ -83,7 +83,8 @@ class CatGame_Admin {
         $form_name = $event_in_edit['name'] ?? '';
         $form_starts_at = isset($event_in_edit['starts_at']) ? self::to_datetime_local($event_in_edit['starts_at']) : '';
         $form_ends_at = isset($event_in_edit['ends_at']) ? self::to_datetime_local($event_in_edit['ends_at']) : '';
-        $form_rules = $event_in_edit['rules_json'] ?? '{"black_cat":1.0,"night_photo":0.5,"funny_pose":0.5,"weird_place":0.5}';
+        $form_rules = CatGame_Events::decode_rules($event_in_edit['rules_json'] ?? null);
+        $rule_fields = self::rule_fields();
         $form_is_active = isset($event_in_edit['is_active']) && (int) $event_in_edit['is_active'] === 1;
         $success = isset($_GET['status']) ? sanitize_key(wp_unslash($_GET['status'])) : '';
         $now_ts = current_time('timestamp');
@@ -119,10 +120,26 @@ class CatGame_Admin {
                                 <td><input type="datetime-local" name="ends_at" id="ends_at" value="<?php echo esc_attr($form_ends_at); ?>" required /></td>
                             </tr>
                             <tr>
-                                <th><label for="rules_json">Reglas (JSON)</label></th>
+                                <th>Reglas de puntaje</th>
                                 <td>
-                                    <textarea name="rules_json" id="rules_json" rows="6" cols="60"><?php echo esc_textarea($form_rules); ?></textarea>
-                                    <p class="description">Ejemplo: {"black_cat":1.0,"night_photo":0.5,"funny_pose":0.5,"weird_place":0.5}</p>
+                                    <div class="catgame-rules-grid">
+                                        <?php foreach ($rule_fields as $rule_key => $rule_meta): ?>
+                                            <label class="catgame-rule-field" for="rules_<?php echo esc_attr($rule_key); ?>">
+                                                <span><?php echo esc_html($rule_meta['label']); ?></span>
+                                                <input
+                                                    type="number"
+                                                    name="rules[<?php echo esc_attr($rule_key); ?>]"
+                                                    id="rules_<?php echo esc_attr($rule_key); ?>"
+                                                    min="0"
+                                                    max="10"
+                                                    step="0.1"
+                                                    value="<?php echo esc_attr(number_format((float) ($form_rules[$rule_key] ?? $rule_meta['default']), 1, '.', '')); ?>"
+                                                />
+                                                <small class="description"><?php echo esc_html($rule_meta['help']); ?></small>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <p class="description">Valores de bonificación por regla. Usa decimales con punto (ej: 0.5).</p>
                                 </td>
                             </tr>
                             <tr>
@@ -241,7 +258,7 @@ class CatGame_Admin {
         $name = sanitize_text_field(wp_unslash($_POST['name'] ?? ''));
         $starts_at = sanitize_text_field(wp_unslash($_POST['starts_at'] ?? ''));
         $ends_at = sanitize_text_field(wp_unslash($_POST['ends_at'] ?? ''));
-        $rules_json = wp_kses_post(wp_unslash($_POST['rules_json'] ?? ''));
+        $rules_json = self::build_rules_json_from_post($_POST);
         $is_active = !empty($_POST['is_active']) ? 1 : 0;
 
         if ($name === '' || $starts_at === '' || $ends_at === '') {
@@ -415,6 +432,46 @@ class CatGame_Admin {
 
     private static function to_datetime_local(string $datetime): string {
         return str_replace(' ', 'T', substr($datetime, 0, 16));
+    }
+
+    private static function build_rules_json_from_post(array $post_data): string {
+        $rule_fields = self::rule_fields();
+        $posted_rules = isset($post_data['rules']) && is_array($post_data['rules']) ? $post_data['rules'] : [];
+        $normalized_rules = [];
+
+        foreach ($rule_fields as $rule_key => $rule_meta) {
+            $raw_value = $posted_rules[$rule_key] ?? $rule_meta['default'];
+            $value = is_scalar($raw_value) ? (float) str_replace(',', '.', (string) $raw_value) : (float) $rule_meta['default'];
+            $value = max(0, min(10, $value));
+            $normalized_rules[$rule_key] = round($value, 2);
+        }
+
+        return wp_json_encode($normalized_rules);
+    }
+
+    private static function rule_fields(): array {
+        return [
+            'black_cat' => [
+                'label' => 'Gato negro',
+                'help' => 'Bono para fotos con gatos negros.',
+                'default' => 1.0,
+            ],
+            'night_photo' => [
+                'label' => 'Foto nocturna',
+                'help' => 'Bono para capturas de noche.',
+                'default' => 0.5,
+            ],
+            'funny_pose' => [
+                'label' => 'Pose divertida',
+                'help' => 'Bono para poses graciosas.',
+                'default' => 0.5,
+            ],
+            'weird_place' => [
+                'label' => 'Lugar raro',
+                'help' => 'Bono para ubicaciones inesperadas.',
+                'default' => 0.5,
+            ],
+        ];
     }
 
     private static function event_status_label(int $start_ts, int $end_ts, int $is_active, int $now_ts): string {

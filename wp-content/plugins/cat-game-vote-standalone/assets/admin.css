@@ -72,3 +72,27 @@
   color: #3858e9;
   background: #e8edff;
 }
+
+.catgame-admin-page .catgame-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.catgame-admin-page .catgame-rule-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
+}
+
+.catgame-admin-page .catgame-rule-field span {
+  font-weight: 600;
+}
+
+.catgame-admin-page .catgame-rule-field input {
+  max-width: 100%;
+}
