@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.23.0
+- Admin/Eventos: rediseño UI/UX del gestor con paneles de listado, creación/edición, detalle y calendario en una sola vista.
+- Eventos: ahora se puede editar un evento existente desde el listado y guardar cambios sin recrearlo.
+- Eventos: mejor feedback visual en estados (Activo, Próximo, Finalizado) y avisos de guardado/activación.
+- Admin: nuevos estilos dedicados (`assets/admin.css`) para mejorar jerarquía visual, espaciado y consistencia responsive.
+
 ## 0.22.3
 - Nuevo popup de evento vigente en frontend con botón flotante "Reglas del evento".
 - El modal muestra nombre, vigencia y reglas/bonificaciones del evento activo.

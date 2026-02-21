@@ -1,0 +1,74 @@
+.catgame-admin-page .catgame-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.catgame-admin-page .catgame-panel {
+  background: #fff;
+  border: 1px solid #dcdcde;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.catgame-admin-page .catgame-panel h2 {
+  margin-top: 0;
+}
+
+.catgame-admin-page .catgame-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.catgame-admin-page .catgame-table-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.catgame-admin-page .catgame-detail-list {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px 12px;
+  margin: 0 0 14px;
+}
+
+.catgame-admin-page .catgame-detail-list dt {
+  color: #50575e;
+  font-weight: 600;
+}
+
+.catgame-admin-page .catgame-detail-list dd {
+  margin: 0;
+}
+
+.catgame-admin-page .catgame-calendar-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.catgame-admin-page .catgame-calendar-item {
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #f9f9fb;
+}
+
+.catgame-admin-page .catgame-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3858e9;
+  background: #e8edff;
+}
