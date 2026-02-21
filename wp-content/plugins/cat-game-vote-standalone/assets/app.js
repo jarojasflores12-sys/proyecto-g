@@ -1,4 +1,56 @@
 (function () {
+  const modal = document.getElementById('catgame-event-rules-modal');
+  const trigger = document.getElementById('catgame-event-rules-trigger');
+  if (!modal || !trigger) {
+    return;
+  }
+
+  const eventId = trigger.getAttribute('data-event-id') || '';
+  const storageKey = eventId ? `catgame_rules_seen_${eventId}` : '';
+
+  const openModal = () => {
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    trigger.setAttribute('aria-expanded', 'true');
+  };
+
+  const closeModal = () => {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+  };
+
+  trigger.addEventListener('click', openModal);
+
+  modal.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+    if (target.closest('[data-modal-close="1"]')) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+      closeModal();
+    }
+  });
+
+  if (storageKey) {
+    try {
+      if (!window.sessionStorage.getItem(storageKey)) {
+        openModal();
+        window.sessionStorage.setItem(storageKey, '1');
+      }
+    } catch (_) {
+      openModal();
+    }
+  }
+})();
+
+(function () {
   window.catgameToast = function catgameToast(message, type = 'info', timeout = 2200) {
     const el = document.getElementById('catgame-toast');
     if (!el || !message) {

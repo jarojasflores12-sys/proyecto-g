@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.3
+- Nuevo popup de evento vigente en frontend con botón flotante "Reglas del evento".
+- El modal muestra nombre, vigencia y reglas/bonificaciones del evento activo.
+- UX móvil: cierre por botón, clic en backdrop o tecla ESC, y autoapertura una vez por sesión/evento.
+
 ## 0.22.2
 - Fix etiquetas: `normalize_tag()` elimina cualquier prefijo inicial `tag` repetido (`tag_`, `tag-tag-`, etc.) y ya no agrega `tag_` automáticamente.
 - Upload/Perfil: se evita re-prefijado de etiquetas personalizadas; persisten y se pueden re-seleccionar correctamente.

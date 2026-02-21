@@ -3,6 +3,21 @@ if (!defined('ABSPATH')) {
     exit;
 }
 $current_page = $data['page'] ?? 'home';
+$event = $data['event'] ?? null;
+$event_rules = [];
+$event_name = '';
+$event_date_range = '';
+
+if (is_array($event) && !empty($event['id'])) {
+    $event_name = sanitize_text_field((string) ($event['name'] ?? 'Evento vigente'));
+    $event_rules = CatGame_Events::decode_rules(isset($event['rules_json']) ? (string) $event['rules_json'] : '');
+    $starts_at = isset($event['starts_at']) ? strtotime((string) $event['starts_at']) : false;
+    $ends_at = isset($event['ends_at']) ? strtotime((string) $event['ends_at']) : false;
+
+    if ($starts_at && $ends_at) {
+        $event_date_range = wp_date('d/m/Y H:i', $starts_at) . ' - ' . wp_date('d/m/Y H:i', $ends_at);
+    }
+}
 $background_style = '';
 $has_background = !empty($background_url) && is_string($background_url);
 $bottom_nav_items = [
@@ -39,6 +54,47 @@ if ($has_background) {
         <?php CatGame_Render::render_page($data['page'] ?? 'home', $data); ?>
     </main>
 </div>
+
+<?php if (!empty($event_rules) && !empty($event['id'])): ?>
+    <button
+        type="button"
+        class="cg-event-rules-trigger"
+        id="catgame-event-rules-trigger"
+        data-event-id="<?php echo (int) $event['id']; ?>"
+        aria-controls="catgame-event-rules-modal"
+        aria-expanded="false"
+    >
+        📜 Reglas del evento
+    </button>
+
+    <div
+        class="cg-modal"
+        id="catgame-event-rules-modal"
+        data-event-id="<?php echo (int) $event['id']; ?>"
+        aria-hidden="true"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="catgame-event-rules-title"
+    >
+        <div class="cg-modal__backdrop" data-modal-close="1"></div>
+        <div class="cg-modal__content" role="document">
+            <button type="button" class="cg-modal__close" data-modal-close="1" aria-label="Cerrar popup de reglas">✕</button>
+            <h2 id="catgame-event-rules-title">📣 <?php echo esc_html($event_name !== '' ? $event_name : 'Evento vigente'); ?></h2>
+            <?php if ($event_date_range !== ''): ?>
+                <p class="cg-modal__dates"><strong>Vigencia:</strong> <?php echo esc_html($event_date_range); ?></p>
+            <?php endif; ?>
+            <p class="cg-modal__intro">Estas son las reglas y bonificaciones del evento activo:</p>
+            <ul class="cg-modal__rules">
+                <?php foreach ($event_rules as $rule_tag => $rule_points): ?>
+                    <li>
+                        <span><?php echo esc_html(CatGame_Submissions::label_for_tag((string) $rule_tag)); ?></span>
+                        <strong>+<?php echo esc_html(number_format_i18n((float) $rule_points, 1)); ?></strong>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </div>
+<?php endif; ?>
 
     <nav class="catgame-bottom-nav" aria-label="Navegación inferior">
         <?php foreach ($bottom_nav_items as $item): ?>

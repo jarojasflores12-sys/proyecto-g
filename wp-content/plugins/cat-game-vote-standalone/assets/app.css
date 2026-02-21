@@ -306,6 +306,72 @@ textarea:focus {
   box-shadow: var(--cg-shadow);
 }
 
+.cg-event-rules-trigger {
+  position: fixed;
+  right: 14px;
+  bottom: 88px;
+  z-index: 40;
+  border-radius: 999px;
+  padding: 10px 14px;
+  box-shadow: var(--cg-shadow);
+}
+
+.cg-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: none;
+}
+
+.cg-modal.is-open {
+  display: block;
+}
+
+.cg-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(34, 36, 48, 0.45);
+}
+
+.cg-modal__content {
+  position: relative;
+  z-index: 1;
+  width: min(560px, calc(100vw - 24px));
+  max-height: calc(100vh - 36px);
+  margin: 18px auto;
+  overflow: auto;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid var(--cg-border);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.2);
+  padding: 16px 16px 14px;
+}
+
+.cg-modal__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+
+.cg-modal__dates,
+.cg-modal__intro {
+  margin: 6px 0 10px;
+}
+
+.cg-modal__rules {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.cg-modal__rules li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 0;
+}
+
 body.cg-has-custom-bg {
   background-image: var(--catgame-bg-image);
   background-size: cover;
