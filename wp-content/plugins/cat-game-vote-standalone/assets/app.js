@@ -555,7 +555,6 @@
     epic: { emoji: '🔥', label: 'Épico' },
   };
 
-  const formatCounts = (counts) => `😻 ${counts.adorable || 0}  😂 ${counts.funny || 0}  🥰 ${counts.cute || 0}  🤩 ${counts.wow || 0}  🔥 ${counts.epic || 0}`;
 
   const initReactionButton = (btn) => {
     const reaction = btn.dataset.reaction || '';
@@ -600,10 +599,6 @@
       btn.classList.toggle('is-active', isActive);
     });
 
-    const row = widget.querySelector('.cg-reaction-counts');
-    if (row) {
-      row.textContent = formatCounts(counts);
-    }
   };
 
   const fetchCounts = async (widget) => {
@@ -647,6 +642,11 @@
   widgets.forEach((widget) => {
     let holdTimer = null;
     let isHolding = false;
+
+    const countsRow = widget.querySelector('.cg-reaction-counts');
+    if (countsRow) {
+      countsRow.remove();
+    }
 
     const buttons = Array.from(widget.querySelectorAll('.cg-reaction-btn'));
     buttons.forEach((btn) => {

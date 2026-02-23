@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.23.7
+- Reacciones UI: se elimina el bloque pequeño inferior de conteos duplicados y se mantiene solo el bloque grande interactivo en cards/detalle.
+- Reacciones frontend: limpieza JS para no renderizar/actualizar el resumen mini de conteos duplicado.
+- CSS: se elimina estilo no usado de la fila mini de conteos (`.cg-reaction-counts`).
+
 ## 0.23.6
 - Reacciones UI: emojis y conteos en chips más grandes para mejorar legibilidad en móvil.
 - Reacciones UX: soporte de long press (>300ms) con escala + tooltip de nombre; el voto se envía al soltar.
