@@ -57,7 +57,7 @@ class CatGame_Votes {
         }
 
         if (self::has_user_voted($submission_id, $current_user)) {
-            wp_safe_redirect(add_query_arg('catgame_error', 'duplicate_vote', home_url('/catgame/submission/' . $submission_id)));
+            wp_safe_redirect(add_query_arg('catgame_error', 'duplicate_vote', home_url('/catgame/feed')));
             exit;
         }
 
@@ -76,7 +76,7 @@ class CatGame_Votes {
         );
 
         if (!$inserted) {
-            wp_safe_redirect(add_query_arg('catgame_error', 'vote_failed', home_url('/catgame/submission/' . $submission_id)));
+            wp_safe_redirect(add_query_arg('catgame_error', 'vote_failed', home_url('/catgame/feed')));
             exit;
         }
 
@@ -93,7 +93,7 @@ class CatGame_Votes {
 
         CatGame_Submissions::recalculate_score($submission_id);
 
-        wp_safe_redirect(add_query_arg('voted', '1', home_url('/catgame/submission/' . $submission_id)));
+        wp_safe_redirect(add_query_arg('voted', '1', home_url('/catgame/feed')));
         exit;
     }
 

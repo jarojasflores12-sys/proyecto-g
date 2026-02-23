@@ -72,10 +72,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                 <?php endif; ?>
 
 
-
                 <?php CatGame_Reactions::render_widget((int) $item['id'], is_user_logged_in()); ?>
-
-                <a class="cg-cta" href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $item['id'])); ?>">Ver detalle</a>
             </article>
         <?php endforeach; ?>
     </div>

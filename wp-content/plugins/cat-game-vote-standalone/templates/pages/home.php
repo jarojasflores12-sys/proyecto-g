@@ -41,7 +41,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                 $author_name = $author ? (string) $author->user_login : 'usuario';
                 $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_user_id;
                 ?>
-                <a class="cg-card cg-home-top3-item <?php echo $is_mine ? 'cg-is-mine' : ''; ?>" href="<?php echo esc_url(home_url('/catgame/submission/' . (int) ($item['id'] ?? 0))); ?>">
+                <article class="cg-card cg-home-top3-item <?php echo $is_mine ? 'cg-is-mine' : ''; ?>">
                     <span class="cg-home-medal"><?php echo esc_html($medals[$index] ?? '🏅'); ?></span>
                     <?php echo wp_get_attachment_image((int) ($item['attachment_id'] ?? 0), 'medium_large', false, ['class' => 'cg-home-thumb', 'loading' => 'eager']); ?>
                     <strong class="cg-title"><?php echo esc_html($title_label); ?></strong>
@@ -49,7 +49,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                     <?php if ($is_mine): ?><span class="cg-inline-badge">Tu publicación</span><?php endif; ?>
                     <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in()); ?>
                     <small class="cg-location">📍 <?php echo esc_html(($item['city'] ?? '') . ', ' . ($item['country'] ?? '')); ?></small>
-                </a>
+                </article>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
@@ -63,11 +63,11 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
         <div class="cg-home-latest" role="list">
             <?php foreach ($latest_items as $item): ?>
                 <?php $title = trim((string) ($item['title'] ?? '')); $author = get_userdata((int) ($item['user_id'] ?? 0)); $author_name = $author ? (string) $author->user_login : 'usuario'; ?>
-                <a class="cg-card cg-home-latest-item" role="listitem" href="<?php echo esc_url(home_url('/catgame/submission/' . (int) ($item['id'] ?? 0))); ?>">
+                <article class="cg-card cg-home-latest-item" role="listitem">
                     <?php echo wp_get_attachment_image((int) ($item['attachment_id'] ?? 0), 'medium', false, ['loading' => 'lazy', 'class' => 'cg-home-latest-image']); ?>
                     <strong class="cg-title"><?php echo esc_html($title !== '' ? $title : 'Publicación #' . (int) ($item['id'] ?? 0)); ?></strong>
                     <small class="cg-author">por @<?php echo esc_html($author_name); ?></small>
-                </a>
+                </article>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>

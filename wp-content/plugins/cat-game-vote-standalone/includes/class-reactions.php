@@ -176,7 +176,6 @@ class CatGame_Reactions {
                     </button>
                 <?php endforeach; ?>
             </div>
-            <p class="cg-reaction-counts" aria-live="polite">😻 0  😂 0  🥰 0  🤩 0  🔥 0</p>
             <?php if (!$is_logged_in): ?><small class="cg-reaction-help">Inicia sesión para reaccionar.</small><?php endif; ?>
         </div>
         <?php

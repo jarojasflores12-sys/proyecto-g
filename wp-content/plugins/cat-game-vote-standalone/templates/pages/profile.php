@@ -142,10 +142,10 @@ if (!isset($allowed_colors[$avatar_color])) {
 }
 $most_voted = is_array($stats['most_voted'] ?? null) ? $stats['most_voted'] : null;
 $best_ranked = is_array($stats['best_ranked'] ?? null) ? $stats['best_ranked'] : null;
-$best_photo = $best_ranked && (int) ($best_ranked['votes_count'] ?? 0) > 0 ? $best_ranked : null;
+$best_photo = $best_ranked ? $best_ranked : null;
 
 $profile_link = home_url('/catgame/profile');
-$best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_photo['id']) : '';
+$best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
 ?>
 <section>
     <h2>Mi perfil</h2>
@@ -216,7 +216,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
             <strong>Publicación con más reacciones</strong>
             <?php if ($most_voted): ?>
                 <?php $mv_title = trim((string) ($most_voted['title'] ?? '')) ?: 'Publicación #' . (int) $most_voted['id']; ?>
-                <p><a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $most_voted['id'])); ?>"><?php echo esc_html($mv_title); ?></a></p>
+                <p><?php echo esc_html($mv_title); ?></p>
             <?php else: ?>
                 <p>Aún no tienes publicaciones.</p>
             <?php endif; ?>
@@ -225,7 +225,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
             <strong>Mejor posicionada por reacciones</strong>
             <?php if ($best_ranked): ?>
                 <?php $br_title = trim((string) ($best_ranked['title'] ?? '')) ?: 'Publicación #' . (int) $best_ranked['id']; ?>
-                <p><a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $best_ranked['id'])); ?>"><?php echo esc_html($br_title); ?></a></p>
+                <p><?php echo esc_html($br_title); ?></p>
             <?php else: ?>
                 <p>Sin datos aún.</p>
             <?php endif; ?>
@@ -238,7 +238,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
             <strong>Publicación destacada</strong>
             <?php if ($best_photo): ?>
                 <?php $bf_title = trim((string) ($best_photo['title'] ?? '')) ?: 'Publicación #' . (int) $best_photo['id']; ?>
-                <p><a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $best_photo['id'])); ?>"><?php echo esc_html($bf_title); ?></a></p>
+                <p><?php echo esc_html($bf_title); ?></p>
             <?php else: ?>
                 <p>Sin datos aún.</p>
             <?php endif; ?>
@@ -254,7 +254,6 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
             <?php echo wp_get_attachment_image((int) $best_photo['attachment_id'], 'medium_large', false, ['loading' => 'lazy', 'class' => 'cg-profile-thumb']); ?>
             <strong><?php echo esc_html($best_title); ?></strong>
             <?php CatGame_Reactions::render_widget((int) ($best_photo['id'] ?? 0), is_user_logged_in()); ?>
-            <a class="cg-cta" href="<?php echo esc_url($best_photo_link); ?>">Ver detalle</a>
         </article>
     <?php else: ?>
         <p>Aún no tienes una publicación con reacciones.</p>

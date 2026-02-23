@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.23.9
+- UX: se elimina el flujo de detalle de publicación; se quita el botón "Ver detalle" y la ruta `/catgame/submission/{id}` ahora redirige al feed.
+- Reacciones: long press ajustado a ~400ms con escala `1.35` + tooltip y envío al soltar; tap rápido mantiene envío inmediato.
+- Reacciones: nuevo feedback al votar con emoji flotante (`catgvFloat`) y vibración `40ms` solo en móviles compatibles al confirmar voto.
+- UI reacciones: una sola fila de reacciones, emoji ~22px, contador visible y estado activo con fondo pastel resaltado.
+
 ## 0.23.8
 - Ranking: orden actualizado para usar reacciones (`total_reactions DESC`, `first_reaction_at ASC`) en vez de estrellas/votos.
 - Inicio: Top 3 ahora refleja el ranking por reacciones.

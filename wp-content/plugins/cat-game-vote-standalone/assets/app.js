@@ -547,6 +547,7 @@
     return;
   }
 
+  const HOLD_MS = 400;
   const labels = {
     adorable: { emoji: '😻', label: 'Adorable' },
     funny: { emoji: '😂', label: 'Me hizo reír' },
@@ -555,19 +556,17 @@
     epic: { emoji: '🔥', label: 'Épico' },
   };
 
-
   const initReactionButton = (btn) => {
     const reaction = btn.dataset.reaction || '';
     const meta = labels[reaction];
-    if (!meta) {
-      return;
-    }
+    if (!meta) return;
 
     btn.classList.add('reaction-btn');
     btn.dataset.label = meta.label;
 
     if (!btn.querySelector('.emoji')) {
       btn.textContent = '';
+
       const emoji = document.createElement('span');
       emoji.className = 'emoji';
       emoji.textContent = meta.emoji;
@@ -577,7 +576,7 @@
       count.textContent = '0';
 
       const tooltip = document.createElement('div');
-      tooltip.className = 'reaction-tooltip';
+      tooltip.className = 'catgv-tooltip';
       tooltip.textContent = meta.label;
 
       btn.appendChild(emoji);
@@ -594,11 +593,19 @@
       if (countEl && Object.hasOwn(counts, reaction)) {
         countEl.textContent = String(counts[reaction] || 0);
       }
-
-      const isActive = reaction === active;
-      btn.classList.toggle('is-active', isActive);
+      btn.classList.toggle('is-active', reaction === active);
     });
+  };
 
+  const showFloatEmoji = (btn) => {
+    const emojiChar = btn.querySelector('.emoji')?.textContent || '';
+    if (!emojiChar) return;
+
+    const floater = document.createElement('span');
+    floater.className = 'catgv-float-emoji';
+    floater.textContent = emojiChar;
+    btn.appendChild(floater);
+    window.setTimeout(() => floater.remove(), 750);
   };
 
   const fetchCounts = async (widget) => {
@@ -611,13 +618,14 @@
 
     const response = await fetch(url.toString(), { credentials: 'same-origin' });
     const payload = await response.json();
-    if (payload && payload.success && payload.data) {
+    if (payload?.success && payload.data) {
       paintWidget(widget, payload.data);
     }
   };
 
-  const sendReaction = async (widget, reactionType) => {
+  const sendReaction = async (widget, btn) => {
     const submissionId = Number(widget.dataset.submissionId || '0');
+    const reactionType = btn.dataset.reaction || '';
     if (!submissionId || !reactionType) return;
 
     const fd = new FormData();
@@ -631,8 +639,12 @@
       credentials: 'same-origin',
     });
     const payload = await response.json();
-    if (payload && payload.success && payload.data) {
+    if (payload?.success && payload.data) {
       paintWidget(widget, payload.data);
+      showFloatEmoji(btn);
+      if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        navigator.vibrate(40);
+      }
       return;
     }
 
@@ -640,45 +652,43 @@
   };
 
   widgets.forEach((widget) => {
-    let holdTimer = null;
-    let isHolding = false;
-
-    const countsRow = widget.querySelector('.cg-reaction-counts');
-    if (countsRow) {
-      countsRow.remove();
-    }
-
     const buttons = Array.from(widget.querySelectorAll('.cg-reaction-btn'));
+
     buttons.forEach((btn) => {
       initReactionButton(btn);
+
+      let holdTimer = null;
+      let hasLongPress = false;
 
       const clearHoldState = () => {
         btn.classList.remove('active-hold', 'show-tooltip');
       };
 
       const startHold = () => {
-        isHolding = false;
+        hasLongPress = false;
         clearTimeout(holdTimer);
-        holdTimer = setTimeout(() => {
-          isHolding = true;
+        holdTimer = window.setTimeout(() => {
+          hasLongPress = true;
           btn.classList.add('active-hold', 'show-tooltip');
-        }, 300);
+        }, HOLD_MS);
       };
 
-      const endHold = () => {
-        clearTimeout(holdTimer);
-        clearHoldState();
-
+      const submitReaction = () => {
         if (widget.dataset.loggedIn !== '1') {
           window.catgameToast?.('Inicia sesión para reaccionar', 'info');
           return;
         }
 
         widget.classList.add('is-busy');
-        sendReaction(widget, btn.dataset.reaction || '')
-          .finally(() => {
-            widget.classList.remove('is-busy');
-          });
+        sendReaction(widget, btn).finally(() => {
+          widget.classList.remove('is-busy');
+        });
+      };
+
+      const endHold = () => {
+        clearTimeout(holdTimer);
+        clearHoldState();
+        submitReaction();
       };
 
       const cancelHold = () => {
@@ -690,11 +700,16 @@
       btn.addEventListener('pointerup', endHold);
       btn.addEventListener('pointerleave', cancelHold);
       btn.addEventListener('pointercancel', cancelHold);
+      btn.addEventListener('contextmenu', (event) => event.preventDefault());
       btn.addEventListener('click', (event) => {
         event.preventDefault();
+        if (!hasLongPress) {
+          // Tap rápido: el voto se procesa en pointerup.
+        }
       });
     });
 
     fetchCounts(widget).catch(() => null);
   });
-})();;
+})();
+;

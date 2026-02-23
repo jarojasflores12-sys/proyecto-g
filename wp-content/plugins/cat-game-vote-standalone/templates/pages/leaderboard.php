@@ -49,11 +49,11 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
             ?>
             <article class="cg-card cg-rank-item <?php echo ($is_mine || $position > 0) ? 'cg-is-mine' : ''; ?>">
                 <span class="cg-rank-badge">#<?php echo (int) $idx + 1; ?></span>
-                <a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $item['id'])); ?>" class="cg-rank-thumb">
+                <div class="cg-rank-thumb">
                     <?php echo wp_get_attachment_image((int) $item['attachment_id'], 'thumbnail', false, ['loading' => 'lazy']); ?>
-                </a>
+                </div>
                 <div class="cg-rank-meta">
-                    <a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $item['id'])); ?>" class="cg-rank-title"><?php echo esc_html($title_label); ?></a>
+                    <p class="cg-rank-title"><?php echo esc_html($title_label); ?></p>
                     <small class="cg-author">por @<?php echo esc_html($author_name); ?></small>
                     <?php if ($is_mine): ?><span class="cg-inline-badge">Tú</span><?php endif; ?>
                     <?php if ($position > 0): ?><span class="cg-inline-badge">Top 3</span><?php endif; ?>
