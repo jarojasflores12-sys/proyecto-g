@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_DB {
-    private const SCHEMA_VERSION = '4';
+    private const SCHEMA_VERSION = '5';
     private const SCHEMA_OPTION_KEY = 'catgame_schema_version';
 
     public static function init(): void {
@@ -36,6 +36,7 @@ class CatGame_DB {
         $submissions = self::table('submissions');
         $votes = self::table('votes');
         $events = self::table('events');
+        $reactions = self::table('reactions');
 
         $sql = [];
         $sql[] = "CREATE TABLE {$events} (
@@ -80,6 +81,18 @@ class CatGame_DB {
             created_at DATETIME NOT NULL,
             PRIMARY KEY (id),
             UNIQUE KEY unique_vote (submission_id, user_id),
+            KEY submission_id (submission_id),
+            KEY user_id (user_id)
+        ) {$charset};";
+
+        $sql[] = "CREATE TABLE {$reactions} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            submission_id BIGINT UNSIGNED NOT NULL,
+            user_id BIGINT UNSIGNED NOT NULL,
+            reaction_type VARCHAR(20) NOT NULL,
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY unique_reaction (submission_id, user_id),
             KEY submission_id (submission_id),
             KEY user_id (user_id)
         ) {$charset};";

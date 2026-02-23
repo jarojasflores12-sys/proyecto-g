@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.23.4
+- Reacciones: nuevo sistema independiente del voto por estrellas con tabla `catgame_reactions` y restricción única por `submission_id + user_id`.
+- Backend: nuevo `CatGame_Reactions` con endpoints `add_or_update_reaction` y `get_reaction_counts`, validación por nonce, sanitización y whitelist de tipos (`adorable`, `funny`, `cute`, `wow`, `epic`).
+- Reacciones: lógica de upsert (crear o actualizar reacción del usuario) y respuesta con conteos agregados + `user_reaction`.
+- Integración: registro del módulo de reacciones en bootstrap del plugin y actualización de esquema DB a versión `5`.
+
 ## 0.23.3
 - Auth (deslogueado): nueva UI con secciones de Iniciar sesión, Crear cuenta y Olvidé mi contraseña.
 - Login: nuevo handler con `wp_signon()` y preservación de usuario/correo en errores (limpiando solo contraseñas).
