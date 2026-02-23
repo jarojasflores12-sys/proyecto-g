@@ -37,8 +37,6 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                 <?php
                 $title = trim((string) ($item['title'] ?? ''));
                 $title_label = $title !== '' ? $title : 'Publicación #' . (int) ($item['id'] ?? 0);
-                $score = (float) ($item['score_cached'] ?? 0);
-                $stars = max(0, min(5, (int) round($score / 2)));
                 $author = get_userdata((int) ($item['user_id'] ?? 0));
                 $author_name = $author ? (string) $author->user_login : 'usuario';
                 $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_user_id;
@@ -49,11 +47,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                     <strong class="cg-title"><?php echo esc_html($title_label); ?></strong>
                     <small class="cg-author">por @<?php echo esc_html($author_name); ?></small>
                     <?php if ($is_mine): ?><span class="cg-inline-badge">Tu publicación</span><?php endif; ?>
-                    <span class="cg-stars" aria-label="Puntaje <?php echo (int) $stars; ?> de 5">
-                        <?php for ($i = 1; $i <= 5; $i++): ?>
-                            <span class="cg-star <?php echo $i <= $stars ? 'is-filled' : ''; ?>">★</span>
-                        <?php endfor; ?>
-                    </span>
+                    <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in()); ?>
                     <small class="cg-location">📍 <?php echo esc_html(($item['city'] ?? '') . ', ' . ($item['country'] ?? '')); ?></small>
                 </a>
             <?php endforeach; ?>

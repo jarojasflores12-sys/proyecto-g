@@ -106,6 +106,13 @@ if ($has_background) {
         <?php endforeach; ?>
     </nav>
 <div id="catgame-toast" class="catgame-toast" aria-live="polite" aria-atomic="true"></div>
+<script>
+window.CATGAME_REACTIONS = {
+    nonce: <?php echo wp_json_encode(wp_create_nonce(CatGame_Reactions::nonce_action())); ?>,
+    addOrUpdateUrl: <?php echo wp_json_encode(CatGame_Reactions::endpoint_add_or_update_url()); ?>,
+    getCountsUrl: <?php echo wp_json_encode(CatGame_Reactions::endpoint_get_counts_url()); ?>,
+};
+</script>
 <script src="<?php echo esc_url(CATGAME_PLUGIN_URL . 'assets/app.js'); ?>?v=<?php echo esc_attr(CATGAME_VERSION); ?>"></script>
 </body>
 </html>

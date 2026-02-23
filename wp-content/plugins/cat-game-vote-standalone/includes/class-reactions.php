@@ -142,6 +142,46 @@ class CatGame_Reactions {
         ];
     }
 
+
+    public static function endpoint_add_or_update_url(): string {
+        return admin_url('admin-post.php?action=catgame_add_or_update_reaction');
+    }
+
+    public static function endpoint_get_counts_url(): string {
+        return admin_url('admin-post.php?action=catgame_get_reaction_counts');
+    }
+
+    public static function reaction_labels(): array {
+        return [
+            'adorable' => ['emoji' => '😻', 'label' => 'Adorable'],
+            'funny' => ['emoji' => '😂', 'label' => 'Me hizo reír'],
+            'cute' => ['emoji' => '🥰', 'label' => 'Tierno'],
+            'wow' => ['emoji' => '🤩', 'label' => 'Impresionante'],
+            'epic' => ['emoji' => '🔥', 'label' => 'Épico'],
+        ];
+    }
+
+    public static function render_widget(int $submission_id, bool $is_logged_in): void {
+        if ($submission_id <= 0) {
+            return;
+        }
+
+        $labels = self::reaction_labels();
+        ?>
+        <div class="cg-reactions" data-submission-id="<?php echo (int) $submission_id; ?>" data-logged-in="<?php echo $is_logged_in ? '1' : '0'; ?>">
+            <div class="cg-reaction-buttons" role="group" aria-label="Reacciones de la publicación">
+                <?php foreach ($labels as $slug => $meta): ?>
+                    <button type="button" class="cg-reaction-btn" data-reaction="<?php echo esc_attr($slug); ?>">
+                        <?php echo esc_html($meta['emoji'] . ' ' . $meta['label']); ?>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+            <p class="cg-reaction-counts" aria-live="polite">😻 0  😂 0  🥰 0  🤩 0  🔥 0</p>
+            <?php if (!$is_logged_in): ?><small class="cg-reaction-help">Inicia sesión para reaccionar.</small><?php endif; ?>
+        </div>
+        <?php
+    }
+
     private static function verify_nonce(): bool {
         $nonce = wp_unslash($_REQUEST['_wpnonce'] ?? '');
         return is_string($nonce) && wp_verify_nonce($nonce, self::NONCE_ACTION) !== false;

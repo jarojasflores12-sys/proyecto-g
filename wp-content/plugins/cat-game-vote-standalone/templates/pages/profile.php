@@ -140,7 +140,6 @@ $allowed_colors = ['rose' => '#F7B7C3', 'mint' => '#B5EAD7', 'lavender' => '#C7C
 if (!isset($allowed_colors[$avatar_color])) {
     $avatar_color = 'rose';
 }
-$best_score_5 = max(0, min(5, (float) ($stats['best_score'] ?? 0) / 2));
 $most_voted = is_array($stats['most_voted'] ?? null) ? $stats['most_voted'] : null;
 $best_ranked = is_array($stats['best_ranked'] ?? null) ? $stats['best_ranked'] : null;
 $best_photo = $best_ranked && (int) ($best_ranked['votes_count'] ?? 0) > 0 ? $best_ranked : null;
@@ -210,19 +209,14 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
     <h3>Resumen</h3>
     <div class="cg-profile-stats-grid cg-profile-summary-grid">
         <article class="cg-card">
-            <strong>Mejor puntaje</strong>
-            <p><?php echo esc_html(number_format($best_score_5, 1)); ?>/5</p>
-        </article>
-        <article class="cg-card">
-            <strong>Total votos recibidos</strong>
-            <p><?php echo (int) ($stats['total_votes'] ?? 0); ?></p>
+            <strong>Publicaciones totales</strong>
+            <p><?php echo (int) ($stats['total_submissions'] ?? 0); ?></p>
         </article>
         <article class="cg-card">
             <strong>Publicación más votada</strong>
             <?php if ($most_voted): ?>
                 <?php $mv_title = trim((string) ($most_voted['title'] ?? '')) ?: 'Publicación #' . (int) $most_voted['id']; ?>
                 <p><a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $most_voted['id'])); ?>"><?php echo esc_html($mv_title); ?></a></p>
-                <p>Votos: <?php echo (int) ($most_voted['votes_count'] ?? 0); ?></p>
             <?php else: ?>
                 <p>Aún no tienes publicaciones.</p>
             <?php endif; ?>
@@ -232,9 +226,17 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
             <?php if ($best_ranked): ?>
                 <?php $br_title = trim((string) ($best_ranked['title'] ?? '')) ?: 'Publicación #' . (int) $best_ranked['id']; ?>
                 <p><a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $best_ranked['id'])); ?>"><?php echo esc_html($br_title); ?></a></p>
-                <p>Promedio: <?php echo esc_html(number_format(((float) ($best_ranked['score_cached'] ?? 0)) / 2, 1)); ?>/5</p>
             <?php else: ?>
-                <p>Sin votos aún.</p>
+                <p>Sin datos aún.</p>
+            <?php endif; ?>
+        </article>
+        <article class="cg-card">
+            <strong>Publicación destacada</strong>
+            <?php if ($best_photo): ?>
+                <?php $bf_title = trim((string) ($best_photo['title'] ?? '')) ?: 'Publicación #' . (int) $best_photo['id']; ?>
+                <p><a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $best_photo['id'])); ?>"><?php echo esc_html($bf_title); ?></a></p>
+            <?php else: ?>
+                <p>Sin datos aún.</p>
             <?php endif; ?>
         </article>
     </div>
@@ -243,21 +245,11 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
     <?php if ($best_photo): ?>
         <?php
         $best_title = trim((string) ($best_photo['title'] ?? '')) ?: 'Publicación #' . (int) $best_photo['id'];
-        $best_score5 = ((float) ($best_photo['score_cached'] ?? 0)) / 2;
-        $best_stars = max(0, min(5, (int) round($best_score5)));
         ?>
         <article class="cg-card cg-profile-best-photo">
             <?php echo wp_get_attachment_image((int) $best_photo['attachment_id'], 'medium_large', false, ['loading' => 'lazy', 'class' => 'cg-profile-thumb']); ?>
             <strong><?php echo esc_html($best_title); ?></strong>
-            <div class="cg-score-row">
-                <span class="cg-stars" aria-label="Puntaje <?php echo (int) $best_stars; ?> de 5">
-                    <?php for ($i = 1; $i <= 5; $i++): ?>
-                        <span class="cg-star <?php echo $i <= $best_stars ? 'is-filled' : ''; ?>">★</span>
-                    <?php endfor; ?>
-                </span>
-                <small class="cg-score-value"><?php echo esc_html(number_format($best_score5, 1)); ?>/5</small>
-            </div>
-            <p>Votos: <?php echo (int) ($best_photo['votes_count'] ?? 0); ?></p>
+            <?php CatGame_Reactions::render_widget((int) ($best_photo['id'] ?? 0), is_user_logged_in()); ?>
             <a class="cg-cta" href="<?php echo esc_url($best_photo_link); ?>">Ver detalle</a>
         </article>
     <?php else: ?>
@@ -301,23 +293,11 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
         <?php endif; ?>
         <?php foreach ($items as $item): ?>
             <?php
-            $score_5 = ((float) ($item['score_cached'] ?? 0)) / 2;
-            $score_5_dec = number_format($score_5, 1);
-            $stars = max(0, min(5, (int) round($score_5)));
-            $votes_count = (int) ($item['votes_count'] ?? 0);
             ?>
             <article class="cg-card cg-profile-item">
                 <?php echo wp_get_attachment_image((int) $item['attachment_id'], 'medium_large', false, ['loading' => 'lazy', 'class' => 'cg-profile-thumb']); ?>
                 <p>#<?php echo (int) $item['id']; ?> — <?php echo esc_html($item['status']); ?></p>
-                <div class="cg-score-row">
-                    <span class="cg-score-label"><?php echo $votes_count > 0 ? 'Puntaje:' : 'Puntaje: Sin votos'; ?></span>
-                    <span class="cg-stars" aria-label="Puntaje <?php echo (int) $stars; ?> de 5">
-                        <?php for ($i = 1; $i <= 5; $i++): ?>
-                            <span class="cg-star <?php echo $i <= $stars ? 'is-filled' : ''; ?>">★</span>
-                        <?php endfor; ?>
-                    </span>
-                    <?php if ($votes_count > 0): ?><small class="cg-score-value">(<?php echo esc_html($score_5_dec); ?>/5)</small><?php endif; ?>
-                </div>
+                <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in()); ?>
             </article>
         <?php endforeach; ?>
     </div>

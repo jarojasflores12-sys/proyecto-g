@@ -538,3 +538,92 @@
     toggle.setAttribute('aria-label', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
   });
 })();
+
+
+(function () {
+  const config = window.CATGAME_REACTIONS;
+  const widgets = Array.from(document.querySelectorAll('.cg-reactions'));
+  if (!config || !widgets.length) {
+    return;
+  }
+
+  const labels = {
+    adorable: '😻',
+    funny: '😂',
+    cute: '🥰',
+    wow: '🤩',
+    epic: '🔥',
+  };
+
+  const formatCounts = (counts) => `${labels.adorable} ${counts.adorable || 0}  ${labels.funny} ${counts.funny || 0}  ${labels.cute} ${counts.cute || 0}  ${labels.wow} ${counts.wow || 0}  ${labels.epic} ${counts.epic || 0}`;
+
+  const paintWidget = (widget, counts) => {
+    const active = counts.user_reaction || '';
+    widget.querySelectorAll('.cg-reaction-btn').forEach((btn) => {
+      const isActive = btn.dataset.reaction === active;
+      btn.classList.toggle('is-active', isActive);
+    });
+    const row = widget.querySelector('.cg-reaction-counts');
+    if (row) {
+      row.textContent = formatCounts(counts);
+    }
+  };
+
+  const fetchCounts = async (widget) => {
+    const submissionId = Number(widget.dataset.submissionId || '0');
+    if (!submissionId) return;
+
+    const url = new URL(config.getCountsUrl, window.location.origin);
+    url.searchParams.set('submission_id', String(submissionId));
+    url.searchParams.set('_wpnonce', config.nonce || '');
+
+    const response = await fetch(url.toString(), { credentials: 'same-origin' });
+    const payload = await response.json();
+    if (payload && payload.success && payload.data) {
+      paintWidget(widget, payload.data);
+    }
+  };
+
+  const submitReaction = async (widget, reactionType) => {
+    const submissionId = Number(widget.dataset.submissionId || '0');
+    if (!submissionId) return;
+
+    const fd = new FormData();
+    fd.append('submission_id', String(submissionId));
+    fd.append('reaction_type', reactionType);
+    fd.append('_wpnonce', config.nonce || '');
+
+    const response = await fetch(config.addOrUpdateUrl, {
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin',
+    });
+    const payload = await response.json();
+    if (payload && payload.success && payload.data) {
+      paintWidget(widget, payload.data);
+      return;
+    }
+
+    window.catgameToast?.('No se pudo guardar la reacción', 'error');
+  };
+
+  widgets.forEach((widget) => {
+    fetchCounts(widget).catch(() => null);
+
+    widget.addEventListener('click', (event) => {
+      const btn = event.target.closest('.cg-reaction-btn');
+      if (!btn) return;
+
+      if (widget.dataset.loggedIn !== '1') {
+        window.catgameToast?.('Inicia sesión para reaccionar', 'info');
+        return;
+      }
+
+      widget.classList.add('is-busy');
+      submitReaction(widget, btn.dataset.reaction || '')
+        .finally(() => {
+          widget.classList.remove('is-busy');
+        });
+    });
+  });
+})();

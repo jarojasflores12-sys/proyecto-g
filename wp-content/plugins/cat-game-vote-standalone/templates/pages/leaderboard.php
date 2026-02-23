@@ -42,8 +42,6 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
             <?php
             $title = trim((string) ($item['title'] ?? ''));
             $title_label = $title !== '' ? $title : 'Publicación #' . (int) $item['id'];
-            $score_10 = (float) ($item['score_cached'] ?? 0);
-            $stars = max(0, min(5, (int) round($score_10 / 2)));
             $author = get_userdata((int) ($item['user_id'] ?? 0));
             $author_name = $author ? (string) $author->user_login : 'usuario';
             $position = isset($top3_positions[(int) $item['id']]) ? (int) $top3_positions[(int) $item['id']] : 0;
@@ -60,15 +58,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                     <?php if ($is_mine): ?><span class="cg-inline-badge">Tú</span><?php endif; ?>
                     <?php if ($position > 0): ?><span class="cg-inline-badge">Top 3</span><?php endif; ?>
                     <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
-                    <div class="cg-score-row">
-                        <span class="cg-stars" aria-label="Puntaje <?php echo (int) $stars; ?> de 5">
-                            <?php for ($i = 1; $i <= 5; $i++): ?>
-                                <span class="cg-star <?php echo $i <= $stars ? 'is-filled' : ''; ?>">★</span>
-                            <?php endfor; ?>
-                        </span>
-                        <small class="cg-score-value">(<?php echo (int) $stars; ?>/5)</small>
-                    </div>
-                    <small>Votos: <?php echo (int) ($item['votes_count'] ?? 0); ?></small>
+                    <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in()); ?>
                 </div>
             </article>
         <?php endforeach; ?>

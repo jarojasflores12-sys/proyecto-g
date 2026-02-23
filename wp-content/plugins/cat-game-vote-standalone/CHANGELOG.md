@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.23.5
+- UI frontend: se reemplaza visualmente el bloque de estrellas por reacciones en Feed/Publicaciones, Detalle, Top 3 de Inicio, Ranking y Mis publicaciones del Perfil.
+- Reacciones: nuevos botones tipo chips (`😻 Adorable`, `😂 Me hizo reír`, `🥰 Tierno`, `🤩 Impresionante`, `🔥 Épico`) con estado activo por usuario.
+- Reacciones: conteos en tiempo real sin recarga usando los endpoints `add_or_update_reaction` y `get_reaction_counts`.
+- Layout/JS: se expone configuración global de nonce/endpoints y se añade controlador frontend para pintar/actualizar reacciones.
+
 ## 0.23.4
 - Reacciones: nuevo sistema independiente del voto por estrellas con tabla `catgame_reactions` y restricción única por `submission_id + user_id`.
 - Backend: nuevo `CatGame_Reactions` con endpoints `add_or_update_reaction` y `get_reaction_counts`, validación por nonce, sanitización y whitelist de tipos (`adorable`, `funny`, `cute`, `wow`, `epic`).

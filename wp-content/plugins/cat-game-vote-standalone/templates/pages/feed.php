@@ -29,9 +29,6 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
         <?php foreach ($items as $item): ?>
             <?php
             $item_tags = CatGame_Submissions::submission_tags($item);
-            $votes_count = (int) ($item['votes_count'] ?? 0);
-            $score_10 = (float) ($item['score_cached'] ?? 0);
-            $stars = $votes_count > 0 ? max(0, min(5, (int) round($score_10 / 2))) : 0;
             $title = trim((string) ($item['title'] ?? ''));
             $title_label = $title !== '' ? $title : 'Publicación #' . (int) $item['id'];
             $author = get_userdata((int) ($item['user_id'] ?? 0));
@@ -64,17 +61,6 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                         <?php if ($position > 0): ?><span class="cg-inline-badge">Top 3 #<?php echo (int) $position; ?></span><?php endif; ?>
                         <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
                     </div>
-                    <div class="cg-score-row">
-                        <span class="cg-score-label"><?php echo $votes_count > 0 ? 'Puntaje:' : 'Puntaje: sin votos'; ?></span>
-                        <span class="cg-stars" aria-label="Puntaje <?php echo (int) $stars; ?> de 5">
-                            <?php for ($i = 1; $i <= 5; $i++): ?>
-                                <span class="cg-star <?php echo $i <= $stars ? 'is-filled' : ''; ?>">★</span>
-                            <?php endfor; ?>
-                        </span>
-                        <?php if ($votes_count > 0): ?>
-                            <small class="cg-score-value">(<?php echo (int) $stars; ?>/5)</small>
-                        <?php endif; ?>
-                    </div>
                 </div>
 
                 <?php if (!empty($item_tags)): ?>
@@ -84,6 +70,10 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
+
+
+
+                <?php CatGame_Reactions::render_widget((int) $item['id'], is_user_logged_in()); ?>
 
                 <a class="cg-cta" href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $item['id'])); ?>">Ver detalle</a>
             </article>
