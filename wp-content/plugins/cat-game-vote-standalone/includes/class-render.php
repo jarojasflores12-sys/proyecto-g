@@ -120,10 +120,34 @@ class CatGame_Render {
                     'current_user_id' => $current_user_id,
                 ];
             case 'profile':
+                $auth_view = sanitize_key(wp_unslash($_GET['auth'] ?? 'login'));
+                if (!in_array($auth_view, ['login', 'register', 'forgot', 'reset'], true)) {
+                    $auth_view = 'login';
+                }
+
                 $register_error = sanitize_text_field(wp_unslash($_GET['register_error'] ?? ''));
+                $login_error = sanitize_text_field(wp_unslash($_GET['login_error'] ?? ''));
+                $lost_error = sanitize_text_field(wp_unslash($_GET['lost_error'] ?? ''));
+                $reset_error = sanitize_text_field(wp_unslash($_GET['reset_error'] ?? ''));
                 $registered = isset($_GET['registered']) ? (int) $_GET['registered'] : 0;
+                $lost_sent = isset($_GET['lost_sent']) ? (int) $_GET['lost_sent'] : 0;
+                $password_reset = isset($_GET['password_reset']) ? (int) $_GET['password_reset'] : 0;
                 $tag_deleted = isset($_GET['tag_deleted']) ? (int) $_GET['tag_deleted'] : 0;
                 $profile_saved = isset($_GET['profile_saved']) ? (int) $_GET['profile_saved'] : 0;
+                $login_identifier = sanitize_text_field(wp_unslash($_GET['login_identifier'] ?? ''));
+                $reg_username = sanitize_user(wp_unslash($_GET['reg_username'] ?? ''), true);
+                $reg_email = sanitize_email(wp_unslash($_GET['reg_email'] ?? ''));
+                $lost_identifier = sanitize_text_field(wp_unslash($_GET['lost_identifier'] ?? ''));
+                $rp_login = sanitize_text_field(wp_unslash($_GET['rp_login'] ?? ''));
+                $rp_key = sanitize_text_field(wp_unslash($_GET['key'] ?? ''));
+                $reset_user = null;
+                if ($auth_view === 'reset' && $rp_login !== '' && $rp_key !== '') {
+                    $candidate_user = check_password_reset_key($rp_key, $rp_login);
+                    if ($candidate_user instanceof WP_User) {
+                        $reset_user = $candidate_user;
+                    }
+                }
+
                 $scope = sanitize_key(wp_unslash($_GET['scope'] ?? 'event'));
                 if (!in_array($scope, ['event', 'global'], true)) {
                     $scope = 'event';
@@ -134,8 +158,21 @@ class CatGame_Render {
                         'page' => $page,
                         'event' => $event,
                         'requires_login' => true,
+                        'auth_view' => $auth_view,
                         'register_error' => $register_error,
+                        'login_error' => $login_error,
+                        'lost_error' => $lost_error,
+                        'reset_error' => $reset_error,
                         'registered' => $registered,
+                        'lost_sent' => $lost_sent,
+                        'password_reset' => $password_reset,
+                        'login_identifier' => $login_identifier,
+                        'reg_username' => $reg_username,
+                        'reg_email' => $reg_email,
+                        'lost_identifier' => $lost_identifier,
+                        'rp_login' => $rp_login,
+                        'rp_key' => $rp_key,
+                        'has_valid_reset_key' => $reset_user instanceof WP_User,
                     ];
                 }
 

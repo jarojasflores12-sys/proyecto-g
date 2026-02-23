@@ -1,37 +1,127 @@
 <?php
 $register_error = !empty($data['register_error']) ? CatGame_Auth::registration_error_message((string) $data['register_error']) : '';
+$login_error = !empty($data['login_error']) ? CatGame_Auth::login_error_message((string) $data['login_error']) : '';
+$lost_error = !empty($data['lost_error']) ? CatGame_Auth::lost_password_message((string) $data['lost_error']) : '';
+$reset_error = !empty($data['reset_error']) ? CatGame_Auth::reset_password_message((string) $data['reset_error']) : '';
 $registered = !empty($data['registered']);
 $tag_deleted = !empty($data['tag_deleted']);
 $profile_saved = !empty($data['profile_saved']);
+$lost_sent = !empty($data['lost_sent']);
+$password_reset = !empty($data['password_reset']);
+$auth_view = (string) ($data['auth_view'] ?? 'login');
+$login_identifier = (string) ($data['login_identifier'] ?? '');
+$reg_username = (string) ($data['reg_username'] ?? '');
+$reg_email = (string) ($data['reg_email'] ?? '');
+$lost_identifier = (string) ($data['lost_identifier'] ?? '');
+$rp_login = (string) ($data['rp_login'] ?? '');
+$rp_key = (string) ($data['rp_key'] ?? '');
+$has_valid_reset_key = !empty($data['has_valid_reset_key']);
 
 if (!empty($data['requires_login'])): ?>
-<section>
-    <h2>Crear cuenta</h2>
-    <p>Regístrate para participar, subir fotos y votar.</p>
+<section class="cg-auth-shell">
+    <h2>Acceso</h2>
+    <p>Inicia sesión o crea tu cuenta para participar, subir fotos y votar.</p>
 
-    <?php if ($register_error): ?>
-        <p class="cg-alert cg-alert-error"><?php echo esc_html($register_error); ?></p>
+    <?php if ($registered): ?>
+        <p class="cg-alert cg-alert-success">¡Cuenta creada! Ya puedes iniciar sesión.</p>
+    <?php endif; ?>
+    <?php if ($password_reset): ?>
+        <p class="cg-alert cg-alert-success">Contraseña actualizada. Ya puedes iniciar sesión.</p>
     <?php endif; ?>
 
-    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form">
-        <?php wp_nonce_field('catgame_register'); ?>
-        <input type="hidden" name="action" value="catgame_register">
+    <div class="cg-auth-tabs" role="tablist" aria-label="Acciones de acceso">
+        <button type="button" class="cg-auth-tab <?php echo $auth_view === 'login' ? 'is-active' : ''; ?>" data-auth-tab="login" role="tab" aria-selected="<?php echo $auth_view === 'login' ? 'true' : 'false'; ?>">Iniciar sesión</button>
+        <button type="button" class="cg-auth-tab <?php echo $auth_view === 'register' ? 'is-active' : ''; ?>" data-auth-tab="register" role="tab" aria-selected="<?php echo $auth_view === 'register' ? 'true' : 'false'; ?>">Crear cuenta</button>
+        <button type="button" class="cg-auth-tab <?php echo $auth_view === 'forgot' ? 'is-active' : ''; ?>" data-auth-tab="forgot" role="tab" aria-selected="<?php echo $auth_view === 'forgot' ? 'true' : 'false'; ?>">Olvidé mi contraseña</button>
+    </div>
 
-        <label>Usuario
-            <input type="text" name="username" required maxlength="60" autocomplete="username">
-        </label>
-        <label>Email
-            <input type="email" name="email" required autocomplete="email">
-        </label>
-        <label>Contraseña
-            <input type="password" name="password" required minlength="8" autocomplete="new-password">
-        </label>
-        <label>Confirmar contraseña
-            <input type="password" name="password_confirm" required minlength="8" autocomplete="new-password">
-        </label>
+    <section class="cg-auth-panel <?php echo $auth_view === 'login' ? 'is-active' : ''; ?>" data-auth-panel="login">
+        <?php if ($login_error): ?><p class="cg-alert cg-alert-error"><?php echo esc_html($login_error); ?></p><?php endif; ?>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form cg-auth-form" autocomplete="on">
+            <?php wp_nonce_field('catgame_login'); ?>
+            <input type="hidden" name="action" value="catgame_login">
+            <label>Usuario o correo
+                <input type="text" name="login_identifier" required value="<?php echo esc_attr($login_identifier); ?>" autocomplete="username">
+            </label>
+            <label>Contraseña
+                <div class="cg-password-wrap">
+                    <input type="password" name="password" required minlength="8" autocomplete="current-password">
+                    <button type="button" class="cg-password-toggle" data-target="password" aria-label="Mostrar u ocultar contraseña">👁</button>
+                </div>
+            </label>
+            <button type="submit">Iniciar sesión</button>
+        </form>
+    </section>
 
-        <button type="submit">Crear cuenta y entrar</button>
-    </form>
+    <section class="cg-auth-panel <?php echo $auth_view === 'register' ? 'is-active' : ''; ?>" data-auth-panel="register">
+        <?php if ($register_error): ?><p class="cg-alert cg-alert-error"><?php echo esc_html($register_error); ?></p><?php endif; ?>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form cg-auth-form" autocomplete="on">
+            <?php wp_nonce_field('catgame_register'); ?>
+            <input type="hidden" name="action" value="catgame_register">
+            <label>Correo
+                <input type="email" name="email" required value="<?php echo esc_attr($reg_email); ?>" autocomplete="email">
+            </label>
+            <label>Nombre de usuario
+                <input type="text" name="username" required maxlength="60" value="<?php echo esc_attr($reg_username); ?>" autocomplete="username">
+            </label>
+            <label>Contraseña
+                <div class="cg-password-wrap">
+                    <input type="password" name="password" required minlength="8" autocomplete="new-password">
+                    <button type="button" class="cg-password-toggle" data-target="password" aria-label="Mostrar u ocultar contraseña">👁</button>
+                </div>
+            </label>
+            <label>Repetir contraseña
+                <div class="cg-password-wrap">
+                    <input type="password" name="password_confirm" required minlength="8" autocomplete="new-password">
+                    <button type="button" class="cg-password-toggle" data-target="password_confirm" aria-label="Mostrar u ocultar contraseña">👁</button>
+                </div>
+            </label>
+            <button type="submit">Crear cuenta</button>
+        </form>
+    </section>
+
+    <section class="cg-auth-panel <?php echo $auth_view === 'forgot' ? 'is-active' : ''; ?>" data-auth-panel="forgot">
+        <?php if ($lost_error): ?><p class="cg-alert cg-alert-error"><?php echo esc_html($lost_error); ?></p><?php endif; ?>
+        <?php if ($lost_sent): ?><p class="cg-alert cg-alert-success">Si existe una cuenta asociada, te enviamos un correo con instrucciones para recuperar tu contraseña.</p><?php endif; ?>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form cg-auth-form" autocomplete="on">
+            <?php wp_nonce_field('catgame_lost_password'); ?>
+            <input type="hidden" name="action" value="catgame_lost_password">
+            <label>Usuario o correo
+                <input type="text" name="lost_identifier" required value="<?php echo esc_attr($lost_identifier); ?>" autocomplete="username email">
+            </label>
+            <button type="submit">Enviar enlace de recuperación</button>
+        </form>
+    </section>
+
+    <?php if ($auth_view === 'reset'): ?>
+        <section class="cg-auth-panel is-active" data-auth-panel="reset">
+            <h3>Restablecer contraseña</h3>
+            <?php if (!$has_valid_reset_key): ?>
+                <p class="cg-alert cg-alert-error">El enlace de recuperación no es válido o ya expiró.</p>
+            <?php else: ?>
+                <?php if ($reset_error): ?><p class="cg-alert cg-alert-error"><?php echo esc_html($reset_error); ?></p><?php endif; ?>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form cg-auth-form" autocomplete="off">
+                    <?php wp_nonce_field('catgame_reset_password'); ?>
+                    <input type="hidden" name="action" value="catgame_reset_password">
+                    <input type="hidden" name="rp_login" value="<?php echo esc_attr($rp_login); ?>">
+                    <input type="hidden" name="rp_key" value="<?php echo esc_attr($rp_key); ?>">
+                    <label>Nueva contraseña
+                        <div class="cg-password-wrap">
+                            <input type="password" name="password" required minlength="8" autocomplete="new-password">
+                            <button type="button" class="cg-password-toggle" data-target="password" aria-label="Mostrar u ocultar contraseña">👁</button>
+                        </div>
+                    </label>
+                    <label>Repetir nueva contraseña
+                        <div class="cg-password-wrap">
+                            <input type="password" name="password_confirm" required minlength="8" autocomplete="new-password">
+                            <button type="button" class="cg-password-toggle" data-target="password_confirm" aria-label="Mostrar u ocultar contraseña">👁</button>
+                        </div>
+                    </label>
+                    <button type="submit">Restablecer contraseña</button>
+                </form>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
 </section>
 <?php return; endif;
 

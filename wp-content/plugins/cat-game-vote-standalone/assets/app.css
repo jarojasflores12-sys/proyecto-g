@@ -1108,3 +1108,71 @@ body.cg-has-custom-bg .cg-main {
     flex: 1;
   }
 }
+
+
+.cg-auth-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.cg-auth-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.cg-auth-tab {
+  background: rgba(199, 206, 234, 0.3);
+  color: var(--cg-text);
+  border-radius: 10px;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.cg-auth-tab.is-active {
+  background: var(--cg-primary);
+  color: #fff;
+}
+
+.cg-auth-panel {
+  display: none;
+}
+
+.cg-auth-panel.is-active {
+  display: block;
+}
+
+.cg-auth-form {
+  max-width: 100%;
+  margin: 0;
+}
+
+.cg-password-wrap {
+  position: relative;
+}
+
+.cg-password-wrap input {
+  padding-right: 46px;
+}
+
+.cg-password-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 8px;
+  padding: 6px 8px;
+  min-width: 34px;
+  background: rgba(199, 206, 234, 0.45);
+  color: #444;
+}
+
+.cg-password-toggle.is-visible {
+  background: rgba(247, 183, 195, 0.6);
+}
+
+@media (max-width: 560px) {
+  .cg-auth-tabs {
+    grid-template-columns: 1fr;
+  }
+}

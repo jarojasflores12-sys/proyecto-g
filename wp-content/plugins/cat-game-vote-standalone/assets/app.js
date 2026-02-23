@@ -487,3 +487,54 @@
     setExpanded(false);
   });
 })();
+
+
+(function () {
+  const authShell = document.querySelector('.cg-auth-shell');
+  if (!authShell) {
+    return;
+  }
+
+  const tabs = Array.from(authShell.querySelectorAll('.cg-auth-tab'));
+  const panels = Array.from(authShell.querySelectorAll('.cg-auth-panel'));
+
+  const activateTab = (tabName) => {
+    tabs.forEach((tab) => {
+      const active = tab.dataset.authTab === tabName;
+      tab.classList.toggle('is-active', active);
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    panels.forEach((panel) => {
+      const active = panel.dataset.authPanel === tabName;
+      if (panel.dataset.authPanel === 'reset') {
+        return;
+      }
+      panel.classList.toggle('is-active', active);
+    });
+  };
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      activateTab(tab.dataset.authTab || 'login');
+    });
+  });
+
+  authShell.addEventListener('click', (event) => {
+    const toggle = event.target.closest('.cg-password-toggle');
+    if (!toggle) {
+      return;
+    }
+
+    const wrap = toggle.closest('.cg-password-wrap');
+    const input = wrap ? wrap.querySelector('input') : null;
+    if (!input) {
+      return;
+    }
+
+    const visible = input.type === 'text';
+    input.type = visible ? 'password' : 'text';
+    toggle.classList.toggle('is-visible', !visible);
+    toggle.setAttribute('aria-label', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
+  });
+})();

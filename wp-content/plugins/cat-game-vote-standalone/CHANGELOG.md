@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.23.3
+- Auth (deslogueado): nueva UI con secciones de Iniciar sesión, Crear cuenta y Olvidé mi contraseña.
+- Login: nuevo handler con `wp_signon()` y preservación de usuario/correo en errores (limpiando solo contraseñas).
+- Registro: mantiene email/usuario ante validaciones fallidas y limpia contraseñas por seguridad.
+- Recuperación: integración con flujo nativo WP (`retrieve_password`) enviando email de restablecimiento con enlace al reset del plugin.
+- Reset: nueva pantalla para establecer contraseña (con confirmación + mínimo 8) y actualización vía `reset_password()`.
+- UX: botón ver/ocultar contraseña (ojo) en login, registro y reset.
+
 ## 0.23.2
 - Perfil: se eliminan controles no funcionales de edición (nombre de usuario editable, ciudad/país por defecto e idioma) para dejar una experiencia más clara sin romper funciones existentes.
 - Perfil: nuevo botón "Cambiar color" que despliega/oculta el panel de colores del avatar; al guardar cambios el panel vuelve a ocultarse.
