@@ -548,21 +548,58 @@
   }
 
   const labels = {
-    adorable: '😻',
-    funny: '😂',
-    cute: '🥰',
-    wow: '🤩',
-    epic: '🔥',
+    adorable: { emoji: '😻', label: 'Adorable' },
+    funny: { emoji: '😂', label: 'Me hizo reír' },
+    cute: { emoji: '🥰', label: 'Tierno' },
+    wow: { emoji: '🤩', label: 'Impresionante' },
+    epic: { emoji: '🔥', label: 'Épico' },
   };
 
-  const formatCounts = (counts) => `${labels.adorable} ${counts.adorable || 0}  ${labels.funny} ${counts.funny || 0}  ${labels.cute} ${counts.cute || 0}  ${labels.wow} ${counts.wow || 0}  ${labels.epic} ${counts.epic || 0}`;
+  const formatCounts = (counts) => `😻 ${counts.adorable || 0}  😂 ${counts.funny || 0}  🥰 ${counts.cute || 0}  🤩 ${counts.wow || 0}  🔥 ${counts.epic || 0}`;
+
+  const initReactionButton = (btn) => {
+    const reaction = btn.dataset.reaction || '';
+    const meta = labels[reaction];
+    if (!meta) {
+      return;
+    }
+
+    btn.classList.add('reaction-btn');
+    btn.dataset.label = meta.label;
+
+    if (!btn.querySelector('.emoji')) {
+      btn.textContent = '';
+      const emoji = document.createElement('span');
+      emoji.className = 'emoji';
+      emoji.textContent = meta.emoji;
+
+      const count = document.createElement('span');
+      count.className = 'count';
+      count.textContent = '0';
+
+      const tooltip = document.createElement('div');
+      tooltip.className = 'reaction-tooltip';
+      tooltip.textContent = meta.label;
+
+      btn.appendChild(emoji);
+      btn.appendChild(count);
+      btn.appendChild(tooltip);
+    }
+  };
 
   const paintWidget = (widget, counts) => {
     const active = counts.user_reaction || '';
     widget.querySelectorAll('.cg-reaction-btn').forEach((btn) => {
-      const isActive = btn.dataset.reaction === active;
+      const reaction = btn.dataset.reaction || '';
+      const countEl = btn.querySelector('.count');
+      if (countEl && Object.hasOwn(counts, reaction)) {
+        countEl.textContent = String(counts[reaction] || 0);
+      }
+
+      const isActive = reaction === active;
       btn.classList.toggle('is-active', isActive);
     });
+
     const row = widget.querySelector('.cg-reaction-counts');
     if (row) {
       row.textContent = formatCounts(counts);
@@ -584,9 +621,9 @@
     }
   };
 
-  const submitReaction = async (widget, reactionType) => {
+  const sendReaction = async (widget, reactionType) => {
     const submissionId = Number(widget.dataset.submissionId || '0');
-    if (!submissionId) return;
+    if (!submissionId || !reactionType) return;
 
     const fd = new FormData();
     fd.append('submission_id', String(submissionId));
@@ -608,22 +645,56 @@
   };
 
   widgets.forEach((widget) => {
-    fetchCounts(widget).catch(() => null);
+    let holdTimer = null;
+    let isHolding = false;
 
-    widget.addEventListener('click', (event) => {
-      const btn = event.target.closest('.cg-reaction-btn');
-      if (!btn) return;
+    const buttons = Array.from(widget.querySelectorAll('.cg-reaction-btn'));
+    buttons.forEach((btn) => {
+      initReactionButton(btn);
 
-      if (widget.dataset.loggedIn !== '1') {
-        window.catgameToast?.('Inicia sesión para reaccionar', 'info');
-        return;
-      }
+      const clearHoldState = () => {
+        btn.classList.remove('active-hold', 'show-tooltip');
+      };
 
-      widget.classList.add('is-busy');
-      submitReaction(widget, btn.dataset.reaction || '')
-        .finally(() => {
-          widget.classList.remove('is-busy');
-        });
+      const startHold = () => {
+        isHolding = false;
+        clearTimeout(holdTimer);
+        holdTimer = setTimeout(() => {
+          isHolding = true;
+          btn.classList.add('active-hold', 'show-tooltip');
+        }, 300);
+      };
+
+      const endHold = () => {
+        clearTimeout(holdTimer);
+        clearHoldState();
+
+        if (widget.dataset.loggedIn !== '1') {
+          window.catgameToast?.('Inicia sesión para reaccionar', 'info');
+          return;
+        }
+
+        widget.classList.add('is-busy');
+        sendReaction(widget, btn.dataset.reaction || '')
+          .finally(() => {
+            widget.classList.remove('is-busy');
+          });
+      };
+
+      const cancelHold = () => {
+        clearTimeout(holdTimer);
+        clearHoldState();
+      };
+
+      btn.addEventListener('pointerdown', startHold);
+      btn.addEventListener('pointerup', endHold);
+      btn.addEventListener('pointerleave', cancelHold);
+      btn.addEventListener('pointercancel', cancelHold);
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+      });
     });
+
+    fetchCounts(widget).catch(() => null);
   });
-})();
+})();;

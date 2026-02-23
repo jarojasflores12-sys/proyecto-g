@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.23.6
+- Reacciones UI: emojis y conteos en chips más grandes para mejorar legibilidad en móvil.
+- Reacciones UX: soporte de long press (>300ms) con escala + tooltip de nombre; el voto se envía al soltar.
+- Reacciones UX: tap rápido mantiene voto inmediato sin mostrar tooltip.
+- Reacciones frontend: se reutiliza la lógica existente de envío sin cambios de backend.
+
 ## 0.23.5
 - UI frontend: se reemplaza visualmente el bloque de estrellas por reacciones en Feed/Publicaciones, Detalle, Top 3 de Inicio, Ranking y Mis publicaciones del Perfil.
 - Reacciones: nuevos botones tipo chips (`😻 Adorable`, `😂 Me hizo reír`, `🥰 Tierno`, `🤩 Impresionante`, `🔥 Épico`) con estado activo por usuario.

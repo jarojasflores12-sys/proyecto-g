@@ -1229,3 +1229,56 @@ body.cg-has-custom-bg .cg-main {
 .cg-reactions.is-busy {
   opacity: 0.75;
 }
+
+
+.reaction-btn,
+.cg-reaction-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #fff;
+  transition: transform .15s ease;
+  position: relative;
+}
+
+.reaction-btn .emoji,
+.cg-reaction-btn .emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.reaction-btn .count,
+.cg-reaction-btn .count {
+  font-size: 15px;
+  font-weight: 600;
+  color: #4f566a;
+}
+
+.reaction-btn.active-hold,
+.cg-reaction-btn.active-hold {
+  transform: scale(1.35);
+  z-index: 10;
+}
+
+.reaction-tooltip {
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease;
+}
+
+.reaction-btn.show-tooltip .reaction-tooltip,
+.cg-reaction-btn.show-tooltip .reaction-tooltip {
+  opacity: 1;
+}
