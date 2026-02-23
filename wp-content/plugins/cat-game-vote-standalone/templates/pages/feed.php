@@ -29,8 +29,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
         <?php foreach ($items as $item): ?>
             <?php
             $item_tags = CatGame_Submissions::submission_tags($item);
-            $title = trim((string) ($item['title'] ?? ''));
-            $title_label = $title !== '' ? $title : 'Publicación #' . (int) $item['id'];
+            $title_label = CatGame_Submissions::title_label($item);
             $author = get_userdata((int) ($item['user_id'] ?? 0));
             $author_name = $author ? (string) $author->user_login : 'usuario';
             $position = isset($top3_positions[(int) $item['id']]) ? (int) $top3_positions[(int) $item['id']] : 0;

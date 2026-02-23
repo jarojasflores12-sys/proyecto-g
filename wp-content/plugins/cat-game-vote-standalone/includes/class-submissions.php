@@ -158,6 +158,55 @@ class CatGame_Submissions {
         return ',' . implode(',', array_values(array_unique($tags))) . ',';
     }
 
+
+    public static function title_label(array $submission): string {
+        $title = trim((string) ($submission['title'] ?? ''));
+        return $title !== '' ? $title : 'Sin título';
+    }
+
+    public static function upload_error_message(string $error): string {
+        $map = [
+            'confirm_required' => 'Debes confirmar que no hay personas en la foto.',
+            'missing_location' => 'Completa ciudad y país.',
+            'missing_title' => 'El título es obligatorio.',
+            'title_too_short' => 'El título debe tener al menos 2 caracteres.',
+            'title_too_long' => 'El título no puede superar los 40 caracteres.',
+            'no_event' => 'No hay evento activo para recibir publicaciones.',
+            'missing_file' => 'Selecciona una imagen para continuar.',
+            'file_too_large' => 'La imagen supera el tamaño máximo permitido.',
+            'invalid_type' => 'El archivo debe ser una imagen válida.',
+            'upload_failed' => 'No se pudo subir la imagen. Intenta nuevamente.',
+        ];
+
+        return $map[$error] ?? 'No se pudo completar la publicación.';
+    }
+
+    private static function upload_redirect_with_state(string $error, array $state = []): void {
+        $query = ['catgame_error' => $error];
+
+        if (!empty($state['city'])) {
+            $query['upload_city'] = sanitize_text_field((string) $state['city']);
+        }
+        if (!empty($state['country'])) {
+            $query['upload_country'] = sanitize_text_field((string) $state['country']);
+        }
+        if (array_key_exists('title', $state)) {
+            $query['upload_title'] = sanitize_text_field((string) $state['title']);
+        }
+        if (!empty($state['custom_tags'])) {
+            $query['upload_custom_tags'] = sanitize_textarea_field((string) $state['custom_tags']);
+        }
+        if (!empty($state['tags']) && is_array($state['tags'])) {
+            $query['upload_tags'] = implode(',', array_values(array_filter(array_map([__CLASS__, 'normalize_tag'], $state['tags']))));
+        }
+        if (!empty($state['confirm_no_people'])) {
+            $query['upload_confirm_no_people'] = '1';
+        }
+
+        wp_safe_redirect(add_query_arg($query, home_url('/catgame/upload')));
+        exit;
+    }
+
     public static function handle_upload(): void {
         if (!is_user_logged_in()) {
             wp_die('Debes iniciar sesión para subir fotos.');
@@ -165,42 +214,61 @@ class CatGame_Submissions {
 
         check_admin_referer('catgame_upload');
 
-        if (empty($_POST['confirm_no_people'])) {
-            wp_safe_redirect(add_query_arg('catgame_error', 'confirm_required', home_url('/catgame/upload')));
-            exit;
-        }
-
         $city = sanitize_text_field(wp_unslash($_POST['city'] ?? ''));
         $country = sanitize_text_field(wp_unslash($_POST['country'] ?? ''));
         $title = sanitize_text_field(wp_unslash($_POST['title'] ?? ''));
-        $title = function_exists('mb_substr') ? mb_substr($title, 0, 80) : substr($title, 0, 80);
+        $title = trim($title);
+        $title_length = function_exists('mb_strlen') ? mb_strlen($title) : strlen($title);
+        $selected_tags = wp_unslash($_POST['tags'] ?? []);
+        $custom_tags_input = (string) wp_unslash($_POST['custom_tags'] ?? '');
+        $confirm_no_people = !empty($_POST['confirm_no_people']);
+
+        $upload_state = [
+            'city' => $city,
+            'country' => $country,
+            'title' => $title,
+            'tags' => is_array($selected_tags) ? $selected_tags : [],
+            'custom_tags' => $custom_tags_input,
+            'confirm_no_people' => $confirm_no_people,
+        ];
+
+        if (!$confirm_no_people) {
+            self::upload_redirect_with_state('confirm_required', $upload_state);
+        }
 
         if ($city === '' || $country === '') {
-            wp_safe_redirect(add_query_arg('catgame_error', 'missing_location', home_url('/catgame/upload')));
-            exit;
+            self::upload_redirect_with_state('missing_location', $upload_state);
+        }
+
+        if ($title === '') {
+            self::upload_redirect_with_state('missing_title', $upload_state);
+        }
+
+        if ($title_length < 2) {
+            self::upload_redirect_with_state('title_too_short', $upload_state);
+        }
+
+        if ($title_length > 40) {
+            self::upload_redirect_with_state('title_too_long', $upload_state);
         }
 
         $event = CatGame_Events::get_active_event();
         if (!$event) {
-            wp_safe_redirect(add_query_arg('catgame_error', 'no_event', home_url('/catgame/upload')));
-            exit;
+            self::upload_redirect_with_state('no_event', $upload_state);
         }
 
         if (empty($_FILES['cat_image']['tmp_name'])) {
-            wp_safe_redirect(add_query_arg('catgame_error', 'missing_file', home_url('/catgame/upload')));
-            exit;
+            self::upload_redirect_with_state('missing_file', $upload_state);
         }
 
         $file = $_FILES['cat_image'];
         if ((int) $file['size'] > 3 * 1024 * 1024) {
-            wp_safe_redirect(add_query_arg('catgame_error', 'file_too_large', home_url('/catgame/upload')));
-            exit;
+            self::upload_redirect_with_state('file_too_large', $upload_state);
         }
 
         $type = wp_check_filetype_and_ext($file['tmp_name'], $file['name']);
         if (empty($type['type']) || strpos($type['type'], 'image/') !== 0) {
-            wp_safe_redirect(add_query_arg('catgame_error', 'invalid_type', home_url('/catgame/upload')));
-            exit;
+            self::upload_redirect_with_state('invalid_type', $upload_state);
         }
 
         require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -209,14 +277,12 @@ class CatGame_Submissions {
 
         $attachment_id = media_handle_upload('cat_image', 0);
         if (is_wp_error($attachment_id)) {
-            wp_safe_redirect(add_query_arg('catgame_error', 'upload_failed', home_url('/catgame/upload')));
-            exit;
+            self::upload_redirect_with_state('upload_failed', $upload_state);
         }
 
         $final_size = self::compress_uploaded_image_backup((int) $attachment_id);
 
         $user_id = get_current_user_id();
-        $selected_tags = wp_unslash($_POST['tags'] ?? []);
         $available_tags = self::available_tags_for_user($user_id);
 
         $new_custom_tag_map = self::parse_custom_tags_input(wp_unslash($_POST['custom_tags'] ?? ''));
@@ -253,7 +319,7 @@ class CatGame_Submissions {
                 'country' => $country,
                 'tags_json' => wp_json_encode($filtered_tags),
                 'tags_text' => self::tags_text_from_list($filtered_tags),
-                'title' => $title !== '' ? $title : null,
+                'title' => $title,
                 'attachment_id' => (int) $attachment_id,
                 'image_size_bytes' => $final_size > 0 ? $final_size : null,
                 'created_at' => current_time('mysql'),
@@ -264,6 +330,8 @@ class CatGame_Submissions {
             ],
             ['%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%f', '%d', '%d']
         );
+
+        update_post_meta((int) $attachment_id, 'catgv_title', $title);
 
         self::clear_leaderboard_cache();
 
@@ -350,6 +418,7 @@ class CatGame_Submissions {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
         $wpdb->update($table, ['score_cached' => $score], ['id' => $submission_id], ['%f'], ['%d']);
+
 
         self::clear_leaderboard_cache();
     }
@@ -522,6 +591,7 @@ class CatGame_Submissions {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
         $wpdb->update($table, ['status' => $status], ['id' => $submission_id], ['%s'], ['%d']);
+
         self::clear_leaderboard_cache();
     }
 

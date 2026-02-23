@@ -53,7 +53,38 @@ class CatGame_Render {
                     $upload_defaults['default_city'] = (string) get_user_meta($uid, 'catgame_default_city', true);
                     $upload_defaults['default_country'] = (string) get_user_meta($uid, 'catgame_default_country', true);
                 }
-                return ['page' => $page, 'event' => $event, 'user_tags' => $user_tags, 'upload_defaults' => $upload_defaults];
+
+                $selected_tags_raw = sanitize_text_field(wp_unslash($_GET['upload_tags'] ?? ''));
+                $selected_tags = [];
+                if ($selected_tags_raw !== '') {
+                    foreach (explode(',', $selected_tags_raw) as $raw_tag) {
+                        $tag = CatGame_Submissions::normalize_tag($raw_tag);
+                        if ($tag !== '') {
+                            $selected_tags[] = $tag;
+                        }
+                    }
+                }
+
+                $upload_state = [
+                    'city' => sanitize_text_field(wp_unslash($_GET['upload_city'] ?? (string) ($upload_defaults['default_city'] ?? ''))),
+                    'country' => sanitize_text_field(wp_unslash($_GET['upload_country'] ?? (string) ($upload_defaults['default_country'] ?? ''))),
+                    'title' => sanitize_text_field(wp_unslash($_GET['upload_title'] ?? '')),
+                    'custom_tags' => sanitize_textarea_field(wp_unslash($_GET['upload_custom_tags'] ?? '')),
+                    'selected_tags' => array_values(array_unique($selected_tags)),
+                    'confirm_no_people' => (int) ($_GET['upload_confirm_no_people'] ?? 0) === 1,
+                ];
+
+                $upload_error_key = sanitize_key(wp_unslash($_GET['catgame_error'] ?? ''));
+                $upload_error = $upload_error_key !== '' ? CatGame_Submissions::upload_error_message($upload_error_key) : '';
+
+                return [
+                    'page' => $page,
+                    'event' => $event,
+                    'user_tags' => $user_tags,
+                    'upload_defaults' => $upload_defaults,
+                    'upload_state' => $upload_state,
+                    'upload_error' => $upload_error,
+                ];
             case 'feed':
                 $filter_tag = CatGame_Submissions::normalize_tag(wp_unslash($_GET['tag'] ?? ''));
                 $feed_tags = is_user_logged_in()
@@ -181,6 +212,30 @@ class CatGame_Render {
                 $items = CatGame_Submissions::list_user_submissions($user_id, $event_id);
                 $stats = CatGame_Submissions::user_stats($user_id, $event_id);
 
+                $best_photo = null;
+                if ($event) {
+                    $active_items = CatGame_Submissions::list_user_submissions($user_id, (int) $event['id']);
+                    usort($active_items, static function (array $a, array $b): int {
+                        $a_total = (int) ($a['total_reactions'] ?? 0);
+                        $b_total = (int) ($b['total_reactions'] ?? 0);
+                        if ($a_total !== $b_total) {
+                            return $b_total <=> $a_total;
+                        }
+
+                        $a_first = (string) ($a['first_reaction_at'] ?? '9999-12-31 23:59:59');
+                        $b_first = (string) ($b['first_reaction_at'] ?? '9999-12-31 23:59:59');
+                        if ($a_first !== $b_first) {
+                            return strcmp($a_first, $b_first);
+                        }
+
+                        return (int) ($a['id'] ?? 0) <=> (int) ($b['id'] ?? 0);
+                    });
+
+                    if (!empty($active_items) && (int) ($active_items[0]['total_reactions'] ?? 0) > 0) {
+                        $best_photo = $active_items[0];
+                    }
+                }
+
                 $top_position_for_user = null;
                 if (!empty($top3_positions) && $event) {
                     $top_items = CatGame_Submissions::leaderboard((int) $event['id'], 'global', '', '', 3);
@@ -207,6 +262,7 @@ class CatGame_Render {
                     'top3_positions' => $top3_positions,
                     'current_user_id' => $current_user_id,
                     'top_position_for_user' => $top_position_for_user,
+                    'best_photo' => $best_photo,
                     'profile_prefs' => [
                         'display_name' => (string) get_user_meta($user_id, 'catgame_display_name', true),
                         'avatar_color' => (string) get_user_meta($user_id, 'catgame_avatar_color', true),

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.24.0
+- Upload: título ahora obligatorio (trim, mínimo 2, máximo 40), con preservación de campos en validaciones fallidas y mensaje de error visible.
+- Upload: el título también se guarda en post meta del attachment como `catgv_title`.
+- UI: en Inicio/Publicaciones/Ranking/Perfil se prioriza título de publicación (fallback "Sin título") y se evita mostrar "Publicación #ID" como título principal.
+- Perfil: "Publicación destacada" ahora se calcula solo con publicaciones del evento activo, por mayor total de reacciones y desempate por `first_reaction_at`.
+- Perfil/Mis publicaciones: no se muestran estrellas; si una publicación no tiene reacciones se muestra "Sin reacciones".
+
 ## 0.23.9
 - UX: se elimina el flujo de detalle de publicación; se quita el botón "Ver detalle" y la ruta `/catgame/submission/{id}` ahora redirige al feed.
 - Reacciones: long press ajustado a ~400ms con escala `1.35` + tooltip y envío al soltar; tap rápido mantiene envío inmediato.

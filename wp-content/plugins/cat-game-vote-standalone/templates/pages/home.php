@@ -35,8 +35,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
         <div class="cg-home-top3">
             <?php foreach ($top_items as $index => $item): ?>
                 <?php
-                $title = trim((string) ($item['title'] ?? ''));
-                $title_label = $title !== '' ? $title : 'Publicación #' . (int) ($item['id'] ?? 0);
+                $title_label = CatGame_Submissions::title_label($item);
                 $author = get_userdata((int) ($item['user_id'] ?? 0));
                 $author_name = $author ? (string) $author->user_login : 'usuario';
                 $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_user_id;
@@ -62,10 +61,10 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
     <?php else: ?>
         <div class="cg-home-latest" role="list">
             <?php foreach ($latest_items as $item): ?>
-                <?php $title = trim((string) ($item['title'] ?? '')); $author = get_userdata((int) ($item['user_id'] ?? 0)); $author_name = $author ? (string) $author->user_login : 'usuario'; ?>
+                <?php $title_label = CatGame_Submissions::title_label($item); $author = get_userdata((int) ($item['user_id'] ?? 0)); $author_name = $author ? (string) $author->user_login : 'usuario'; ?>
                 <article class="cg-card cg-home-latest-item" role="listitem">
                     <?php echo wp_get_attachment_image((int) ($item['attachment_id'] ?? 0), 'medium', false, ['loading' => 'lazy', 'class' => 'cg-home-latest-image']); ?>
-                    <strong class="cg-title"><?php echo esc_html($title !== '' ? $title : 'Publicación #' . (int) ($item['id'] ?? 0)); ?></strong>
+                    <span class="cg-badge">#<?php echo (int) ($item['id'] ?? 0); ?></span><strong class="cg-title"><?php echo esc_html($title_label); ?></strong>
                     <small class="cg-author">por @<?php echo esc_html($author_name); ?></small>
                 </article>
             <?php endforeach; ?>

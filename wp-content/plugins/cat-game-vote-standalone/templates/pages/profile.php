@@ -142,7 +142,7 @@ if (!isset($allowed_colors[$avatar_color])) {
 }
 $most_voted = is_array($stats['most_voted'] ?? null) ? $stats['most_voted'] : null;
 $best_ranked = is_array($stats['best_ranked'] ?? null) ? $stats['best_ranked'] : null;
-$best_photo = $best_ranked ? $best_ranked : null;
+$best_photo = is_array($data['best_photo'] ?? null) ? $data['best_photo'] : null;
 
 $profile_link = home_url('/catgame/profile');
 $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
@@ -215,7 +215,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
         <article class="cg-card">
             <strong>Publicación con más reacciones</strong>
             <?php if ($most_voted): ?>
-                <?php $mv_title = trim((string) ($most_voted['title'] ?? '')) ?: 'Publicación #' . (int) $most_voted['id']; ?>
+                <?php $mv_title = CatGame_Submissions::title_label($most_voted); ?>
                 <p><?php echo esc_html($mv_title); ?></p>
             <?php else: ?>
                 <p>Aún no tienes publicaciones.</p>
@@ -224,7 +224,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
         <article class="cg-card">
             <strong>Mejor posicionada por reacciones</strong>
             <?php if ($best_ranked): ?>
-                <?php $br_title = trim((string) ($best_ranked['title'] ?? '')) ?: 'Publicación #' . (int) $best_ranked['id']; ?>
+                <?php $br_title = CatGame_Submissions::title_label($best_ranked); ?>
                 <p><?php echo esc_html($br_title); ?></p>
             <?php else: ?>
                 <p>Sin datos aún.</p>
@@ -237,7 +237,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
         <article class="cg-card">
             <strong>Publicación destacada</strong>
             <?php if ($best_photo): ?>
-                <?php $bf_title = trim((string) ($best_photo['title'] ?? '')) ?: 'Publicación #' . (int) $best_photo['id']; ?>
+                <?php $bf_title = CatGame_Submissions::title_label($best_photo); ?>
                 <p><?php echo esc_html($bf_title); ?></p>
             <?php else: ?>
                 <p>Sin datos aún.</p>
@@ -248,11 +248,11 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
     <h3>Tu publicación destacada</h3>
     <?php if ($best_photo): ?>
         <?php
-        $best_title = trim((string) ($best_photo['title'] ?? '')) ?: 'Publicación #' . (int) $best_photo['id'];
+        $best_title = CatGame_Submissions::title_label($best_photo);
         ?>
         <article class="cg-card cg-profile-best-photo">
             <?php echo wp_get_attachment_image((int) $best_photo['attachment_id'], 'medium_large', false, ['loading' => 'lazy', 'class' => 'cg-profile-thumb']); ?>
-            <strong><?php echo esc_html($best_title); ?></strong>
+            <span class="cg-badge">#<?php echo (int) ($best_photo['id'] ?? 0); ?></span><strong><?php echo esc_html($best_title); ?></strong>
             <?php CatGame_Reactions::render_widget((int) ($best_photo['id'] ?? 0), is_user_logged_in()); ?>
         </article>
     <?php else: ?>
@@ -298,8 +298,16 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
             <?php
             ?>
             <article class="cg-card cg-profile-item">
+                <?php
+                $item_title = CatGame_Submissions::title_label($item);
+                $item_author = get_userdata((int) ($item['user_id'] ?? 0));
+                $item_author_name = $item_author ? (string) $item_author->user_login : 'usuario';
+                $item_reactions = (int) ($item['total_reactions'] ?? 0);
+                ?>
                 <?php echo wp_get_attachment_image((int) $item['attachment_id'], 'medium_large', false, ['loading' => 'lazy', 'class' => 'cg-profile-thumb']); ?>
-                <p>#<?php echo (int) $item['id']; ?> — <?php echo esc_html($item['status']); ?> — <?php echo (int) ($item['total_reactions'] ?? 0); ?> reacciones</p>
+                <p><span class="cg-badge">#<?php echo (int) $item['id']; ?></span> <?php echo esc_html($item_title); ?></p>
+                <small class="cg-author">por @<?php echo esc_html($item_author_name); ?></small>
+                <p><?php echo $item_reactions > 0 ? esc_html($item_reactions . ' reacciones') : 'Sin reacciones'; ?></p>
                 <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in()); ?>
             </article>
         <?php endforeach; ?>
