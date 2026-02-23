@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.23.8
+- Ranking: orden actualizado para usar reacciones (`total_reactions DESC`, `first_reaction_at ASC`) en vez de estrellas/votos.
+- Inicio: Top 3 ahora refleja el ranking por reacciones.
+- Perfil: estadísticas y destacados migrados a métricas de reacciones; "Mis publicaciones" muestra total de reacciones por item.
+- Backend: consultas agregadas con `LEFT JOIN` sobre agregados de reacciones para mantener eficiencia y compatibilidad.
+
 ## 0.23.7
 - Reacciones UI: se elimina el bloque pequeño inferior de conteos duplicados y se mantiene solo el bloque grande interactivo en cards/detalle.
 - Reacciones frontend: limpieza JS para no renderizar/actualizar el resumen mini de conteos duplicado.

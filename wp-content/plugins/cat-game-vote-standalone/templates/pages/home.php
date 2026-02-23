@@ -9,7 +9,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
 <?php $is_logged = is_user_logged_in(); ?>
 <section class="cg-home-hero">
     <h2>¡Compite con tu gato y gana!</h2>
-    <p>Participa en el evento activo y consigue el mejor puntaje.</p>
+    <p>Participa en el evento activo y consigue más reacciones.</p>
     <?php if ($event): ?>
         <p><strong>Evento activo:</strong> <?php echo esc_html($event['name']); ?></p>
     <?php else: ?>
@@ -28,7 +28,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
 </section>
 
 <section class="cg-home-section">
-    <h3>Top 3 del ranking</h3>
+    <h3>Top 3 por reacciones</h3>
     <?php if (empty($top_items)): ?>
         <p class="cg-empty-state">Aún no hay ranking disponible.</p>
     <?php else: ?>
@@ -77,7 +77,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
     <h3>Cómo funciona</h3>
     <div class="cg-home-steps">
         <a class="cg-card cg-home-step-link" href="<?php echo esc_url(home_url('/catgame/upload')); ?>" aria-label="Ir a Subir"><strong>📷 Sube</strong><p>Publica la mejor foto de tu gato.</p></a>
-        <a class="cg-card cg-home-step-link" href="<?php echo esc_url(home_url('/catgame/feed')); ?>" aria-label="Ir a Publicaciones"><strong>⭐ Vota</strong><p>La comunidad califica las publicaciones.</p></a>
+        <a class="cg-card cg-home-step-link" href="<?php echo esc_url(home_url('/catgame/feed')); ?>" aria-label="Ir a Publicaciones"><strong>😻 Reacciona</strong><p>La comunidad reacciona a las publicaciones.</p></a>
         <a class="cg-card cg-home-step-link" href="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>" aria-label="Ir a Ranking"><strong>🏆 Gana</strong><p>Sube en el ranking y llega al top.</p></a>
     </div>
 </section>

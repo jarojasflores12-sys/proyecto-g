@@ -357,16 +357,38 @@ class CatGame_Submissions {
     public static function list_user_submissions(int $user_id, int $event_id = 0): array {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
+        $reactions_table = CatGame_DB::table('reactions');
+
+        $reaction_agg_sql = "
+            SELECT submission_id, COUNT(*) AS total_reactions, MIN(created_at) AS first_reaction_at
+            FROM {$reactions_table}
+            GROUP BY submission_id
+        ";
 
         if ($event_id > 0) {
             return $wpdb->get_results(
-                $wpdb->prepare("SELECT * FROM {$table} WHERE user_id = %d AND event_id = %d ORDER BY created_at DESC", $user_id, $event_id),
+                $wpdb->prepare(
+                    "SELECT s.*, COALESCE(r.total_reactions, 0) AS total_reactions, r.first_reaction_at
+                    FROM {$table} s
+                    LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id
+                    WHERE s.user_id = %d AND s.event_id = %d
+                    ORDER BY s.created_at DESC",
+                    $user_id,
+                    $event_id
+                ),
                 ARRAY_A
             );
         }
 
         return $wpdb->get_results(
-            $wpdb->prepare("SELECT * FROM {$table} WHERE user_id = %d ORDER BY created_at DESC", $user_id),
+            $wpdb->prepare(
+                "SELECT s.*, COALESCE(r.total_reactions, 0) AS total_reactions, r.first_reaction_at
+                FROM {$table} s
+                LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id
+                WHERE s.user_id = %d
+                ORDER BY s.created_at DESC",
+                $user_id
+            ),
             ARRAY_A
         );
     }
@@ -374,29 +396,40 @@ class CatGame_Submissions {
     public static function user_stats(int $user_id, int $event_id = 0): array {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
+        $reactions_table = CatGame_DB::table('reactions');
+        $reaction_agg_sql = "
+            SELECT submission_id, COUNT(*) AS total_reactions, MIN(created_at) AS first_reaction_at
+            FROM {$reactions_table}
+            GROUP BY submission_id
+        ";
 
-        $where = 'user_id = %d';
+        $where = 's.user_id = %d';
         $params = [$user_id];
         if ($event_id > 0) {
-            $where .= ' AND event_id = %d';
+            $where .= ' AND s.event_id = %d';
             $params[] = $event_id;
         }
 
-        $sql = "SELECT COUNT(*) AS total_submissions, MAX(score_cached) AS best_score, AVG(score_cached) AS avg_score, SUM(votes_count) AS total_votes FROM {$table} WHERE {$where}";
+        $sql = "SELECT COUNT(*) AS total_submissions, COALESCE(SUM(COALESCE(r.total_reactions, 0)), 0) AS total_reactions FROM {$table} s LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id WHERE {$where}";
         $row = $wpdb->get_row($wpdb->prepare($sql, ...$params), ARRAY_A);
 
-        $sql_most_voted = "SELECT * FROM {$table} WHERE {$where} ORDER BY votes_count DESC, score_cached DESC, created_at DESC, id DESC LIMIT 1";
-        $most_voted = $wpdb->get_row($wpdb->prepare($sql_most_voted, ...$params), ARRAY_A);
+        $sql_most_reacted = "SELECT s.*, COALESCE(r.total_reactions, 0) AS total_reactions, r.first_reaction_at
+            FROM {$table} s
+            LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id
+            WHERE {$where}
+            ORDER BY COALESCE(r.total_reactions, 0) DESC, COALESCE(r.first_reaction_at, '9999-12-31 23:59:59') ASC, s.created_at DESC, s.id DESC
+            LIMIT 1";
+        $most_reacted = $wpdb->get_row($wpdb->prepare($sql_most_reacted, ...$params), ARRAY_A);
 
-        $sql_best = "SELECT * FROM {$table} WHERE {$where} AND votes_count > 0 ORDER BY score_cached DESC, votes_count DESC, created_at DESC, id DESC LIMIT 1";
-        $best_ranked = $wpdb->get_row($wpdb->prepare($sql_best, ...$params), ARRAY_A);
+        $best_ranked = $most_reacted;
 
         return [
             'total_submissions' => (int) ($row['total_submissions'] ?? 0),
-            'best_score' => round((float) ($row['best_score'] ?? 0), 2),
-            'avg_score' => round((float) ($row['avg_score'] ?? 0), 2),
-            'total_votes' => (int) ($row['total_votes'] ?? 0),
-            'most_voted' => is_array($most_voted) ? $most_voted : null,
+            'best_score' => 0,
+            'avg_score' => 0,
+            'total_votes' => 0,
+            'total_reactions' => (int) ($row['total_reactions'] ?? 0),
+            'most_voted' => is_array($most_reacted) ? $most_reacted : null,
             'best_ranked' => is_array($best_ranked) ? $best_ranked : null,
         ];
     }
@@ -421,6 +454,12 @@ class CatGame_Submissions {
         }
 
         $table = CatGame_DB::table('submissions');
+        $reactions_table = CatGame_DB::table('reactions');
+        $reaction_agg_sql = "
+            SELECT submission_id, COUNT(*) AS total_reactions, MIN(created_at) AS first_reaction_at
+            FROM {$reactions_table}
+            GROUP BY submission_id
+        ";
         $where = ['event_id = %d', "status = 'active'"];
         $params = [$event_id];
 
@@ -460,7 +499,16 @@ class CatGame_Submissions {
 
         $params[] = $limit;
 
-        $sql = "SELECT * FROM {$table} WHERE " . implode(' AND ', $where) . " ORDER BY score_cached DESC, votes_count DESC, created_at DESC, id DESC LIMIT %d";
+        $where_sql = implode(' AND ', array_map(static function ($clause): string {
+            return str_replace(['event_id', 'status', 'country', 'city', 'tags_text', 'tags_json'], ['s.event_id', 's.status', 's.country', 's.city', 's.tags_text', 's.tags_json'], $clause);
+        }, $where));
+
+        $sql = "SELECT s.*, COALESCE(r.total_reactions, 0) AS total_reactions, r.first_reaction_at
+            FROM {$table} s
+            LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id
+            WHERE {$where_sql}
+            ORDER BY COALESCE(r.total_reactions, 0) DESC, COALESCE(r.first_reaction_at, '9999-12-31 23:59:59') ASC, s.created_at DESC, s.id DESC
+            LIMIT %d";
         $prepared = $wpdb->prepare($sql, ...$params);
         $results = $wpdb->get_results($prepared, ARRAY_A);
 

@@ -35,7 +35,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
 
     <div class="cg-rank-list">
         <?php if (!$items): ?>
-            <p class="cg-empty-state">Aún no hay ranking disponible. Cuando existan votos, aparecerá aquí.</p>
+            <p class="cg-empty-state">Aún no hay ranking disponible. Cuando existan reacciones, aparecerá aquí.</p>
         <?php endif; ?>
 
         <?php foreach ($items as $idx => $item): ?>

@@ -125,7 +125,7 @@ if (!empty($data['requires_login'])): ?>
 </section>
 <?php return; endif;
 
-$stats = $data['stats'] ?? ['total_submissions' => 0, 'best_score' => 0, 'avg_score' => 0, 'total_votes' => 0, 'most_voted' => null, 'best_ranked' => null];
+$stats = $data['stats'] ?? ['total_submissions' => 0, 'total_reactions' => 0, 'most_voted' => null, 'best_ranked' => null];
 $items = $data['items'] ?? [];
 $custom_tags = $data['custom_tags'] ?? [];
 $top_position_for_user = $data['top_position_for_user'] ?? null;
@@ -213,7 +213,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
             <p><?php echo (int) ($stats['total_submissions'] ?? 0); ?></p>
         </article>
         <article class="cg-card">
-            <strong>Publicación más votada</strong>
+            <strong>Publicación con más reacciones</strong>
             <?php if ($most_voted): ?>
                 <?php $mv_title = trim((string) ($most_voted['title'] ?? '')) ?: 'Publicación #' . (int) $most_voted['id']; ?>
                 <p><a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $most_voted['id'])); ?>"><?php echo esc_html($mv_title); ?></a></p>
@@ -222,13 +222,17 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
             <?php endif; ?>
         </article>
         <article class="cg-card">
-            <strong>Publicación mejor rankeada</strong>
+            <strong>Mejor posicionada por reacciones</strong>
             <?php if ($best_ranked): ?>
                 <?php $br_title = trim((string) ($best_ranked['title'] ?? '')) ?: 'Publicación #' . (int) $best_ranked['id']; ?>
                 <p><a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $best_ranked['id'])); ?>"><?php echo esc_html($br_title); ?></a></p>
             <?php else: ?>
                 <p>Sin datos aún.</p>
             <?php endif; ?>
+        </article>
+        <article class="cg-card">
+            <strong>Reacciones totales recibidas</strong>
+            <p><?php echo (int) ($stats['total_reactions'] ?? 0); ?></p>
         </article>
         <article class="cg-card">
             <strong>Publicación destacada</strong>
@@ -241,7 +245,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
         </article>
     </div>
 
-    <h3>Tu mejor foto</h3>
+    <h3>Tu publicación destacada</h3>
     <?php if ($best_photo): ?>
         <?php
         $best_title = trim((string) ($best_photo['title'] ?? '')) ?: 'Publicación #' . (int) $best_photo['id'];
@@ -253,12 +257,12 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
             <a class="cg-cta" href="<?php echo esc_url($best_photo_link); ?>">Ver detalle</a>
         </article>
     <?php else: ?>
-        <p>Aún no tienes una publicación con votos.</p>
+        <p>Aún no tienes una publicación con reacciones.</p>
     <?php endif; ?>
 
     <div class="cg-profile-share">
         <button type="button" class="secondary js-share-profile" data-url="<?php echo esc_url($profile_link); ?>">Compartir mi perfil</button>
-        <button type="button" class="secondary js-share-best" data-url="<?php echo esc_url($best_photo_link ?: $profile_link); ?>">Compartir mi mejor foto</button>
+        <button type="button" class="secondary js-share-best" data-url="<?php echo esc_url($best_photo_link ?: $profile_link); ?>">Compartir mi publicación destacada</button>
     </div>
 
     <section class="cg-card">
@@ -296,7 +300,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
             ?>
             <article class="cg-card cg-profile-item">
                 <?php echo wp_get_attachment_image((int) $item['attachment_id'], 'medium_large', false, ['loading' => 'lazy', 'class' => 'cg-profile-thumb']); ?>
-                <p>#<?php echo (int) $item['id']; ?> — <?php echo esc_html($item['status']); ?></p>
+                <p>#<?php echo (int) $item['id']; ?> — <?php echo esc_html($item['status']); ?> — <?php echo (int) ($item['total_reactions'] ?? 0); ?> reacciones</p>
                 <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in()); ?>
             </article>
         <?php endforeach; ?>
