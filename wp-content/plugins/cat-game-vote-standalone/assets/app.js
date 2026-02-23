@@ -457,3 +457,33 @@
     });
   }
 })();
+
+
+(function () {
+  const profileForm = document.querySelector('.cg-form[action*="admin-post.php"] input[name="action"][value="catgame_profile_update"]')?.closest('form');
+  if (!profileForm) {
+    return;
+  }
+
+  const toggleButton = profileForm.querySelector('.js-avatar-color-toggle');
+  const colorsPanel = profileForm.querySelector('.cg-avatar-colors');
+  if (!toggleButton || !colorsPanel) {
+    return;
+  }
+
+  const setExpanded = (expanded) => {
+    colorsPanel.hidden = !expanded;
+    toggleButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  };
+
+  setExpanded(false);
+
+  toggleButton.addEventListener('click', () => {
+    const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
+    setExpanded(!isExpanded);
+  });
+
+  profileForm.addEventListener('submit', () => {
+    setExpanded(false);
+  });
+})();

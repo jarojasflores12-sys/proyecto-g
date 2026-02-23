@@ -45,18 +45,12 @@ $prefs = $data['profile_prefs'] ?? [];
 $current_user = wp_get_current_user();
 $username = $current_user && !empty($current_user->user_login) ? (string) $current_user->user_login : 'usuario';
 $initial = strtoupper(substr($username, 0, 1));
-$display_name = trim((string) ($prefs['display_name'] ?? ''));
 $avatar_color = sanitize_key((string) ($prefs['avatar_color'] ?? 'rose'));
 $allowed_colors = ['rose' => '#F7B7C3', 'mint' => '#B5EAD7', 'lavender' => '#C7CEEA', 'yellow' => '#FFF5BA', 'sky' => '#BFE3FF'];
 if (!isset($allowed_colors[$avatar_color])) {
     $avatar_color = 'rose';
 }
-$default_city = (string) ($prefs['default_city'] ?? '');
-$default_country = (string) ($prefs['default_country'] ?? '');
-$language = (string) ($prefs['language'] ?? 'es');
-
 $best_score_5 = max(0, min(5, (float) ($stats['best_score'] ?? 0) / 2));
-$avg_score_5 = max(0, (float) ($stats['avg_score'] ?? 0) / 2);
 $most_voted = is_array($stats['most_voted'] ?? null) ? $stats['most_voted'] : null;
 $best_ranked = is_array($stats['best_ranked'] ?? null) ? $stats['best_ranked'] : null;
 $best_photo = $best_ranked && (int) ($best_ranked['votes_count'] ?? 0) > 0 ? $best_ranked : null;
@@ -85,16 +79,14 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
             <div class="cg-avatar cg-avatar-<?php echo esc_attr($avatar_color); ?>" aria-hidden="true"><?php echo esc_html($initial); ?></div>
             <div class="cg-profile-user-meta">
                 <p>Usuario: @<?php echo esc_html($username); ?></p>
-                <label>Nombre visible
-                    <input type="text" name="display_name" maxlength="80" value="<?php echo esc_attr($display_name); ?>" placeholder="Ej: Cat Lover">
-                </label>
             </div>
             <div class="cg-profile-user-actions">
-                <button type="submit">Guardar cambios</button>
+                <button type="button" class="secondary js-avatar-color-toggle" aria-expanded="false" aria-controls="cg-avatar-colors">Cambiar color</button>
+                <button type="submit" class="js-profile-save">Guardar cambios</button>
             </div>
         </div>
 
-        <fieldset class="cg-avatar-colors">
+        <fieldset class="cg-avatar-colors" id="cg-avatar-colors" hidden>
             <legend>Color de avatar</legend>
             <?php foreach ($allowed_colors as $slug => $hex): ?>
                 <label class="cg-color-swatch <?php echo $avatar_color === $slug ? 'is-selected' : ''; ?>" style="--cg-swatch: <?php echo esc_attr($hex); ?>;">
@@ -103,19 +95,6 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
                 </label>
             <?php endforeach; ?>
         </fieldset>
-
-        <h3>Preferencias</h3>
-        <label>Ciudad por defecto
-            <input type="text" name="default_city" value="<?php echo esc_attr($default_city); ?>">
-        </label>
-        <label>País por defecto
-            <input type="text" name="default_country" value="<?php echo esc_attr($default_country); ?>">
-        </label>
-        <label>Idioma
-            <select name="language">
-                <option value="es" <?php selected($language, 'es'); ?>>Español</option>
-            </select>
-        </label>
     </form>
 
     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-logout-form">
@@ -138,16 +117,18 @@ $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) $best_p
         <button type="submit">Aplicar</button>
     </form>
 
-    <div class="cg-profile-stats-grid">
-        <article class="cg-card"><strong>Total publicaciones</strong><p><?php echo (int) ($stats['total_submissions'] ?? 0); ?></p></article>
-        <article class="cg-card"><strong>Mejor puntaje</strong><p><?php echo esc_html(number_format($best_score_5, 1)); ?>/5</p></article>
-        <article class="cg-card"><strong>Total votos recibidos</strong><p><?php echo (int) ($stats['total_votes'] ?? 0); ?></p></article>
-        <article class="cg-card"><strong>Puntaje promedio</strong><p><?php echo esc_html(number_format($avg_score_5, 1)); ?>/5</p></article>
-    </div>
-
-    <div class="cg-profile-stats-grid">
+    <h3>Resumen</h3>
+    <div class="cg-profile-stats-grid cg-profile-summary-grid">
         <article class="cg-card">
-            <strong>Publicación con más votos</strong>
+            <strong>Mejor puntaje</strong>
+            <p><?php echo esc_html(number_format($best_score_5, 1)); ?>/5</p>
+        </article>
+        <article class="cg-card">
+            <strong>Total votos recibidos</strong>
+            <p><?php echo (int) ($stats['total_votes'] ?? 0); ?></p>
+        </article>
+        <article class="cg-card">
+            <strong>Publicación más votada</strong>
             <?php if ($most_voted): ?>
                 <?php $mv_title = trim((string) ($most_voted['title'] ?? '')) ?: 'Publicación #' . (int) $most_voted['id']; ?>
                 <p><a href="<?php echo esc_url(home_url('/catgame/submission/' . (int) $most_voted['id'])); ?>"><?php echo esc_html($mv_title); ?></a></p>

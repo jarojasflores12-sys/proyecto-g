@@ -956,7 +956,7 @@ body.cg-has-custom-bg .cg-main {
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .cg-profile-user p {
@@ -1003,9 +1003,15 @@ body.cg-has-custom-bg .cg-main {
 
 .cg-profile-user-meta {
   display: grid;
-  gap: 6px;
+  gap: 4px;
   flex: 1;
-  min-width: 220px;
+  min-width: 180px;
+}
+
+.cg-profile-user-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .cg-avatar-colors {
@@ -1015,6 +1021,22 @@ body.cg-has-custom-bg .cg-main {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  margin: 0 0 12px;
+  max-height: 120px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.22s ease, opacity 0.22s ease, margin 0.22s ease;
+}
+
+.cg-avatar-colors[hidden] {
+  display: flex;
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0;
+  pointer-events: none;
 }
 
 .cg-color-swatch {
@@ -1047,6 +1069,16 @@ body.cg-has-custom-bg .cg-main {
   margin-bottom: 12px;
 }
 
+.cg-profile-summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.cg-profile-summary-grid .cg-card {
+  padding: 10px 12px;
+  border-radius: 14px;
+}
+
 .cg-profile-stats-grid .cg-card p {
   margin: 6px 0 0;
 }
@@ -1065,4 +1097,14 @@ body.cg-has-custom-bg .cg-main {
 
 .cg-logout-form {
   margin: 8px 0 12px;
+}
+
+@media (max-width: 560px) {
+  .cg-profile-user-actions {
+    width: 100%;
+  }
+
+  .cg-profile-user-actions button {
+    flex: 1;
+  }
 }

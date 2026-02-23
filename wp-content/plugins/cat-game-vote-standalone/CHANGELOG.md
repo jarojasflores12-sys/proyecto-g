@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.23.2
+- Perfil: se eliminan controles no funcionales de edición (nombre de usuario editable, ciudad/país por defecto e idioma) para dejar una experiencia más clara sin romper funciones existentes.
+- Perfil: nuevo botón "Cambiar color" que despliega/oculta el panel de colores del avatar; al guardar cambios el panel vuelve a ocultarse.
+- Perfil: la sección de estadísticas se simplifica a "Resumen" con 4 cards compactas (Mejor puntaje, Total votos recibidos, Publicación más votada y Publicación mejor rankeada).
+- UI/UX mobile-first: ajustes de espaciado y grid responsive en header de perfil, panel de colores y cards de resumen.
+
 ## 0.23.1
 - Gestión de eventos (admin): reglas del evento ahora se editan con UI de campos numéricos por criterio, eliminando la edición manual de JSON.
 - Reglas: labels y ayudas en español para cada criterio (gato negro, foto nocturna, pose divertida, lugar raro).
