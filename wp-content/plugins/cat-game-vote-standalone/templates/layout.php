@@ -105,6 +105,20 @@ if ($has_background) {
             </a>
         <?php endforeach; ?>
     </nav>
+
+<div class="cg-modal" id="catgame-confirm-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-confirm-title">
+    <div class="cg-modal__backdrop" data-confirm-close="1"></div>
+    <div class="cg-modal__content" role="document">
+        <button type="button" class="cg-modal__close" data-confirm-close="1" aria-label="Cerrar confirmación">✕</button>
+        <h2 id="catgame-confirm-title">Confirmar acción</h2>
+        <p id="catgame-confirm-text">¿Deseas continuar?</p>
+        <div class="cg-confirm-actions">
+            <button type="button" class="secondary" id="catgame-confirm-cancel" data-confirm-close="1">Cancelar</button>
+            <button type="button" id="catgame-confirm-accept">Eliminar</button>
+        </div>
+    </div>
+</div>
+
 <div id="catgame-toast" class="catgame-toast" aria-live="polite" aria-atomic="true"></div>
 <script>
 window.CATGAME_REACTIONS = {

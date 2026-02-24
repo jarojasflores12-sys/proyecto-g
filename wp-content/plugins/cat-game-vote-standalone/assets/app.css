@@ -1277,3 +1277,19 @@ body.cg-has-custom-bg .cg-main {
 .cg-reaction-btn.show-tooltip .catgv-tooltip {
   opacity: 1;
 }
+
+
+.cg-confirm-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:12px;
+}
+
+.cg-inline-delete-form {
+  margin: 6px 0;
+}
+
+.cg-reactions.is-readonly .cg-reaction-btn {
+  cursor: default;
+}

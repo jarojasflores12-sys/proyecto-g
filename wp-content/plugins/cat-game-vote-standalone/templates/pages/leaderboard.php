@@ -3,8 +3,6 @@ $scope = $data['scope'] ?? 'global';
 $country = $data['country'] ?? '';
 $city = $data['city'] ?? '';
 $items = $data['items'] ?? [];
-$available_tags = $data['available_tags'] ?? [];
-$selected_tags = $data['selected_tags'] ?? [];
 $top3_positions = $data['top3_positions'] ?? [];
 $current_user_id = (int) ($data['current_user_id'] ?? 0);
 ?>
@@ -20,16 +18,6 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
         </label>
         <label>País <input type="text" name="country" value="<?php echo esc_attr($country); ?>"></label>
         <label>Ciudad <input type="text" name="city" value="<?php echo esc_attr($city); ?>"></label>
-
-        <fieldset class="cg-filter-tags">
-            <legend>Etiquetas</legend>
-            <?php foreach ($available_tags as $tag): ?>
-                <label>
-                    <input type="checkbox" name="tags[]" value="<?php echo esc_attr($tag); ?>" <?php checked(in_array($tag, $selected_tags, true)); ?>>
-                    <?php echo esc_html(CatGame_Submissions::label_for_tag($tag, get_current_user_id())); ?>
-                </label>
-            <?php endforeach; ?>
-        </fieldset>
         <button type="submit">Filtrar</button>
     </form>
 
@@ -56,6 +44,14 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                     <small class="cg-author">por @<?php echo esc_html($author_name); ?></small>
                     <?php if ($is_mine): ?><span class="cg-inline-badge">Tú</span><?php endif; ?>
                     <?php if ($position > 0): ?><span class="cg-inline-badge">Top 3</span><?php endif; ?>
+                    <?php if ($is_mine && is_user_logged_in()): ?>
+                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-inline-delete-form" data-cg-confirm="1" data-cg-confirm-title="Eliminar publicación" data-cg-confirm-text="Esta acción no se puede deshacer. ¿Eliminar esta publicación?">
+                            <?php wp_nonce_field('catgame_delete_submission'); ?>
+                            <input type="hidden" name="action" value="catgame_delete_submission">
+                            <input type="hidden" name="submission_id" value="<?php echo (int) ($item['id'] ?? 0); ?>">
+                            <button type="submit" class="cg-tag-delete">Eliminar mi publicación</button>
+                        </form>
+                    <?php endif; ?>
                     <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
                     <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in()); ?>
                 </div>

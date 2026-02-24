@@ -278,7 +278,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
             <?php foreach ($custom_tags as $tag => $label): ?>
                 <li class="cg-tag-item">
                     <strong><?php echo esc_html(CatGame_Submissions::label_for_tag($tag, get_current_user_id())); ?></strong>
-                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-tag-delete-form" onsubmit="return confirm('¿Eliminar etiqueta?');">
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-tag-delete-form" data-cg-confirm="1" data-cg-confirm-title="Eliminar etiqueta" data-cg-confirm-text="Esta acción no se puede deshacer. ¿Eliminar esta etiqueta?">
                         <?php wp_nonce_field('catgame_delete_custom_tag'); ?>
                         <input type="hidden" name="action" value="catgame_delete_custom_tag">
                         <input type="hidden" name="tag" value="<?php echo esc_attr($tag); ?>">
@@ -308,6 +308,12 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
                 <p><span class="cg-badge">#<?php echo (int) $item['id']; ?></span> <?php echo esc_html($item_title); ?></p>
                 <small class="cg-author">por @<?php echo esc_html($item_author_name); ?></small>
                 <p><?php echo $item_reactions > 0 ? esc_html($item_reactions . ' reacciones') : 'Sin reacciones'; ?></p>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-inline-delete-form" data-cg-confirm="1" data-cg-confirm-title="Eliminar publicación" data-cg-confirm-text="Esta acción no se puede deshacer. ¿Eliminar esta publicación?">
+                    <?php wp_nonce_field('catgame_delete_submission'); ?>
+                    <input type="hidden" name="action" value="catgame_delete_submission">
+                    <input type="hidden" name="submission_id" value="<?php echo (int) ($item['id'] ?? 0); ?>">
+                    <button type="submit" class="cg-tag-delete">Eliminar mi publicación</button>
+                </form>
                 <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in()); ?>
             </article>
         <?php endforeach; ?>

@@ -120,24 +120,11 @@ class CatGame_Render {
                 $scope = sanitize_text_field($_GET['scope'] ?? 'global');
                 $country = sanitize_text_field(wp_unslash($_GET['country'] ?? ''));
                 $city = sanitize_text_field(wp_unslash($_GET['city'] ?? ''));
-                $selected_tags_raw = wp_unslash($_GET['tags'] ?? []);
-                if (!is_array($selected_tags_raw)) {
-                    $selected_tags_raw = is_string($selected_tags_raw) && $selected_tags_raw !== '' ? explode(',', $selected_tags_raw) : [];
-                }
-                $selected_tags = [];
-                foreach ($selected_tags_raw as $raw_tag) {
-                    $tag = CatGame_Submissions::normalize_tag($raw_tag);
-                    if ($tag !== '') {
-                        $selected_tags[] = $tag;
-                    }
-                }
-                $selected_tags = array_values(array_unique($selected_tags));
 
                 if (!in_array($scope, ['global', 'country', 'city'], true)) {
                     $scope = 'global';
                 }
-                $items = $event ? CatGame_Submissions::leaderboard((int) $event['id'], $scope, $country, $city, 20, $selected_tags) : [];
-                $available_tags = $event ? CatGame_Submissions::event_tags((int) $event['id']) : [];
+                $items = $event ? CatGame_Submissions::leaderboard((int) $event['id'], $scope, $country, $city, 20, []) : [];
                 return [
                     'page' => $page,
                     'event' => $event,
@@ -145,8 +132,6 @@ class CatGame_Render {
                     'country' => $country,
                     'city' => $city,
                     'items' => $items,
-                    'available_tags' => $available_tags,
-                    'selected_tags' => $selected_tags,
                     'top3_positions' => $top3_positions,
                     'current_user_id' => $current_user_id,
                 ];

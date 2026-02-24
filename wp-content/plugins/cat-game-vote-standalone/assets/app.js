@@ -80,16 +80,21 @@
     window.catgameToast('Foto subida correctamente', 'success');
   }
 
+  if (deleted === '1') {
+    window.catgameToast('Publicación eliminada', 'success');
+  }
+
   if (error) {
     console.warn('CatGame warning:', error);
     window.catgameToast('Ocurrió un error. Intenta nuevamente.', 'error');
   }
 
-  const shouldClean = voted === '1' || uploaded === '1' || !!error;
+  const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || !!error;
   if (shouldClean && window.history && typeof window.history.replaceState === 'function') {
     params.delete('voted');
     params.delete('uploaded');
     params.delete('catgame_error');
+    params.delete('deleted');
     const nextQuery = params.toString();
     const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
     window.history.replaceState({}, '', nextUrl);
@@ -541,6 +546,59 @@
 
 
 (function () {
+  const modal = document.getElementById('catgame-confirm-modal');
+  const titleEl = document.getElementById('catgame-confirm-title');
+  const textEl = document.getElementById('catgame-confirm-text');
+  const acceptBtn = document.getElementById('catgame-confirm-accept');
+  if (!modal || !titleEl || !textEl || !acceptBtn) {
+    return;
+  }
+
+  let onAccept = null;
+
+  const closeModal = () => {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    onAccept = null;
+  };
+
+  const openModal = (title, text, acceptLabel, callback) => {
+    titleEl.textContent = title || 'Confirmar acción';
+    textEl.textContent = text || '¿Deseas continuar?';
+    acceptBtn.textContent = acceptLabel || 'Eliminar';
+    onAccept = callback;
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+  };
+
+  modal.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest('[data-confirm-close="1"]')) {
+      closeModal();
+    }
+  });
+
+  acceptBtn.addEventListener('click', () => {
+    if (typeof onAccept === 'function') {
+      onAccept();
+    }
+    closeModal();
+  });
+
+  document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    if (form.dataset.cgConfirm !== '1') return;
+
+    event.preventDefault();
+    const title = form.dataset.cgConfirmTitle || 'Confirmar acción';
+    const text = form.dataset.cgConfirmText || '¿Deseas continuar?';
+    openModal(title, text, 'Eliminar', () => form.submit());
+  }, true);
+})();
+
+(function () {
   const config = window.CATGAME_REACTIONS;
   const widgets = Array.from(document.querySelectorAll('.cg-reactions'));
   if (!config || !widgets.length) {
@@ -653,6 +711,26 @@
 
   widgets.forEach((widget) => {
     const buttons = Array.from(widget.querySelectorAll('.cg-reaction-btn'));
+    const isLoggedIn = widget.dataset.loggedIn === '1';
+
+    if (!isLoggedIn) {
+      widget.classList.add('is-readonly');
+      buttons.forEach((btn) => {
+        initReactionButton(btn);
+      });
+
+      widget.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (target.closest('.cg-reaction-btn')) {
+          event.preventDefault();
+          window.catgameToast?.('Inicia sesión para reaccionar', 'info');
+        }
+      });
+
+      fetchCounts(widget).catch(() => null);
+      return;
+    }
 
     buttons.forEach((btn) => {
       initReactionButton(btn);

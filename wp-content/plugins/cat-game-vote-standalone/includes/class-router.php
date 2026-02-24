@@ -39,10 +39,6 @@ class CatGame_Router {
             return;
         }
 
-        if ($page === 'submission') {
-            wp_safe_redirect(home_url('/catgame/feed'));
-            exit;
-        }
 
         set_query_var('catgame_page', $page);
         status_header(200);

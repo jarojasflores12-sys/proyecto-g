@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.24.1
+- Ranking: se elimina por completo el filtro por etiquetas en UI y en el flujo de query params del frontend.
+- Reacciones: para usuarios no logueados se muestran en modo solo lectura (contadores visibles) y, al intentar interactuar, se muestra aviso "Inicia sesión para reaccionar".
+- Publicaciones: nuevo borrado definitivo para dueño (`Eliminar mi publicación`) en Perfil, Ranking y vista de detalle, con limpieza de votos/reacciones/reportes asociados y adjunto de imagen.
+- UX: todas las confirmaciones de eliminar (etiqueta/publicación) pasan a modal propio del plugin, evitando confirmaciones nativas del navegador.
+
 ## 0.24.0
 - Upload: título ahora obligatorio (trim, mínimo 2, máximo 40), con preservación de campos en validaciones fallidas y mensaje de error visible.
 - Upload: el título también se guarda en post meta del attachment como `catgv_title`.

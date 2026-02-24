@@ -10,6 +10,7 @@ class CatGame_Submissions {
     public static function init(): void {
         add_action('admin_post_catgame_upload', [__CLASS__, 'handle_upload']);
         add_action('admin_post_catgame_delete_custom_tag', [__CLASS__, 'handle_delete_custom_tag']);
+        add_action('admin_post_catgame_delete_submission', [__CLASS__, 'handle_delete_submission']);
     }
 
     public static function predefined_tag_labels(): array {
@@ -339,6 +340,64 @@ class CatGame_Submissions {
         exit;
     }
 
+
+    public static function handle_delete_submission(): void {
+        if (!is_user_logged_in()) {
+            wp_safe_redirect(home_url('/catgame/profile'));
+            exit;
+        }
+
+        check_admin_referer('catgame_delete_submission');
+        $submission_id = isset($_POST['submission_id']) ? (int) $_POST['submission_id'] : 0;
+        if ($submission_id <= 0) {
+            wp_safe_redirect(add_query_arg('catgame_error', 'submission_unavailable', home_url('/catgame/feed')));
+            exit;
+        }
+
+        $submission = self::get_submission($submission_id);
+        $current_user = get_current_user_id();
+        if (!$submission || (int) ($submission['user_id'] ?? 0) !== $current_user) {
+            wp_safe_redirect(add_query_arg('catgame_error', 'submission_unavailable', home_url('/catgame/feed')));
+            exit;
+        }
+
+        self::delete_submission_permanently($submission);
+
+        $redirect_to = wp_get_referer();
+        if (!is_string($redirect_to) || $redirect_to === '') {
+            $redirect_to = home_url('/catgame/feed');
+        }
+        wp_safe_redirect(add_query_arg('deleted', '1', $redirect_to));
+        exit;
+    }
+
+    private static function delete_submission_permanently(array $submission): void {
+        global $wpdb;
+
+        $submission_id = (int) ($submission['id'] ?? 0);
+        if ($submission_id <= 0) {
+            return;
+        }
+
+        $wpdb->delete(CatGame_DB::table('reactions'), ['submission_id' => $submission_id], ['%d']);
+        $wpdb->delete(CatGame_DB::table('votes'), ['submission_id' => $submission_id], ['%d']);
+
+        $reports_table = CatGame_DB::table('reports');
+        $report_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $reports_table));
+        if (is_string($report_exists) && $report_exists === $reports_table) {
+            $wpdb->delete($reports_table, ['submission_id' => $submission_id], ['%d']);
+        }
+
+        $wpdb->delete(CatGame_DB::table('submissions'), ['id' => $submission_id], ['%d']);
+
+        $attachment_id = (int) ($submission['attachment_id'] ?? 0);
+        if ($attachment_id > 0) {
+            wp_delete_attachment($attachment_id, true);
+        }
+
+        self::clear_leaderboard_cache();
+    }
+
     public static function handle_delete_custom_tag(): void {
         if (!is_user_logged_in()) {
             wp_safe_redirect(home_url('/catgame/profile'));
@@ -542,28 +601,6 @@ class CatGame_Submissions {
             $where[] = 'city = %s';
             $params[] = $country;
             $params[] = $city;
-        }
-
-        $normalized_tags = [];
-        foreach ($tags as $tag) {
-            $normalized = self::normalize_tag($tag);
-            if ($normalized !== '') {
-                $normalized_tags[] = $normalized;
-            }
-        }
-        $normalized_tags = array_values(array_unique($normalized_tags));
-
-        if (!empty($normalized_tags)) {
-            $tag_clauses = [];
-            foreach ($normalized_tags as $tag) {
-                $search_tags = self::tag_storage_variants($tag);
-                foreach ($search_tags as $search_tag) {
-                    $tag_clauses[] = '(tags_text LIKE %s OR tags_json LIKE %s)';
-                    $params[] = '%,' . $wpdb->esc_like($search_tag) . ',%';
-                    $params[] = '%"' . $wpdb->esc_like($search_tag) . '"%';
-                }
-            }
-            $where[] = '(' . implode(' OR ', $tag_clauses) . ')';
         }
 
         $params[] = $limit;
