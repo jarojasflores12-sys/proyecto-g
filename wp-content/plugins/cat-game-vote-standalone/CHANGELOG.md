@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.25.2
+- Documentación: `README.md` se alinea con el estado actual del plugin (reacciones comunitarias, ubicación obligatoria desde Perfil y flujo vigente de subida).
+- Documentación: se corrigen descripciones heredadas de estrellas/ciudad-país manual en upload para evitar confusión operativa.
+
 ## 0.25.1
 - Perfil: se mueve "Cerrar sesión" al extremo superior derecho (botón compacto con ícono+texto), se re-agregan Ciudad/País persistentes en user meta y se exige completar ubicación para poder subir.
 - Auth/flujo: login/registro exitoso redirigen a Perfil con aviso de completar ubicación cuando falta; Subir queda bloqueado con CTA a Perfil y el envío también valida ubicación desde Perfil.
