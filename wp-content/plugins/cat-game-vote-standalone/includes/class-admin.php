@@ -55,20 +55,45 @@ class CatGame_Admin {
         global $wpdb;
         $table = CatGame_DB::table('events');
         $events = $wpdb->get_results("SELECT * FROM {$table} ORDER BY created_at DESC", ARRAY_A);
+
+        $selected_event_id = isset($_GET['event_id']) ? (int) $_GET['event_id'] : 0;
+        $event_in_edit = null;
+
+        if ($selected_event_id > 0) {
+            foreach ($events as $event) {
+                if ((int) $event['id'] === $selected_event_id) {
+                    $event_in_edit = $event;
+                    break;
+                }
+            }
+        }
+
+        $show_event_not_found_notice = $selected_event_id > 0 && $event_in_edit === null;
+        $default_rules_json = '{"black_cat":1.0,"night_photo":0.5,"funny_pose":0.5,"weird_place":0.5}';
+        $name_value = (string) ($event_in_edit['name'] ?? '');
+        $starts_at_value = $event_in_edit !== null ? gmdate('Y-m-d\TH:i', strtotime((string) $event_in_edit['starts_at'])) : '';
+        $ends_at_value = $event_in_edit !== null ? gmdate('Y-m-d\TH:i', strtotime((string) $event_in_edit['ends_at'])) : '';
+        $rules_json_value = (string) ($event_in_edit['rules_json'] ?? $default_rules_json);
+        $is_active_checked = $event_in_edit !== null && (int) ($event_in_edit['is_active'] ?? 0) === 1;
         ?>
         <div class="wrap">
             <h1>Cat Game - Events</h1>
+            <p><a class="button" href="<?php echo esc_url(admin_url('admin.php?page=catgame-events&event_id=0')); ?>">Nuevo evento</a></p>
+            <?php if ($show_event_not_found_notice): ?>
+                <div class="notice notice-warning"><p><?php echo esc_html__('El evento solicitado no existe. Puedes crear uno nuevo.', 'cat-game-vote-standalone'); ?></p></div>
+            <?php endif; ?>
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('catgame_save_event'); ?>
                 <input type="hidden" name="action" value="catgame_save_event" />
+                <input type="hidden" name="event_id" value="<?php echo (int) ($event_in_edit['id'] ?? 0); ?>" />
                 <table class="form-table">
-                    <tr><th><label for="name">Name</label></th><td><input class="regular-text" type="text" name="name" id="name" required /></td></tr>
-                    <tr><th><label for="starts_at">Starts At</label></th><td><input type="datetime-local" name="starts_at" id="starts_at" required /></td></tr>
-                    <tr><th><label for="ends_at">Ends At</label></th><td><input type="datetime-local" name="ends_at" id="ends_at" required /></td></tr>
-                    <tr><th><label for="rules_json">Rules JSON</label></th><td><textarea name="rules_json" id="rules_json" rows="6" cols="60">{"black_cat":1.0,"night_photo":0.5,"funny_pose":0.5,"weird_place":0.5}</textarea></td></tr>
-                    <tr><th><label for="is_active">Active</label></th><td><input type="checkbox" name="is_active" id="is_active" value="1" /></td></tr>
+                    <tr><th><label for="name">Name</label></th><td><input class="regular-text" type="text" name="name" id="name" value="<?php echo esc_attr($name_value); ?>" required /></td></tr>
+                    <tr><th><label for="starts_at">Starts At</label></th><td><input type="datetime-local" name="starts_at" id="starts_at" value="<?php echo esc_attr($starts_at_value); ?>" required /></td></tr>
+                    <tr><th><label for="ends_at">Ends At</label></th><td><input type="datetime-local" name="ends_at" id="ends_at" value="<?php echo esc_attr($ends_at_value); ?>" required /></td></tr>
+                    <tr><th><label for="rules_json">Rules JSON</label></th><td><textarea name="rules_json" id="rules_json" rows="6" cols="60"><?php echo esc_textarea($rules_json_value); ?></textarea></td></tr>
+                    <tr><th><label for="is_active">Active</label></th><td><input type="checkbox" name="is_active" id="is_active" value="1" <?php checked($is_active_checked); ?> /></td></tr>
                 </table>
-                <?php submit_button('Save Event'); ?>
+                <?php submit_button($event_in_edit === null ? 'Create Event' : 'Update Event'); ?>
             </form>
 
             <h2>Existing events</h2>
@@ -82,7 +107,8 @@ class CatGame_Admin {
                         <td><?php echo esc_html($event['starts_at'] . ' - ' . $event['ends_at']); ?></td>
                         <td><?php echo (int) $event['is_active'] === 1 ? 'Yes' : 'No'; ?></td>
                         <td>
-                            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                            <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=catgame-events&event_id=' . (int) $event['id'])); ?>">Edit</a>
+                            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline-block; margin-left:6px;">
                                 <?php wp_nonce_field('catgame_save_event'); ?>
                                 <input type="hidden" name="action" value="catgame_save_event" />
                                 <input type="hidden" name="activate_id" value="<?php echo (int) $event['id']; ?>" />
@@ -110,6 +136,7 @@ class CatGame_Admin {
             exit;
         }
 
+        $event_id = isset($_POST['event_id']) ? (int) $_POST['event_id'] : 0;
         $name = sanitize_text_field(wp_unslash($_POST['name'] ?? ''));
         $starts_at = sanitize_text_field(wp_unslash($_POST['starts_at'] ?? ''));
         $ends_at = sanitize_text_field(wp_unslash($_POST['ends_at'] ?? ''));
@@ -124,21 +151,44 @@ class CatGame_Admin {
         global $wpdb;
         $table = CatGame_DB::table('events');
 
-        $wpdb->insert(
-            $table,
-            [
-                'name' => $name,
-                'starts_at' => gmdate('Y-m-d H:i:s', strtotime($starts_at)),
-                'ends_at' => gmdate('Y-m-d H:i:s', strtotime($ends_at)),
-                'is_active' => $is_active,
-                'rules_json' => $rules_json,
-                'created_at' => current_time('mysql'),
-            ],
-            ['%s', '%s', '%s', '%d', '%s', '%s']
-        );
+        if ($event_id > 0) {
+            $exists = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE id = %d", $event_id));
+            if ($exists > 0) {
+                $wpdb->update(
+                    $table,
+                    [
+                        'name' => $name,
+                        'starts_at' => gmdate('Y-m-d H:i:s', strtotime($starts_at)),
+                        'ends_at' => gmdate('Y-m-d H:i:s', strtotime($ends_at)),
+                        'is_active' => $is_active,
+                        'rules_json' => $rules_json,
+                    ],
+                    ['id' => $event_id],
+                    ['%s', '%s', '%s', '%d', '%s'],
+                    ['%d']
+                );
+            } else {
+                wp_safe_redirect(admin_url('admin.php?page=catgame-events&event_id=0'));
+                exit;
+            }
+        } else {
+            $wpdb->insert(
+                $table,
+                [
+                    'name' => $name,
+                    'starts_at' => gmdate('Y-m-d H:i:s', strtotime($starts_at)),
+                    'ends_at' => gmdate('Y-m-d H:i:s', strtotime($ends_at)),
+                    'is_active' => $is_active,
+                    'rules_json' => $rules_json,
+                    'created_at' => current_time('mysql'),
+                ],
+                ['%s', '%s', '%s', '%d', '%s', '%s']
+            );
+            $event_id = (int) $wpdb->insert_id;
+        }
 
-        if ($is_active) {
-            CatGame_Events::set_active((int) $wpdb->insert_id);
+        if ($is_active && $event_id > 0) {
+            CatGame_Events::set_active($event_id);
         }
 
         CatGame_Submissions::clear_leaderboard_cache();

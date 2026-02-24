@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.4
+- Fix P1 admin/events: el formulario respeta modo creación real cuando `event_id` falta o es `0`.
+- Admin/events: edición solo se carga con `event_id > 0` existente; si no existe, se muestra aviso y queda en modo creación.
+- Admin/events: hidden `event_id` se fuerza a `0` en creación, enlace "Nuevo evento" apunta a `event_id=0`, y `save_event` ahora actualiza cuando corresponde.
+
 ## 0.22.3
 - Nuevo popup de evento vigente en frontend con botón flotante "Reglas del evento".
 - El modal muestra nombre, vigencia y reglas/bonificaciones del evento activo.
