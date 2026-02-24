@@ -121,10 +121,6 @@
     return;
   }
 
-  const originalEl = document.getElementById('catgame-file-size-original');
-  const compressedEl = document.getElementById('catgame-file-size-compressed');
-  const reductionEl = document.getElementById('catgame-file-reduction');
-  const formatEl = document.getElementById('catgame-file-format');
   const stateEl = document.getElementById('catgame-compress-status');
   const previewEl = document.getElementById('catgame-image-preview');
   const filePickerText = document.querySelector('.cg-file-picker-text');
@@ -145,7 +141,6 @@
     compressing = !!isBusy;
   };
 
-  const setCompressionInfo = () => {};
 
   const supportsWebP = () => {
     try {
@@ -245,13 +240,11 @@
     }
 
     if (!file) {
-      setCompressionInfo();
       if (filePickerText) filePickerText.textContent = 'JPG, PNG o WEBP';
       setState('Estado: esperando archivo', false);
       return;
     }
 
-    setCompressionInfo({ originalBytes: file.size });
 
     if (previewEl) {
       previewEl.src = URL.createObjectURL(file);
@@ -262,11 +255,9 @@
       setState('Estado: comprimiendo...', true);
       const nextFile = await buildCompressedFile(file);
       compressedFile = nextFile;
-      setCompressionInfo({ originalBytes: file.size, compressedBytes: nextFile.size, format: nextFile.type });
       setState('Estado: listo para enviar', false);
     } catch (err) {
       console.warn('CatGame compression fallback:', err);
-      setCompressionInfo({ originalBytes: file.size, compressedBytes: null, format: file.type || '-' });
       setState('Estado: error de compresión (se enviará original)', false);
     }
   });
