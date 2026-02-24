@@ -605,7 +605,7 @@
     return;
   }
 
-  const HOLD_MS = 400;
+  const HOLD_MS = 450;
   const MOVE_CANCEL_PX = 10;
   const labels = {
     adorable: { emoji: '😺', label: 'Adorable' },
@@ -659,15 +659,23 @@
     });
   };
 
-  const showFloatEmoji = (btn) => {
-    const emojiChar = btn.querySelector('.emoji')?.textContent || '';
+  const spawnReactionFloat = (emojiChar, anchorElement) => {
     if (!emojiChar) return;
+    if (!(anchorElement instanceof HTMLElement)) return;
 
+    const rect = anchorElement.getBoundingClientRect();
     const floater = document.createElement('span');
     floater.className = 'catgv-float-emoji';
     floater.textContent = emojiChar;
-    btn.appendChild(floater);
-    window.setTimeout(() => floater.remove(), 750);
+    floater.style.left = `${rect.left + (rect.width / 2)}px`;
+    floater.style.top = `${rect.top + (rect.height / 2)}px`;
+    document.body.appendChild(floater);
+    floater.addEventListener('animationend', () => floater.remove(), { once: true });
+  };
+
+  const showFloatEmoji = (btn) => {
+    const emojiChar = btn.querySelector('.emoji')?.textContent || '';
+    spawnReactionFloat(emojiChar, btn);
   };
 
   const fetchCounts = async (widget) => {
@@ -768,7 +776,8 @@
       initReactionButton(btn);
 
       let holdTimer = null;
-      let hasLongPress = false;
+      let longPressActive = false;
+      let pressCanceled = false;
       let startX = 0;
       let startY = 0;
 
@@ -777,12 +786,13 @@
       };
 
       const startHold = (event) => {
-        hasLongPress = false;
+        longPressActive = false;
+        pressCanceled = false;
         startX = Number(event.clientX || 0);
         startY = Number(event.clientY || 0);
         clearTimeout(holdTimer);
         holdTimer = window.setTimeout(() => {
-          hasLongPress = true;
+          longPressActive = true;
           btn.classList.add('active-hold', 'show-tooltip');
         }, HOLD_MS);
       };
@@ -822,15 +832,24 @@
 
       const endHold = (event) => {
         clearTimeout(holdTimer);
-        if (hasLongPress) {
+        if (longPressActive) {
           event.preventDefault();
+          clearHoldState();
+          return;
         }
+
+        if (pressCanceled) {
+          clearHoldState();
+          return;
+        }
+
         clearHoldState();
         submitReaction();
       };
 
       const cancelHold = () => {
         clearTimeout(holdTimer);
+        pressCanceled = true;
         clearHoldState();
       };
 
@@ -847,6 +866,9 @@
       btn.addEventListener('pointermove', moveHold);
       btn.addEventListener('pointerleave', cancelHold);
       btn.addEventListener('pointercancel', cancelHold);
+      btn.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+      });
       btn.addEventListener('contextmenu', (event) => event.preventDefault());
     });
 

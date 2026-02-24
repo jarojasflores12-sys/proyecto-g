@@ -52,20 +52,30 @@ class CatGame_Reactions {
         $table = CatGame_DB::table('reactions');
         $user_id = get_current_user_id();
 
-        $existing_id = (int) $wpdb->get_var(
+        $existing = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT id FROM {$table} WHERE submission_id = %d AND user_id = %d LIMIT 1",
+                "SELECT id, reaction_type FROM {$table} WHERE submission_id = %d AND user_id = %d LIMIT 1",
                 $submission_id,
                 $user_id
-            )
+            ),
+            ARRAY_A
         );
+
+        $existing_id = (int) ($existing['id'] ?? 0);
+        $old_type = sanitize_key((string) ($existing['reaction_type'] ?? ''));
+        if (!in_array($old_type, self::allowed_reactions(), true)) {
+            $old_type = null;
+        }
 
         if ($existing_id > 0) {
             $wpdb->update(
                 $table,
-                ['reaction_type' => $reaction_type],
+                [
+                    'reaction_type' => $reaction_type,
+                    'updated_at' => current_time('mysql'),
+                ],
                 ['id' => $existing_id],
-                ['%s'],
+                ['%s', '%s'],
                 ['%d']
             );
         } else {
@@ -81,7 +91,11 @@ class CatGame_Reactions {
             );
         }
 
-        wp_send_json_success(self::reaction_counts($submission_id, $user_id));
+        $counts = self::reaction_counts($submission_id, $user_id);
+        $counts['old_type'] = $old_type;
+        $counts['new_type'] = $reaction_type;
+
+        wp_send_json_success($counts);
     }
 
     public static function handle_get_reaction_counts(): void {

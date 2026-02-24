@@ -1252,15 +1252,17 @@ body.cg-has-custom-bg .cg-main {
 }
 
 .catgv-float-emoji {
-  position: absolute;
+  position: fixed;
   animation: catgvFloat 700ms ease-out forwards;
   pointer-events: none;
   font-size: 28px;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
 }
 
 @keyframes catgvFloat {
-  0% { transform: translateY(0) scale(1); opacity: 1; }
-  100% { transform: translateY(-40px) scale(1.4); opacity: 0; }
+  0% { transform: translate(-50%, -50%) translateY(0) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) translateY(-34px) scale(1.15); opacity: 0; }
 }
 
 .catgv-tooltip {

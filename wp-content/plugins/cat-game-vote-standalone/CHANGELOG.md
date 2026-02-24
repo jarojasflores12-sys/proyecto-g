@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.24.4
+- Reacciones UX: tap rápido ahora permite cambiar reacción siempre (sin bloqueo por reacción previa), manteniendo conteos y resaltado seleccionado.
+- Reacciones mobile: long-press (~450ms) muestra tooltip de nombre y al soltar no vota; tap/click rápido sí vota/cambia.
+- Reacciones feedback: animación de emoji flotante al votar/cambiar (solo emoji), sin activarse por long-press.
+- API reacciones: respuesta de `add_or_update` ahora incluye `old_type` y `new_type` además de conteos actualizados.
+
 ## 0.24.3
 - Reacciones: payload de publicaciones ahora incluye `reaction_counts` (5 keys fijas) y `my_reaction` en feed/ranking/inicio/perfil/detalle.
 - Reacciones UI: chips renderizan solo emoji + contador (sin nombre visible), con marca persistente de la reacción del usuario.
