@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.24.8
+- Fix UI reacciones: se declara correctamente el parámetro `deleted` en el bloque de toasts para evitar un `ReferenceError` que interrumpía `app.js` y bloqueaba la interacción de reacciones.
+- Reacciones: vuelve a marcarse la reacción seleccionada al tocar/cambiar porque el script ya no se corta antes de inicializar los widgets.
+
 ## 0.24.7
 - Fix urgente reacciones: se restaura interacción por tap/click con listener simple de `click` para votar/cambiar reacción inmediatamente.
 - Reacciones: actualización optimista + rollback mantienen conteos y selección al votar/cambiar, sin bloquear cuando ya existe reacción previa.

@@ -70,6 +70,7 @@
   const params = new URLSearchParams(window.location.search);
   const uploaded = params.get('uploaded');
   const voted = params.get('voted');
+  const deleted = params.get('deleted');
   const error = params.get('catgame_error');
 
   if (voted === '1') {
