@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.25.3
+- Seguridad reacciones: se agrega rate limit backend de 20 reacciones por usuario por minuto en `add_or_update_reaction`, con respuesta `429` y `retry_after` cuando se excede el límite.
+- UX reacciones: frontend ahora muestra el mensaje devuelto por backend (incluyendo límite alcanzado) en lugar de un error genérico.
+
 ## 0.25.2
 - Documentación: `README.md` se alinea con el estado actual del plugin (reacciones comunitarias, ubicación obligatoria desde Perfil y flujo vigente de subida).
 - Documentación: se corrigen descripciones heredadas de estrellas/ciudad-país manual en upload para evitar confusión operativa.

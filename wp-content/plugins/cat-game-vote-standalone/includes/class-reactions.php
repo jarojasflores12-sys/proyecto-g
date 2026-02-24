@@ -6,6 +6,8 @@ if (!defined('ABSPATH')) {
 
 class CatGame_Reactions {
     private const NONCE_ACTION = 'catgame_reactions';
+    private const RATE_LIMIT_MAX_REQUESTS = 20;
+    private const RATE_LIMIT_WINDOW_SECONDS = 60;
 
     public static function init(): void {
         add_action('admin_post_catgame_add_or_update_reaction', [__CLASS__, 'handle_add_or_update_reaction']);
@@ -36,6 +38,16 @@ class CatGame_Reactions {
             wp_send_json_error(['message' => 'Solicitud inválida (nonce).'], 403);
         }
 
+        $user_id = get_current_user_id();
+        $retry_after = 0;
+        if (!self::within_rate_limit($user_id, $retry_after)) {
+            wp_send_json_error([
+                'message' => 'Has alcanzado el límite de reacciones. Espera un minuto e intenta nuevamente.',
+                'code' => 'rate_limited',
+                'retry_after' => $retry_after,
+            ], 429);
+        }
+
         $submission_id = isset($_POST['submission_id']) ? (int) $_POST['submission_id'] : 0;
         $reaction_type = sanitize_key(wp_unslash($_POST['reaction_type'] ?? ''));
 
@@ -50,7 +62,6 @@ class CatGame_Reactions {
 
         global $wpdb;
         $table = CatGame_DB::table('reactions');
-        $user_id = get_current_user_id();
 
         $existing = $wpdb->get_row(
             $wpdb->prepare(
@@ -278,6 +289,46 @@ class CatGame_Reactions {
             <?php if (!$is_logged_in): ?><small class="cg-reaction-help">Inicia sesión para reaccionar.</small><?php endif; ?>
         </div>
         <?php
+    }
+
+
+    private static function within_rate_limit(int $user_id, int &$retry_after = 0): bool {
+        if ($user_id <= 0) {
+            return false;
+        }
+
+        $key = 'catgame_reaction_rl_' . $user_id;
+        $now = time();
+        $window = self::RATE_LIMIT_WINDOW_SECONDS;
+        $max = self::RATE_LIMIT_MAX_REQUESTS;
+
+        $bucket = get_transient($key);
+        if (!is_array($bucket)) {
+            $bucket = [
+                'count' => 0,
+                'reset_at' => $now + $window,
+            ];
+        }
+
+        $count = isset($bucket['count']) ? (int) $bucket['count'] : 0;
+        $reset_at = isset($bucket['reset_at']) ? (int) $bucket['reset_at'] : ($now + $window);
+
+        if ($reset_at <= $now) {
+            $count = 0;
+            $reset_at = $now + $window;
+        }
+
+        if ($count >= $max) {
+            $retry_after = max(1, $reset_at - $now);
+            return false;
+        }
+
+        $count++;
+        $bucket['count'] = $count;
+        $bucket['reset_at'] = $reset_at;
+        set_transient($key, $bucket, max(1, $reset_at - $now));
+
+        return true;
     }
 
     private static function verify_nonce(): bool {

@@ -740,12 +740,25 @@
       body: fd,
       credentials: 'same-origin',
     });
-    const payload = await response.json();
-    if (payload?.success && payload.data) {
-      return payload.data;
+
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch (_) {
+      payload = null;
     }
 
-    return null;
+    if (payload?.success && payload.data) {
+      return { ok: true, data: payload.data };
+    }
+
+    return {
+      ok: false,
+      message: payload?.data?.message || 'No se pudo guardar la reacción',
+      status: Number(response.status || 0),
+      code: payload?.data?.code || '',
+      retryAfter: Number(payload?.data?.retry_after || 0),
+    };
   };
 
   const clearLongPressUI = (btn) => {
@@ -822,15 +835,15 @@
 
       widget.classList.add('is-busy');
       sendReaction(widget, reactionType)
-        .then((serverState) => {
-          if (serverState) {
-            currentState = { ...currentState, ...serverState };
+        .then((result) => {
+          if (result?.ok && result.data) {
+            currentState = { ...currentState, ...result.data };
             paintWidget(widget, currentState);
             floatReaction(widget, btn);
           } else {
             currentState = previousState;
             paintWidget(widget, currentState);
-            window.catgameToast?.('No se pudo guardar la reacción', 'error');
+            window.catgameToast?.(result?.message || 'No se pudo guardar la reacción', 'error');
           }
         })
         .catch(() => {
