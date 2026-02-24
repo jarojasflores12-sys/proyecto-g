@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.24.6
+- Reacciones UX: long-press ajustado a ~400ms con tooltip visible y voto al soltar.
+- Reacciones feedback: se asegura emoji flotante ascendente con fade-out en el botón seleccionado (solo emoji).
+- Reacciones UI: se mantienen 5 reacciones, una sola fila, emoji grande, contador visible y estado activo resaltado.
+
 ## 0.24.5
 - Reacciones UX: long-press mantiene tooltip con nombre y ahora sí envía voto al soltar (alineado al comportamiento solicitado).
 - Reacciones UX: se corrige bloqueo de interacción removiendo la prevención extra en `pointerdown` que impedía reaccionar en algunos dispositivos.

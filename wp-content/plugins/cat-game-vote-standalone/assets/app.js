@@ -605,7 +605,7 @@
     return;
   }
 
-  const HOLD_MS = 450;
+  const HOLD_MS = 400;
   const MOVE_CANCEL_PX = 10;
   const labels = {
     adorable: { emoji: '😺', label: 'Adorable' },
@@ -663,13 +663,12 @@
     if (!emojiChar) return;
     if (!(anchorElement instanceof HTMLElement)) return;
 
-    const rect = anchorElement.getBoundingClientRect();
     const floater = document.createElement('span');
     floater.className = 'catgv-float-emoji';
     floater.textContent = emojiChar;
-    floater.style.left = `${rect.left + (rect.width / 2)}px`;
-    floater.style.top = `${rect.top + (rect.height / 2)}px`;
-    document.body.appendChild(floater);
+    floater.style.left = '50%';
+    floater.style.top = '50%';
+    anchorElement.appendChild(floater);
     floater.addEventListener('animationend', () => floater.remove(), { once: true });
   };
 
