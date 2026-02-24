@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.5
+- Fix votación/reacciones: se registra también el endpoint `admin_post_nopriv_catgame_vote` para evitar respuestas vacías/fallo cuando la acción llega sin sesión válida.
+- Voto sin sesión: en lugar de `wp_die`, ahora redirige a `/catgame/profile` con `catgame_error=login_required` para mantener el flujo del frontend.
+
 ## 0.22.4
 - Fix P1 admin/events: el formulario respeta modo creación real cuando `event_id` falta o es `0`.
 - Admin/events: edición solo se carga con `event_id > 0` existente; si no existe, se muestra aviso y queda en modo creación.
