@@ -68,18 +68,21 @@ class CatGame_Reactions {
         }
 
         if ($existing_id > 0) {
-            $wpdb->update(
+            $updated = $wpdb->update(
                 $table,
                 [
                     'reaction_type' => $reaction_type,
-                    'updated_at' => current_time('mysql'),
                 ],
                 ['id' => $existing_id],
-                ['%s', '%s'],
+                ['%s'],
                 ['%d']
             );
+
+            if ($updated === false) {
+                wp_send_json_error(['message' => 'No se pudo actualizar la reacción.'], 500);
+            }
         } else {
-            $wpdb->insert(
+            $inserted = $wpdb->insert(
                 $table,
                 [
                     'submission_id' => $submission_id,
@@ -89,6 +92,10 @@ class CatGame_Reactions {
                 ],
                 ['%d', '%d', '%s', '%s']
             );
+
+            if ($inserted === false) {
+                wp_send_json_error(['message' => 'No se pudo registrar la reacción.'], 500);
+            }
         }
 
         $counts = self::reaction_counts($submission_id, $user_id);

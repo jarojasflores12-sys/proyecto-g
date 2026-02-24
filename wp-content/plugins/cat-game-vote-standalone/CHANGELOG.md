@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.24.9
+- Fix reacciones (cambio de voto): `add_or_update` ya no intenta actualizar la columna inexistente `updated_at` en la tabla de reacciones, por lo que volver a reaccionar ahora sí cambia correctamente el tipo guardado.
+- Backend reacciones: se agrega manejo explícito de errores en `UPDATE/INSERT` para devolver 500 si la operación falla en base de datos.
+
 ## 0.24.8
 - Fix UI reacciones: se declara correctamente el parámetro `deleted` en el bloque de toasts para evitar un `ReferenceError` que interrumpía `app.js` y bloqueaba la interacción de reacciones.
 - Reacciones: vuelve a marcarse la reacción seleccionada al tocar/cambiar porque el script ya no se corta antes de inicializar los widgets.
