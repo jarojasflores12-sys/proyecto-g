@@ -605,8 +605,6 @@
     return;
   }
 
-  const HOLD_MS = 400;
-  const MOVE_CANCEL_PX = 10;
   const labels = {
     adorable: { emoji: '😺', label: 'Adorable' },
     funny: { emoji: '😂', label: 'Me hizo reír' },
@@ -657,24 +655,6 @@
       btn.classList.toggle('is-active', isSelected);
       btn.classList.toggle('is-selected', isSelected);
     });
-  };
-
-  const spawnReactionFloat = (emojiChar, anchorElement) => {
-    if (!emojiChar) return;
-    if (!(anchorElement instanceof HTMLElement)) return;
-
-    const floater = document.createElement('span');
-    floater.className = 'catgv-float-emoji';
-    floater.textContent = emojiChar;
-    floater.style.left = '50%';
-    floater.style.top = '50%';
-    anchorElement.appendChild(floater);
-    floater.addEventListener('animationend', () => floater.remove(), { once: true });
-  };
-
-  const showFloatEmoji = (btn) => {
-    const emojiChar = btn.querySelector('.emoji')?.textContent || '';
-    spawnReactionFloat(emojiChar, btn);
   };
 
   const fetchCounts = async (widget) => {
@@ -771,102 +751,43 @@
       return;
     }
 
-    buttons.forEach((btn) => {
-      initReactionButton(btn);
+    buttons.forEach((btn) => initReactionButton(btn));
 
-      let holdTimer = null;
-      let longPressActive = false;
-      let pressCanceled = false;
-      let startX = 0;
-      let startY = 0;
+    const submitReaction = (btn) => {
+      const reactionType = btn.dataset.reaction || '';
+      if (!reactionType || widget.classList.contains('is-busy')) return;
 
-      const clearHoldState = () => {
-        btn.classList.remove('active-hold', 'show-tooltip');
-      };
+      const previousState = JSON.parse(JSON.stringify(currentState));
+      currentState = applyOptimisticReaction(widget, currentState, reactionType);
 
-      const startHold = (event) => {
-        longPressActive = false;
-        pressCanceled = false;
-        startX = Number(event.clientX || 0);
-        startY = Number(event.clientY || 0);
-        clearTimeout(holdTimer);
-        holdTimer = window.setTimeout(() => {
-          longPressActive = true;
-          btn.classList.add('active-hold', 'show-tooltip');
-        }, HOLD_MS);
-      };
-
-      const submitReaction = () => {
-        const reactionType = btn.dataset.reaction || '';
-        if (!reactionType) return;
-
-        const previousState = JSON.parse(JSON.stringify(currentState));
-        currentState = applyOptimisticReaction(widget, currentState, reactionType);
-        showFloatEmoji(btn);
-
-        widget.classList.add('is-busy');
-        sendReaction(widget, reactionType)
-          .then((serverState) => {
-            if (serverState) {
-              currentState = { ...currentState, ...serverState };
-              paintWidget(widget, currentState);
-              if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
-                navigator.vibrate(40);
-              }
-            } else {
-              currentState = previousState;
-              paintWidget(widget, currentState);
-              window.catgameToast?.('No se pudo guardar la reacción', 'error');
-            }
-          })
-          .catch(() => {
+      widget.classList.add('is-busy');
+      sendReaction(widget, reactionType)
+        .then((serverState) => {
+          if (serverState) {
+            currentState = { ...currentState, ...serverState };
+            paintWidget(widget, currentState);
+          } else {
             currentState = previousState;
             paintWidget(widget, currentState);
             window.catgameToast?.('No se pudo guardar la reacción', 'error');
-          })
-          .finally(() => {
-            widget.classList.remove('is-busy');
-          });
-      };
+          }
+        })
+        .catch(() => {
+          currentState = previousState;
+          paintWidget(widget, currentState);
+          window.catgameToast?.('No se pudo guardar la reacción', 'error');
+        })
+        .finally(() => {
+          widget.classList.remove('is-busy');
+        });
+    };
 
-      const endHold = (event) => {
-        clearTimeout(holdTimer);
-        if (longPressActive) {
-          event.preventDefault();
-          clearHoldState();
-          submitReaction();
-          return;
-        }
-
-        if (pressCanceled) {
-          clearHoldState();
-          return;
-        }
-
-        clearHoldState();
-        submitReaction();
-      };
-
-      const cancelHold = () => {
-        clearTimeout(holdTimer);
-        pressCanceled = true;
-        clearHoldState();
-      };
-
-      const moveHold = (event) => {
-        const dx = Math.abs(Number(event.clientX || 0) - startX);
-        const dy = Math.abs(Number(event.clientY || 0) - startY);
-        if (dx > MOVE_CANCEL_PX || dy > MOVE_CANCEL_PX) {
-          cancelHold();
-        }
-      };
-
-      btn.addEventListener('pointerdown', startHold);
-      btn.addEventListener('pointerup', endHold);
-      btn.addEventListener('pointermove', moveHold);
-      btn.addEventListener('pointerleave', cancelHold);
-      btn.addEventListener('pointercancel', cancelHold);
-      btn.addEventListener('contextmenu', (event) => event.preventDefault());
+    widget.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const btn = target.closest('.cg-reaction-btn');
+      if (!(btn instanceof HTMLButtonElement)) return;
+      submitReaction(btn);
     });
 
     paintWidget(widget, currentState);

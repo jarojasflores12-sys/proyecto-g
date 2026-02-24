@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.24.7
+- Fix urgente reacciones: se restaura interacción por tap/click con listener simple de `click` para votar/cambiar reacción inmediatamente.
+- Reacciones: actualización optimista + rollback mantienen conteos y selección al votar/cambiar, sin bloquear cuando ya existe reacción previa.
+- Reacciones (no logueado): se mantiene modo solo lectura con aviso para iniciar sesión.
+
 ## 0.24.6
 - Reacciones UX: long-press ajustado a ~400ms con tooltip visible y voto al soltar.
 - Reacciones feedback: se asegura emoji flotante ascendente con fade-out en el botón seleccionado (solo emoji).
