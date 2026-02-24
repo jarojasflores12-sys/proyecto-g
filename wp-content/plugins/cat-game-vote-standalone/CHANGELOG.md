@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.25.1
+- Perfil: se mueve "Cerrar sesión" al extremo superior derecho (botón compacto con ícono+texto), se re-agregan Ciudad/País persistentes en user meta y se exige completar ubicación para poder subir.
+- Auth/flujo: login/registro exitoso redirigen a Perfil con aviso de completar ubicación cuando falta; Subir queda bloqueado con CTA a Perfil y el envío también valida ubicación desde Perfil.
+- Subir: se eliminan inputs de ciudad/país; ahora muestra "Ubicación: ciudad, país" del perfil, se mantiene título obligatorio, nuevo picker de archivo estilizado, preview visible y sin mostrar tamaños de imagen.
+- Subir: checkbox actualizado a "Acepto los términos" con modal "Reglas del juego" accesible desde la pantalla.
+- Inicio/Tab bar: se reordena Home (hero + cómo funciona + top 3 + últimas), se elimina evento activo/CTA de subir en Home y se ajusta distribución de la barra inferior para balance móvil con énfasis correcto en Inicio activo.
+
+## 0.25.0
+- Reacciones UX: tap/click rápido mantiene voto inmediato; long-press (~450ms) muestra tooltip con nombre, aplica micro-escala y ahora vota recién al soltar.
+- Reacciones touch: cancelación de voto en long-press si hay movimiento/fuera de objetivo o `pointercancel`; se usan Pointer Events con fallback a `click`.
+- Reacciones visuales: se mantiene vista solo emoji + contador por defecto y se agrega animación ligera de emoji flotante al guardar voto exitoso.
+- iOS: mejoras anti-selección/callout/highlight en pills (`user-select`, `-webkit-user-select`, `-webkit-touch-callout`, `touch-action`, `-webkit-tap-highlight-color`).
+
+## 0.24.9
+- Fix reacciones (cambio de voto): `add_or_update` ya no intenta actualizar la columna inexistente `updated_at` en la tabla de reacciones, por lo que volver a reaccionar ahora sí cambia correctamente el tipo guardado.
+- Backend reacciones: se agrega manejo explícito de errores en `UPDATE/INSERT` para devolver 500 si la operación falla en base de datos.
+
+## 0.24.8
+- Fix UI reacciones: se declara correctamente el parámetro `deleted` en el bloque de toasts para evitar un `ReferenceError` que interrumpía `app.js` y bloqueaba la interacción de reacciones.
+- Reacciones: vuelve a marcarse la reacción seleccionada al tocar/cambiar porque el script ya no se corta antes de inicializar los widgets.
+
 ## 0.24.7
 - Fix urgente reacciones: se restaura interacción por tap/click con listener simple de `click` para votar/cambiar reacción inmediatamente.
 - Reacciones: actualización optimista + rollback mantienen conteos y selección al votar/cambiar, sin bloquear cuando ya existe reacción previa.

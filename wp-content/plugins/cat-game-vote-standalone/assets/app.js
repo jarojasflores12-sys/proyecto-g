@@ -70,6 +70,9 @@
   const params = new URLSearchParams(window.location.search);
   const uploaded = params.get('uploaded');
   const voted = params.get('voted');
+  const deleted = params.get('deleted');
+  const profileSaved = params.get('profile_saved');
+  const completeProfile = params.get('complete_profile');
   const error = params.get('catgame_error');
 
   if (voted === '1') {
@@ -84,17 +87,27 @@
     window.catgameToast('Publicación eliminada', 'success');
   }
 
+  if (profileSaved === '1') {
+    window.catgameToast('Perfil actualizado correctamente', 'success');
+  }
+
+  if (completeProfile === '1') {
+    window.catgameToast('Completa tu ciudad y país para continuar', 'info');
+  }
+
   if (error) {
     console.warn('CatGame warning:', error);
     window.catgameToast('Ocurrió un error. Intenta nuevamente.', 'error');
   }
 
-  const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || !!error;
+  const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || profileSaved === '1' || completeProfile === '1' || !!error;
   if (shouldClean && window.history && typeof window.history.replaceState === 'function') {
     params.delete('voted');
     params.delete('uploaded');
     params.delete('catgame_error');
     params.delete('deleted');
+    params.delete('profile_saved');
+    params.delete('complete_profile');
     const nextQuery = params.toString();
     const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
     window.history.replaceState({}, '', nextUrl);
@@ -114,6 +127,7 @@
   const formatEl = document.getElementById('catgame-file-format');
   const stateEl = document.getElementById('catgame-compress-status');
   const previewEl = document.getElementById('catgame-image-preview');
+  const filePickerText = document.querySelector('.cg-file-picker-text');
   const submitButton = form.querySelector('button[type="submit"]');
 
   const TARGET_MAX_SIDE = 1280;
@@ -125,38 +139,13 @@
   let compressedFile = null;
   let compressing = false;
 
-  const formatSize = (bytes) => {
-    if (!Number.isFinite(bytes) || bytes < 0) return '-';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
-
   const setState = (text, isBusy) => {
     if (stateEl) stateEl.textContent = text;
     if (submitButton) submitButton.disabled = !!isBusy;
     compressing = !!isBusy;
   };
 
-  const setCompressionInfo = ({ originalBytes = null, compressedBytes = null, format = '-' } = {}) => {
-    if (originalEl) {
-      originalEl.textContent = `Tamaño original: ${originalBytes === null ? '-' : formatSize(originalBytes)}`;
-    }
-    if (compressedEl) {
-      compressedEl.textContent = `Tamaño comprimido: ${compressedBytes === null ? '-' : formatSize(compressedBytes)}`;
-    }
-    if (formatEl) {
-      formatEl.textContent = `Formato final: ${format === '-' ? '-' : format.toUpperCase().replace('IMAGE/', '')}`;
-    }
-    if (reductionEl) {
-      if (!Number.isFinite(originalBytes) || !Number.isFinite(compressedBytes) || originalBytes <= 0) {
-        reductionEl.textContent = 'Reducción: -';
-      } else {
-        const reduction = Math.max(0, ((originalBytes - compressedBytes) / originalBytes) * 100);
-        reductionEl.textContent = `Reducción: ${reduction.toFixed(1)}%`;
-      }
-    }
-  };
+  const setCompressionInfo = () => {};
 
   const supportsWebP = () => {
     try {
@@ -257,6 +246,7 @@
 
     if (!file) {
       setCompressionInfo();
+      if (filePickerText) filePickerText.textContent = 'JPG, PNG o WEBP';
       setState('Estado: esperando archivo', false);
       return;
     }
@@ -310,6 +300,25 @@
       console.warn('CatGame submit fallback:', err);
     }
   });
+
+
+  const uploadRulesModal = document.getElementById('catgame-upload-rules-modal');
+  const openUploadRulesBtn = document.querySelector('[data-open-upload-rules="1"]');
+  if (uploadRulesModal && openUploadRulesBtn) {
+    const setUploadRulesOpen = (open) => {
+      uploadRulesModal.classList.toggle('is-open', open);
+      uploadRulesModal.setAttribute('aria-hidden', open ? 'false' : 'true');
+    };
+
+    openUploadRulesBtn.addEventListener('click', () => setUploadRulesOpen(true));
+    uploadRulesModal.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.closest('[data-upload-rules-close="1"]')) {
+        setUploadRulesOpen(false);
+      }
+    });
+  }
 })();
 
 (function () {
@@ -465,31 +474,51 @@
 
 
 (function () {
-  const profileForm = document.querySelector('.cg-form[action*="admin-post.php"] input[name="action"][value="catgame_profile_update"]')?.closest('form');
+  const profileForm = document.querySelector('#catgame-profile-form');
   if (!profileForm) {
     return;
   }
 
   const toggleButton = profileForm.querySelector('.js-avatar-color-toggle');
   const colorsPanel = profileForm.querySelector('.cg-avatar-colors');
-  if (!toggleButton || !colorsPanel) {
+  const saveButton = profileForm.querySelector('.js-profile-save');
+  const cityInput = profileForm.querySelector('input[name="default_city"]');
+  const countryInput = profileForm.querySelector('input[name="default_country"]');
+  if (!toggleButton || !colorsPanel || !saveButton) {
     return;
   }
+
+  const showSave = () => saveButton.classList.remove('is-hidden');
+  const hideSave = () => saveButton.classList.add('is-hidden');
 
   const setExpanded = (expanded) => {
     colorsPanel.hidden = !expanded;
     toggleButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    if (expanded) {
+      showSave();
+    }
   };
 
   setExpanded(false);
+  hideSave();
 
   toggleButton.addEventListener('click', () => {
     const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
     setExpanded(!isExpanded);
   });
 
+  profileForm.querySelectorAll('input[name="avatar_color"]').forEach((radio) => {
+    radio.addEventListener('change', showSave);
+  });
+
+  [cityInput, countryInput].forEach((input) => {
+    if (!input) return;
+    input.addEventListener('input', showSave);
+  });
+
   profileForm.addEventListener('submit', () => {
     setExpanded(false);
+    hideSave();
   });
 })();
 
@@ -613,6 +642,9 @@
     epic: { emoji: '🔥', label: 'Épico' },
   };
 
+  const LONG_PRESS_MS = 450;
+  const CANCEL_MOVE_PX = 10;
+
   const initReactionButton = (btn) => {
     const reaction = btn.dataset.reaction || '';
     const meta = labels[reaction];
@@ -621,6 +653,7 @@
     btn.classList.add('reaction-btn');
     const label = btn.dataset.label || meta.label;
     btn.dataset.label = label;
+    btn.setAttribute('aria-label', label);
 
     if (!btn.querySelector('.emoji')) {
       btn.textContent = '';
@@ -633,7 +666,7 @@
       count.className = 'count';
       count.textContent = '0';
 
-      const tooltip = document.createElement('div');
+      const tooltip = document.createElement('span');
       tooltip.className = 'catgv-tooltip';
       tooltip.textContent = label;
 
@@ -654,6 +687,7 @@
       const isSelected = reaction === active;
       btn.classList.toggle('is-active', isSelected);
       btn.classList.toggle('is-selected', isSelected);
+      btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
     });
   };
 
@@ -714,6 +748,34 @@
     return null;
   };
 
+  const clearLongPressUI = (btn) => {
+    btn.classList.remove('active-hold', 'show-tooltip');
+  };
+
+  const showLongPressUI = (btn) => {
+    btn.classList.add('active-hold', 'show-tooltip');
+  };
+
+  const floatReaction = (widget, btn) => {
+    const emoji = btn.querySelector('.emoji')?.textContent || '';
+    if (!emoji) return;
+
+    const anchorRect = btn.getBoundingClientRect();
+    const host = widget.querySelector('.cg-reaction-buttons') || widget;
+    const hostRect = host.getBoundingClientRect();
+
+    const floating = document.createElement('span');
+    floating.className = 'catgv-float-emoji';
+    floating.setAttribute('aria-hidden', 'true');
+    floating.textContent = emoji;
+    floating.style.left = `${anchorRect.left - hostRect.left + (anchorRect.width / 2)}px`;
+    floating.style.top = `${anchorRect.top - hostRect.top + (anchorRect.height / 2)}px`;
+
+    host.appendChild(floating);
+    floating.addEventListener('animationend', () => floating.remove(), { once: true });
+    window.setTimeout(() => floating.remove(), 850);
+  };
+
   widgets.forEach((widget) => {
     const buttons = Array.from(widget.querySelectorAll('.cg-reaction-btn'));
     const isLoggedIn = widget.dataset.loggedIn === '1';
@@ -727,9 +789,10 @@
       }
     })();
 
+    buttons.forEach((btn) => initReactionButton(btn));
+
     if (!isLoggedIn) {
       widget.classList.add('is-readonly');
-      buttons.forEach((btn) => initReactionButton(btn));
       paintWidget(widget, currentState);
 
       widget.addEventListener('click', (event) => {
@@ -741,17 +804,14 @@
         }
       });
 
-      paintWidget(widget, currentState);
-    fetchCounts(widget).then((serverState) => {
-      if (serverState) {
-        currentState = { ...currentState, ...serverState };
-        paintWidget(widget, currentState);
-      }
-    }).catch(() => null);
+      fetchCounts(widget).then((serverState) => {
+        if (serverState) {
+          currentState = { ...currentState, ...serverState };
+          paintWidget(widget, currentState);
+        }
+      }).catch(() => null);
       return;
     }
-
-    buttons.forEach((btn) => initReactionButton(btn));
 
     const submitReaction = (btn) => {
       const reactionType = btn.dataset.reaction || '';
@@ -766,6 +826,7 @@
           if (serverState) {
             currentState = { ...currentState, ...serverState };
             paintWidget(widget, currentState);
+            floatReaction(widget, btn);
           } else {
             currentState = previousState;
             paintWidget(widget, currentState);
@@ -782,13 +843,105 @@
         });
     };
 
-    widget.addEventListener('click', (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      const btn = target.closest('.cg-reaction-btn');
-      if (!(btn instanceof HTMLButtonElement)) return;
-      submitReaction(btn);
-    });
+    if ('PointerEvent' in window) {
+      const states = new WeakMap();
+
+      const cancelState = (btn, state, { moved = false } = {}) => {
+        if (!state) return;
+        if (state.timer) {
+          window.clearTimeout(state.timer);
+          state.timer = null;
+        }
+        state.canceled = true;
+        if (moved) {
+          state.moved = true;
+        }
+        clearLongPressUI(btn);
+      };
+
+      buttons.forEach((btn) => {
+        btn.addEventListener('pointerdown', (event) => {
+          if (event.button !== 0 || widget.classList.contains('is-busy')) return;
+
+          const state = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            moved: false,
+            canceled: false,
+            longPress: false,
+            timer: null,
+          };
+
+          state.timer = window.setTimeout(() => {
+            state.longPress = true;
+            showLongPressUI(btn);
+          }, LONG_PRESS_MS);
+
+          states.set(btn, state);
+          try {
+            btn.setPointerCapture(event.pointerId);
+          } catch (_) {
+            // noop
+          }
+        });
+
+        btn.addEventListener('pointermove', (event) => {
+          const state = states.get(btn);
+          if (!state || state.pointerId !== event.pointerId || state.canceled) return;
+
+          const dx = Math.abs(event.clientX - state.startX);
+          const dy = Math.abs(event.clientY - state.startY);
+          if (dx > CANCEL_MOVE_PX || dy > CANCEL_MOVE_PX) {
+            cancelState(btn, state, { moved: true });
+          }
+        });
+
+        btn.addEventListener('pointercancel', (event) => {
+          const state = states.get(btn);
+          if (!state || state.pointerId !== event.pointerId) return;
+          cancelState(btn, state);
+          states.delete(btn);
+        });
+
+        btn.addEventListener('pointerleave', () => {
+          const state = states.get(btn);
+          if (!state || state.canceled || state.longPress) return;
+          cancelState(btn, state, { moved: true });
+        });
+
+        btn.addEventListener('pointerup', (event) => {
+          const state = states.get(btn);
+          if (!state || state.pointerId !== event.pointerId) return;
+
+          if (state.timer) {
+            window.clearTimeout(state.timer);
+            state.timer = null;
+          }
+
+          const shouldVote = !state.canceled && !state.moved;
+          clearLongPressUI(btn);
+          states.delete(btn);
+
+          if (shouldVote) {
+            event.preventDefault();
+            submitReaction(btn);
+          }
+        });
+
+        btn.addEventListener('click', (event) => {
+          event.preventDefault();
+        });
+      });
+    } else {
+      widget.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const btn = target.closest('.cg-reaction-btn');
+        if (!(btn instanceof HTMLButtonElement)) return;
+        submitReaction(btn);
+      });
+    }
 
     paintWidget(widget, currentState);
     fetchCounts(widget).then((serverState) => {

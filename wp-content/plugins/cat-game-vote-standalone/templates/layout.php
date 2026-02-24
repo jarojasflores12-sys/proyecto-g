@@ -99,7 +99,7 @@ if ($has_background) {
     <nav class="catgame-bottom-nav" aria-label="Navegación inferior">
         <?php foreach ($bottom_nav_items as $item): ?>
             <?php $is_bottom_active = ($current_page === $item['page']); ?>
-            <a href="<?php echo esc_url($item['url']); ?>" class="nav-item <?php echo $is_bottom_active ? 'active' : ''; ?>" aria-current="<?php echo $is_bottom_active ? 'page' : 'false'; ?>">
+            <a href="<?php echo esc_url($item['url']); ?>" class="nav-item <?php echo $is_bottom_active ? 'active' : ''; ?> <?php echo $item['page'] === 'home' ? 'is-home' : ''; ?>" data-page="<?php echo esc_attr($item['page']); ?>" aria-current="<?php echo $is_bottom_active ? 'page' : 'false'; ?>">
                 <span class="icon" aria-hidden="true"><?php echo esc_html($item['icon']); ?></span>
                 <span><?php echo esc_html($item['label']); ?></span>
             </a>

@@ -49,8 +49,7 @@ class CatGame_Auth {
             self::redirect_auth(['auth' => 'login', 'login_error' => 'invalid_credentials', 'login_identifier' => $identifier]);
         }
 
-        wp_safe_redirect(home_url('/catgame/profile'));
-        exit;
+        self::redirect_after_auth((int) $signon->ID);
     }
 
     public static function handle_register(): void {
@@ -110,8 +109,7 @@ class CatGame_Auth {
         wp_set_current_user((int) $user_id);
         wp_set_auth_cookie((int) $user_id, true);
 
-        wp_safe_redirect(add_query_arg('registered', '1', home_url('/catgame/profile')));
-        exit;
+        self::redirect_after_auth((int) $user_id, ['registered' => '1']);
     }
 
     public static function handle_lost_password(): void {
@@ -217,6 +215,8 @@ class CatGame_Auth {
 
         $user_id = get_current_user_id();
         $avatar_color = sanitize_key(wp_unslash($_POST['avatar_color'] ?? 'rose'));
+        $city = sanitize_text_field(wp_unslash($_POST['default_city'] ?? ''));
+        $country = sanitize_text_field(wp_unslash($_POST['default_country'] ?? ''));
 
         $allowed_avatar_colors = ['rose', 'mint', 'lavender', 'yellow', 'sky'];
         if (!in_array($avatar_color, $allowed_avatar_colors, true)) {
@@ -224,8 +224,31 @@ class CatGame_Auth {
         }
 
         update_user_meta($user_id, 'catgame_avatar_color', $avatar_color);
+        update_user_meta($user_id, 'catgame_default_city', $city);
+        update_user_meta($user_id, 'catgame_default_country', $country);
 
         wp_safe_redirect(add_query_arg('profile_saved', '1', home_url('/catgame/profile')));
+        exit;
+    }
+
+
+    private static function has_required_location(int $user_id): bool {
+        $city = trim((string) get_user_meta($user_id, 'catgame_default_city', true));
+        $country = trim((string) get_user_meta($user_id, 'catgame_default_country', true));
+        return $city !== '' && $country !== '';
+    }
+
+    private static function redirect_after_auth(int $user_id, array $extra_query = []): void {
+        $query = $extra_query;
+        if (!self::has_required_location($user_id)) {
+            $query['complete_profile'] = '1';
+        }
+
+        $target = empty($query)
+            ? home_url('/catgame/profile')
+            : add_query_arg($query, home_url('/catgame/profile'));
+
+        wp_safe_redirect($target);
         exit;
     }
 
