@@ -71,6 +71,8 @@
   const uploaded = params.get('uploaded');
   const voted = params.get('voted');
   const deleted = params.get('deleted');
+  const profileSaved = params.get('profile_saved');
+  const completeProfile = params.get('complete_profile');
   const error = params.get('catgame_error');
 
   if (voted === '1') {
@@ -85,17 +87,27 @@
     window.catgameToast('Publicación eliminada', 'success');
   }
 
+  if (profileSaved === '1') {
+    window.catgameToast('Perfil actualizado correctamente', 'success');
+  }
+
+  if (completeProfile === '1') {
+    window.catgameToast('Completa tu ciudad y país para continuar', 'info');
+  }
+
   if (error) {
     console.warn('CatGame warning:', error);
     window.catgameToast('Ocurrió un error. Intenta nuevamente.', 'error');
   }
 
-  const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || !!error;
+  const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || profileSaved === '1' || completeProfile === '1' || !!error;
   if (shouldClean && window.history && typeof window.history.replaceState === 'function') {
     params.delete('voted');
     params.delete('uploaded');
     params.delete('catgame_error');
     params.delete('deleted');
+    params.delete('profile_saved');
+    params.delete('complete_profile');
     const nextQuery = params.toString();
     const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
     window.history.replaceState({}, '', nextUrl);
@@ -115,6 +127,7 @@
   const formatEl = document.getElementById('catgame-file-format');
   const stateEl = document.getElementById('catgame-compress-status');
   const previewEl = document.getElementById('catgame-image-preview');
+  const filePickerText = document.querySelector('.cg-file-picker-text');
   const submitButton = form.querySelector('button[type="submit"]');
 
   const TARGET_MAX_SIDE = 1280;
@@ -126,38 +139,13 @@
   let compressedFile = null;
   let compressing = false;
 
-  const formatSize = (bytes) => {
-    if (!Number.isFinite(bytes) || bytes < 0) return '-';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
-
   const setState = (text, isBusy) => {
     if (stateEl) stateEl.textContent = text;
     if (submitButton) submitButton.disabled = !!isBusy;
     compressing = !!isBusy;
   };
 
-  const setCompressionInfo = ({ originalBytes = null, compressedBytes = null, format = '-' } = {}) => {
-    if (originalEl) {
-      originalEl.textContent = `Tamaño original: ${originalBytes === null ? '-' : formatSize(originalBytes)}`;
-    }
-    if (compressedEl) {
-      compressedEl.textContent = `Tamaño comprimido: ${compressedBytes === null ? '-' : formatSize(compressedBytes)}`;
-    }
-    if (formatEl) {
-      formatEl.textContent = `Formato final: ${format === '-' ? '-' : format.toUpperCase().replace('IMAGE/', '')}`;
-    }
-    if (reductionEl) {
-      if (!Number.isFinite(originalBytes) || !Number.isFinite(compressedBytes) || originalBytes <= 0) {
-        reductionEl.textContent = 'Reducción: -';
-      } else {
-        const reduction = Math.max(0, ((originalBytes - compressedBytes) / originalBytes) * 100);
-        reductionEl.textContent = `Reducción: ${reduction.toFixed(1)}%`;
-      }
-    }
-  };
+  const setCompressionInfo = () => {};
 
   const supportsWebP = () => {
     try {
@@ -258,6 +246,7 @@
 
     if (!file) {
       setCompressionInfo();
+      if (filePickerText) filePickerText.textContent = 'JPG, PNG o WEBP';
       setState('Estado: esperando archivo', false);
       return;
     }
@@ -311,6 +300,25 @@
       console.warn('CatGame submit fallback:', err);
     }
   });
+
+
+  const uploadRulesModal = document.getElementById('catgame-upload-rules-modal');
+  const openUploadRulesBtn = document.querySelector('[data-open-upload-rules="1"]');
+  if (uploadRulesModal && openUploadRulesBtn) {
+    const setUploadRulesOpen = (open) => {
+      uploadRulesModal.classList.toggle('is-open', open);
+      uploadRulesModal.setAttribute('aria-hidden', open ? 'false' : 'true');
+    };
+
+    openUploadRulesBtn.addEventListener('click', () => setUploadRulesOpen(true));
+    uploadRulesModal.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.closest('[data-upload-rules-close="1"]')) {
+        setUploadRulesOpen(false);
+      }
+    });
+  }
 })();
 
 (function () {
@@ -466,31 +474,51 @@
 
 
 (function () {
-  const profileForm = document.querySelector('.cg-form[action*="admin-post.php"] input[name="action"][value="catgame_profile_update"]')?.closest('form');
+  const profileForm = document.querySelector('#catgame-profile-form');
   if (!profileForm) {
     return;
   }
 
   const toggleButton = profileForm.querySelector('.js-avatar-color-toggle');
   const colorsPanel = profileForm.querySelector('.cg-avatar-colors');
-  if (!toggleButton || !colorsPanel) {
+  const saveButton = profileForm.querySelector('.js-profile-save');
+  const cityInput = profileForm.querySelector('input[name="default_city"]');
+  const countryInput = profileForm.querySelector('input[name="default_country"]');
+  if (!toggleButton || !colorsPanel || !saveButton) {
     return;
   }
+
+  const showSave = () => saveButton.classList.remove('is-hidden');
+  const hideSave = () => saveButton.classList.add('is-hidden');
 
   const setExpanded = (expanded) => {
     colorsPanel.hidden = !expanded;
     toggleButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    if (expanded) {
+      showSave();
+    }
   };
 
   setExpanded(false);
+  hideSave();
 
   toggleButton.addEventListener('click', () => {
     const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
     setExpanded(!isExpanded);
   });
 
+  profileForm.querySelectorAll('input[name="avatar_color"]').forEach((radio) => {
+    radio.addEventListener('change', showSave);
+  });
+
+  [cityInput, countryInput].forEach((input) => {
+    if (!input) return;
+    input.addEventListener('input', showSave);
+  });
+
   profileForm.addEventListener('submit', () => {
     setExpanded(false);
+    hideSave();
   });
 })();
 

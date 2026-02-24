@@ -80,10 +80,12 @@ class CatGame_Render {
                     'default_city' => '',
                     'default_country' => '',
                 ];
+                $requires_location = false;
                 if (is_user_logged_in()) {
                     $uid = get_current_user_id();
                     $upload_defaults['default_city'] = (string) get_user_meta($uid, 'catgame_default_city', true);
                     $upload_defaults['default_country'] = (string) get_user_meta($uid, 'catgame_default_country', true);
+                    $requires_location = trim($upload_defaults['default_city']) === '' || trim($upload_defaults['default_country']) === '';
                 }
 
                 $selected_tags_raw = sanitize_text_field(wp_unslash($_GET['upload_tags'] ?? ''));
@@ -98,8 +100,6 @@ class CatGame_Render {
                 }
 
                 $upload_state = [
-                    'city' => sanitize_text_field(wp_unslash($_GET['upload_city'] ?? (string) ($upload_defaults['default_city'] ?? ''))),
-                    'country' => sanitize_text_field(wp_unslash($_GET['upload_country'] ?? (string) ($upload_defaults['default_country'] ?? ''))),
                     'title' => sanitize_text_field(wp_unslash($_GET['upload_title'] ?? '')),
                     'custom_tags' => sanitize_textarea_field(wp_unslash($_GET['upload_custom_tags'] ?? '')),
                     'selected_tags' => array_values(array_unique($selected_tags)),
@@ -116,6 +116,7 @@ class CatGame_Render {
                     'upload_defaults' => $upload_defaults,
                     'upload_state' => $upload_state,
                     'upload_error' => $upload_error,
+                    'requires_location' => $requires_location,
                 ];
             case 'feed':
                 $filter_tag = CatGame_Submissions::normalize_tag(wp_unslash($_GET['tag'] ?? ''));
@@ -182,6 +183,7 @@ class CatGame_Render {
                 $password_reset = isset($_GET['password_reset']) ? (int) $_GET['password_reset'] : 0;
                 $tag_deleted = isset($_GET['tag_deleted']) ? (int) $_GET['tag_deleted'] : 0;
                 $profile_saved = isset($_GET['profile_saved']) ? (int) $_GET['profile_saved'] : 0;
+                $complete_profile = isset($_GET['complete_profile']) ? (int) $_GET['complete_profile'] : 0;
                 $login_identifier = sanitize_text_field(wp_unslash($_GET['login_identifier'] ?? ''));
                 $reg_username = sanitize_user(wp_unslash($_GET['reg_username'] ?? ''), true);
                 $reg_email = sanitize_email(wp_unslash($_GET['reg_email'] ?? ''));
@@ -272,6 +274,7 @@ class CatGame_Render {
                     'registered' => $registered,
                     'tag_deleted' => $tag_deleted,
                     'profile_saved' => $profile_saved,
+                    'complete_profile' => $complete_profile,
                     'scope' => $scope,
                     'items' => $items,
                     'stats' => $stats,

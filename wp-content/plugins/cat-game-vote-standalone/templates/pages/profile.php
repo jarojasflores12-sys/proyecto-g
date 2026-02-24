@@ -6,6 +6,7 @@ $reset_error = !empty($data['reset_error']) ? CatGame_Auth::reset_password_messa
 $registered = !empty($data['registered']);
 $tag_deleted = !empty($data['tag_deleted']);
 $profile_saved = !empty($data['profile_saved']);
+$complete_profile = !empty($data['complete_profile']);
 $lost_sent = !empty($data['lost_sent']);
 $password_reset = !empty($data['password_reset']);
 $auth_view = (string) ($data['auth_view'] ?? 'login');
@@ -146,12 +147,28 @@ $best_photo = is_array($data['best_photo'] ?? null) ? $data['best_photo'] : null
 
 $profile_link = home_url('/catgame/profile');
 $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
+$default_city = trim((string) ($prefs['default_city'] ?? ''));
+$default_country = trim((string) ($prefs['default_country'] ?? ''));
+$location_missing = $default_city === '' || $default_country === '';
 ?>
 <section>
-    <h2>Mi perfil</h2>
+    <div class="cg-profile-topbar">
+        <h2>Mi perfil</h2>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-logout-form cg-logout-form-top">
+            <?php wp_nonce_field('catgame_logout'); ?>
+            <input type="hidden" name="action" value="catgame_logout">
+            <button type="submit" class="secondary cg-logout-btn" aria-label="Cerrar sesión">⎋ <span>Cerrar sesión</span></button>
+        </form>
+    </div>
 
     <?php if ($registered): ?>
         <p class="cg-alert cg-alert-success">¡Cuenta creada! Ya estás dentro.</p>
+    <?php endif; ?>
+    <?php if ($complete_profile): ?>
+        <p class="cg-alert cg-alert-error">Completa tu ciudad y país para continuar.</p>
+    <?php endif; ?>
+    <?php if ($location_missing): ?>
+        <p class="cg-alert cg-alert-error">Completa tu ciudad y país para poder subir fotos.</p>
     <?php endif; ?>
     <?php if ($tag_deleted): ?>
         <p class="cg-alert cg-alert-success">Etiqueta eliminada del catálogo personal.</p>
@@ -160,7 +177,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
         <p class="cg-alert cg-alert-success">Perfil actualizado correctamente.</p>
     <?php endif; ?>
 
-    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form">
+    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form" id="catgame-profile-form">
         <?php wp_nonce_field('catgame_profile_update'); ?>
         <input type="hidden" name="action" value="catgame_profile_update">
 
@@ -171,7 +188,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
             </div>
             <div class="cg-profile-user-actions">
                 <button type="button" class="secondary js-avatar-color-toggle" aria-expanded="false" aria-controls="cg-avatar-colors">Cambiar color</button>
-                <button type="submit" class="js-profile-save">Guardar cambios</button>
+                <button type="submit" class="js-profile-save is-hidden">Guardar cambios</button>
             </div>
         </div>
 
@@ -184,12 +201,16 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
                 </label>
             <?php endforeach; ?>
         </fieldset>
-    </form>
 
-    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-logout-form">
-        <?php wp_nonce_field('catgame_logout'); ?>
-        <input type="hidden" name="action" value="catgame_logout">
-        <button type="submit" class="secondary">Cerrar sesión</button>
+
+        <div class="cg-profile-location-fields">
+            <label>Ciudad
+                <input type="text" name="default_city" value="<?php echo esc_attr($default_city); ?>" placeholder="Ej: Talca" required>
+            </label>
+            <label>País
+                <input type="text" name="default_country" value="<?php echo esc_attr($default_country); ?>" placeholder="Ej: Chile" required>
+            </label>
+        </div>
     </form>
 
     <?php if (!empty($top_position_for_user)): ?>

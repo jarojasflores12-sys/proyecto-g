@@ -168,7 +168,7 @@ class CatGame_Submissions {
     public static function upload_error_message(string $error): string {
         $map = [
             'confirm_required' => 'Debes confirmar que no hay personas en la foto.',
-            'missing_location' => 'Completa ciudad y país.',
+            'missing_location' => 'Completa tu ciudad y país en tu perfil para continuar.',
             'missing_title' => 'El título es obligatorio.',
             'title_too_short' => 'El título debe tener al menos 2 caracteres.',
             'title_too_long' => 'El título no puede superar los 40 caracteres.',
@@ -185,12 +185,6 @@ class CatGame_Submissions {
     private static function upload_redirect_with_state(string $error, array $state = []): void {
         $query = ['catgame_error' => $error];
 
-        if (!empty($state['city'])) {
-            $query['upload_city'] = sanitize_text_field((string) $state['city']);
-        }
-        if (!empty($state['country'])) {
-            $query['upload_country'] = sanitize_text_field((string) $state['country']);
-        }
         if (array_key_exists('title', $state)) {
             $query['upload_title'] = sanitize_text_field((string) $state['title']);
         }
@@ -215,8 +209,9 @@ class CatGame_Submissions {
 
         check_admin_referer('catgame_upload');
 
-        $city = sanitize_text_field(wp_unslash($_POST['city'] ?? ''));
-        $country = sanitize_text_field(wp_unslash($_POST['country'] ?? ''));
+        $user_id = get_current_user_id();
+        $city = sanitize_text_field((string) get_user_meta($user_id, 'catgame_default_city', true));
+        $country = sanitize_text_field((string) get_user_meta($user_id, 'catgame_default_country', true));
         $title = sanitize_text_field(wp_unslash($_POST['title'] ?? ''));
         $title = trim($title);
         $title_length = function_exists('mb_strlen') ? mb_strlen($title) : strlen($title);
@@ -225,8 +220,6 @@ class CatGame_Submissions {
         $confirm_no_people = !empty($_POST['confirm_no_people']);
 
         $upload_state = [
-            'city' => $city,
-            'country' => $country,
             'title' => $title,
             'tags' => is_array($selected_tags) ? $selected_tags : [],
             'custom_tags' => $custom_tags_input,
@@ -238,7 +231,8 @@ class CatGame_Submissions {
         }
 
         if ($city === '' || $country === '') {
-            self::upload_redirect_with_state('missing_location', $upload_state);
+            wp_safe_redirect(add_query_arg('complete_profile', '1', home_url('/catgame/profile')));
+            exit;
         }
 
         if ($title === '') {
@@ -283,7 +277,6 @@ class CatGame_Submissions {
 
         $final_size = self::compress_uploaded_image_backup((int) $attachment_id);
 
-        $user_id = get_current_user_id();
         $available_tags = self::available_tags_for_user($user_id);
 
         $new_custom_tag_map = self::parse_custom_tags_input(wp_unslash($_POST['custom_tags'] ?? ''));
