@@ -1188,6 +1188,8 @@ body.cg-has-custom-bg .cg-main {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  position: relative;
+  overflow: visible;
 }
 
 .reaction-btn,
@@ -1206,6 +1208,7 @@ body.cg-has-custom-bg .cg-main {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .cg-reaction-btn:hover {
@@ -1231,7 +1234,7 @@ body.cg-has-custom-bg .cg-main {
 
 .reaction-btn.active-hold,
 .cg-reaction-btn.active-hold {
-  transform: scale(1.35);
+  transform: scale(1.08);
   z-index: 10;
 }
 
@@ -1266,12 +1269,15 @@ body.cg-has-custom-bg .cg-main {
 
 .catgv-tooltip {
   position: absolute;
-  background: rgba(0,0,0,.75);
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 8px;
-  font-size: 12px;
-  bottom: 110%;
+  background: rgba(255, 244, 248, 0.98);
+  color: #4a3f47;
+  border: 1px solid rgba(247, 183, 195, 0.85);
+  box-shadow: 0 6px 16px rgba(73, 56, 80, 0.15);
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;

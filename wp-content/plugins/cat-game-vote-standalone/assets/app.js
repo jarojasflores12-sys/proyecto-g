@@ -614,6 +614,9 @@
     epic: { emoji: '🔥', label: 'Épico' },
   };
 
+  const LONG_PRESS_MS = 450;
+  const CANCEL_MOVE_PX = 10;
+
   const initReactionButton = (btn) => {
     const reaction = btn.dataset.reaction || '';
     const meta = labels[reaction];
@@ -622,6 +625,7 @@
     btn.classList.add('reaction-btn');
     const label = btn.dataset.label || meta.label;
     btn.dataset.label = label;
+    btn.setAttribute('aria-label', label);
 
     if (!btn.querySelector('.emoji')) {
       btn.textContent = '';
@@ -634,7 +638,7 @@
       count.className = 'count';
       count.textContent = '0';
 
-      const tooltip = document.createElement('div');
+      const tooltip = document.createElement('span');
       tooltip.className = 'catgv-tooltip';
       tooltip.textContent = label;
 
@@ -655,6 +659,7 @@
       const isSelected = reaction === active;
       btn.classList.toggle('is-active', isSelected);
       btn.classList.toggle('is-selected', isSelected);
+      btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
     });
   };
 
@@ -715,6 +720,34 @@
     return null;
   };
 
+  const clearLongPressUI = (btn) => {
+    btn.classList.remove('active-hold', 'show-tooltip');
+  };
+
+  const showLongPressUI = (btn) => {
+    btn.classList.add('active-hold', 'show-tooltip');
+  };
+
+  const floatReaction = (widget, btn) => {
+    const emoji = btn.querySelector('.emoji')?.textContent || '';
+    if (!emoji) return;
+
+    const anchorRect = btn.getBoundingClientRect();
+    const host = widget.querySelector('.cg-reaction-buttons') || widget;
+    const hostRect = host.getBoundingClientRect();
+
+    const floating = document.createElement('span');
+    floating.className = 'catgv-float-emoji';
+    floating.setAttribute('aria-hidden', 'true');
+    floating.textContent = emoji;
+    floating.style.left = `${anchorRect.left - hostRect.left + (anchorRect.width / 2)}px`;
+    floating.style.top = `${anchorRect.top - hostRect.top + (anchorRect.height / 2)}px`;
+
+    host.appendChild(floating);
+    floating.addEventListener('animationend', () => floating.remove(), { once: true });
+    window.setTimeout(() => floating.remove(), 850);
+  };
+
   widgets.forEach((widget) => {
     const buttons = Array.from(widget.querySelectorAll('.cg-reaction-btn'));
     const isLoggedIn = widget.dataset.loggedIn === '1';
@@ -728,9 +761,10 @@
       }
     })();
 
+    buttons.forEach((btn) => initReactionButton(btn));
+
     if (!isLoggedIn) {
       widget.classList.add('is-readonly');
-      buttons.forEach((btn) => initReactionButton(btn));
       paintWidget(widget, currentState);
 
       widget.addEventListener('click', (event) => {
@@ -742,17 +776,14 @@
         }
       });
 
-      paintWidget(widget, currentState);
-    fetchCounts(widget).then((serverState) => {
-      if (serverState) {
-        currentState = { ...currentState, ...serverState };
-        paintWidget(widget, currentState);
-      }
-    }).catch(() => null);
+      fetchCounts(widget).then((serverState) => {
+        if (serverState) {
+          currentState = { ...currentState, ...serverState };
+          paintWidget(widget, currentState);
+        }
+      }).catch(() => null);
       return;
     }
-
-    buttons.forEach((btn) => initReactionButton(btn));
 
     const submitReaction = (btn) => {
       const reactionType = btn.dataset.reaction || '';
@@ -767,6 +798,7 @@
           if (serverState) {
             currentState = { ...currentState, ...serverState };
             paintWidget(widget, currentState);
+            floatReaction(widget, btn);
           } else {
             currentState = previousState;
             paintWidget(widget, currentState);
@@ -783,13 +815,105 @@
         });
     };
 
-    widget.addEventListener('click', (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      const btn = target.closest('.cg-reaction-btn');
-      if (!(btn instanceof HTMLButtonElement)) return;
-      submitReaction(btn);
-    });
+    if ('PointerEvent' in window) {
+      const states = new WeakMap();
+
+      const cancelState = (btn, state, { moved = false } = {}) => {
+        if (!state) return;
+        if (state.timer) {
+          window.clearTimeout(state.timer);
+          state.timer = null;
+        }
+        state.canceled = true;
+        if (moved) {
+          state.moved = true;
+        }
+        clearLongPressUI(btn);
+      };
+
+      buttons.forEach((btn) => {
+        btn.addEventListener('pointerdown', (event) => {
+          if (event.button !== 0 || widget.classList.contains('is-busy')) return;
+
+          const state = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            moved: false,
+            canceled: false,
+            longPress: false,
+            timer: null,
+          };
+
+          state.timer = window.setTimeout(() => {
+            state.longPress = true;
+            showLongPressUI(btn);
+          }, LONG_PRESS_MS);
+
+          states.set(btn, state);
+          try {
+            btn.setPointerCapture(event.pointerId);
+          } catch (_) {
+            // noop
+          }
+        });
+
+        btn.addEventListener('pointermove', (event) => {
+          const state = states.get(btn);
+          if (!state || state.pointerId !== event.pointerId || state.canceled) return;
+
+          const dx = Math.abs(event.clientX - state.startX);
+          const dy = Math.abs(event.clientY - state.startY);
+          if (dx > CANCEL_MOVE_PX || dy > CANCEL_MOVE_PX) {
+            cancelState(btn, state, { moved: true });
+          }
+        });
+
+        btn.addEventListener('pointercancel', (event) => {
+          const state = states.get(btn);
+          if (!state || state.pointerId !== event.pointerId) return;
+          cancelState(btn, state);
+          states.delete(btn);
+        });
+
+        btn.addEventListener('pointerleave', () => {
+          const state = states.get(btn);
+          if (!state || state.canceled || state.longPress) return;
+          cancelState(btn, state, { moved: true });
+        });
+
+        btn.addEventListener('pointerup', (event) => {
+          const state = states.get(btn);
+          if (!state || state.pointerId !== event.pointerId) return;
+
+          if (state.timer) {
+            window.clearTimeout(state.timer);
+            state.timer = null;
+          }
+
+          const shouldVote = !state.canceled && !state.moved;
+          clearLongPressUI(btn);
+          states.delete(btn);
+
+          if (shouldVote) {
+            event.preventDefault();
+            submitReaction(btn);
+          }
+        });
+
+        btn.addEventListener('click', (event) => {
+          event.preventDefault();
+        });
+      });
+    } else {
+      widget.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const btn = target.closest('.cg-reaction-btn');
+        if (!(btn instanceof HTMLButtonElement)) return;
+        submitReaction(btn);
+      });
+    }
 
     paintWidget(widget, currentState);
     fetchCounts(widget).then((serverState) => {

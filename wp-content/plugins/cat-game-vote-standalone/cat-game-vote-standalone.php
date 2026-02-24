@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Cat Game Vote Standalone
  * Description: Frontend standalone para juego de gatos con votación comunitaria y moderación manual.
- * Version: 0.24.9
+ * Version: 0.25.0
  * Author: Codex
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('CATGAME_VERSION', '0.24.9');
+define('CATGAME_VERSION', '0.25.0');
 define('CATGAME_PLUGIN_FILE', __FILE__);
 define('CATGAME_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CATGAME_PLUGIN_URL', plugin_dir_url(__FILE__));

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.25.0
+- Reacciones UX: tap/click rápido mantiene voto inmediato; long-press (~450ms) muestra tooltip con nombre, aplica micro-escala y ahora vota recién al soltar.
+- Reacciones touch: cancelación de voto en long-press si hay movimiento/fuera de objetivo o `pointercancel`; se usan Pointer Events con fallback a `click`.
+- Reacciones visuales: se mantiene vista solo emoji + contador por defecto y se agrega animación ligera de emoji flotante al guardar voto exitoso.
+- iOS: mejoras anti-selección/callout/highlight en pills (`user-select`, `-webkit-user-select`, `-webkit-touch-callout`, `touch-action`, `-webkit-tap-highlight-color`).
+
 ## 0.24.9
 - Fix reacciones (cambio de voto): `add_or_update` ya no intenta actualizar la columna inexistente `updated_at` en la tabla de reacciones, por lo que volver a reaccionar ahora sí cambia correctamente el tipo guardado.
 - Backend reacciones: se agrega manejo explícito de errores en `UPDATE/INSERT` para devolver 500 si la operación falla en base de datos.
