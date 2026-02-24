@@ -1235,7 +1235,8 @@ body.cg-has-custom-bg .cg-main {
   z-index: 10;
 }
 
-.cg-reaction-btn.is-active {
+.cg-reaction-btn.is-active,
+.cg-reaction-btn.is-selected {
   background: rgba(247, 183, 195, 0.55);
   border-color: rgba(247, 183, 195, 0.95);
   color: #4a3f47;

@@ -608,7 +608,7 @@
   const HOLD_MS = 400;
   const MOVE_CANCEL_PX = 10;
   const labels = {
-    adorable: { emoji: '😻', label: 'Adorable' },
+    adorable: { emoji: '😺', label: 'Adorable' },
     funny: { emoji: '😂', label: 'Me hizo reír' },
     cute: { emoji: '🥰', label: 'Tierno' },
     wow: { emoji: '🤩', label: 'Impresionante' },
@@ -653,7 +653,9 @@
       if (countEl && Object.hasOwn(counts, reaction)) {
         countEl.textContent = String(counts[reaction] || 0);
       }
-      btn.classList.toggle('is-active', reaction === active);
+      const isSelected = reaction === active;
+      btn.classList.toggle('is-active', isSelected);
+      btn.classList.toggle('is-selected', isSelected);
     });
   };
 
@@ -680,13 +682,32 @@
     const payload = await response.json();
     if (payload?.success && payload.data) {
       paintWidget(widget, payload.data);
+      return payload.data;
     }
+    return null;
   };
 
-  const sendReaction = async (widget, btn) => {
+  const applyOptimisticReaction = (widget, currentState, reactionType) => {
+    const nextState = JSON.parse(JSON.stringify(currentState));
+    const old = nextState.user_reaction || null;
+    if (old === reactionType) {
+      return nextState;
+    }
+
+    if (old && Object.hasOwn(nextState, old)) {
+      nextState[old] = Math.max(0, Number(nextState[old] || 0) - 1);
+    }
+    if (Object.hasOwn(nextState, reactionType)) {
+      nextState[reactionType] = Number(nextState[reactionType] || 0) + 1;
+    }
+    nextState.user_reaction = reactionType;
+    paintWidget(widget, nextState);
+    return nextState;
+  };
+
+  const sendReaction = async (widget, reactionType) => {
     const submissionId = Number(widget.dataset.submissionId || '0');
-    const reactionType = btn.dataset.reaction || '';
-    if (!submissionId || !reactionType) return;
+    if (!submissionId || !reactionType) return null;
 
     const fd = new FormData();
     fd.append('submission_id', String(submissionId));
@@ -700,24 +721,29 @@
     });
     const payload = await response.json();
     if (payload?.success && payload.data) {
-      paintWidget(widget, payload.data);
-      showFloatEmoji(btn);
-      if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
-        navigator.vibrate(40);
-      }
-      return;
+      return payload.data;
     }
 
-    window.catgameToast?.('No se pudo guardar la reacción', 'error');
+    return null;
   };
 
   widgets.forEach((widget) => {
     const buttons = Array.from(widget.querySelectorAll('.cg-reaction-btn'));
     const isLoggedIn = widget.dataset.loggedIn === '1';
+    let currentState = (() => {
+      const base = { adorable: 0, funny: 0, cute: 0, wow: 0, epic: 0, user_reaction: widget.dataset.myReaction || null };
+      try {
+        const parsed = JSON.parse(widget.dataset.reactionCounts || '{}');
+        return { ...base, ...parsed, user_reaction: widget.dataset.myReaction || parsed.user_reaction || null };
+      } catch (_) {
+        return base;
+      }
+    })();
 
     if (!isLoggedIn) {
       widget.classList.add('is-readonly');
       buttons.forEach((btn) => initReactionButton(btn));
+      paintWidget(widget, currentState);
 
       widget.addEventListener('click', (event) => {
         const target = event.target;
@@ -728,7 +754,13 @@
         }
       });
 
-      fetchCounts(widget).catch(() => null);
+      paintWidget(widget, currentState);
+    fetchCounts(widget).then((serverState) => {
+      if (serverState) {
+        currentState = { ...currentState, ...serverState };
+        paintWidget(widget, currentState);
+      }
+    }).catch(() => null);
       return;
     }
 
@@ -756,10 +788,36 @@
       };
 
       const submitReaction = () => {
+        const reactionType = btn.dataset.reaction || '';
+        if (!reactionType) return;
+
+        const previousState = JSON.parse(JSON.stringify(currentState));
+        currentState = applyOptimisticReaction(widget, currentState, reactionType);
+        showFloatEmoji(btn);
+
         widget.classList.add('is-busy');
-        sendReaction(widget, btn).finally(() => {
-          widget.classList.remove('is-busy');
-        });
+        sendReaction(widget, reactionType)
+          .then((serverState) => {
+            if (serverState) {
+              currentState = { ...currentState, ...serverState };
+              paintWidget(widget, currentState);
+              if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+                navigator.vibrate(40);
+              }
+            } else {
+              currentState = previousState;
+              paintWidget(widget, currentState);
+              window.catgameToast?.('No se pudo guardar la reacción', 'error');
+            }
+          })
+          .catch(() => {
+            currentState = previousState;
+            paintWidget(widget, currentState);
+            window.catgameToast?.('No se pudo guardar la reacción', 'error');
+          })
+          .finally(() => {
+            widget.classList.remove('is-busy');
+          });
       };
 
       const endHold = (event) => {
@@ -792,7 +850,13 @@
       btn.addEventListener('contextmenu', (event) => event.preventDefault());
     });
 
-    fetchCounts(widget).catch(() => null);
+    paintWidget(widget, currentState);
+    fetchCounts(widget).then((serverState) => {
+      if (serverState) {
+        currentState = { ...currentState, ...serverState };
+        paintWidget(widget, currentState);
+      }
+    }).catch(() => null);
   });
 })();
 ;

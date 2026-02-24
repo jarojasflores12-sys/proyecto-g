@@ -46,7 +46,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                     <strong class="cg-title"><?php echo esc_html($title_label); ?></strong>
                     <small class="cg-author">por @<?php echo esc_html($author_name); ?></small>
                     <?php if ($is_mine): ?><span class="cg-inline-badge">Tu publicación</span><?php endif; ?>
-                    <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in()); ?>
+                    <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in(), (array) ($item['reaction_counts'] ?? []) ? ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)] : []); ?>
                     <small class="cg-location">📍 <?php echo esc_html(($item['city'] ?? '') . ', ' . ($item['country'] ?? '')); ?></small>
                 </article>
             <?php endforeach; ?>

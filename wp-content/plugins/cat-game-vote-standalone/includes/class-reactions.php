@@ -143,6 +143,71 @@ class CatGame_Reactions {
     }
 
 
+
+    public static function reaction_payload_map(array $submission_ids, int $user_id = 0): array {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $submission_ids), static function (int $id): bool {
+            return $id > 0;
+        })));
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        $base_counts = array_fill_keys(self::allowed_reactions(), 0);
+        $result = [];
+        foreach ($ids as $id) {
+            $result[$id] = [
+                'reaction_counts' => $base_counts,
+                'my_reaction' => null,
+            ];
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('reactions');
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT submission_id, reaction_type, COUNT(*) AS total FROM {$table} WHERE submission_id IN ({$placeholders}) GROUP BY submission_id, reaction_type",
+                ...$ids
+            ),
+            ARRAY_A
+        );
+
+        foreach ($rows as $row) {
+            $submission_id = (int) ($row['submission_id'] ?? 0);
+            $reaction_type = sanitize_key((string) ($row['reaction_type'] ?? ''));
+            if (!isset($result[$submission_id]['reaction_counts'][$reaction_type])) {
+                continue;
+            }
+            $result[$submission_id]['reaction_counts'][$reaction_type] = (int) ($row['total'] ?? 0);
+        }
+
+        if ($user_id > 0) {
+            $user_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT submission_id, reaction_type FROM {$table} WHERE user_id = %d AND submission_id IN ({$placeholders})",
+                    $user_id,
+                    ...$ids
+                ),
+                ARRAY_A
+            );
+
+            foreach ($user_rows as $row) {
+                $submission_id = (int) ($row['submission_id'] ?? 0);
+                $reaction_type = sanitize_key((string) ($row['reaction_type'] ?? ''));
+                if (!isset($result[$submission_id])) {
+                    continue;
+                }
+                if (in_array($reaction_type, self::allowed_reactions(), true)) {
+                    $result[$submission_id]['my_reaction'] = $reaction_type;
+                }
+            }
+        }
+
+        return $result;
+    }
+
     public static function endpoint_add_or_update_url(): string {
         return admin_url('admin-post.php?action=catgame_add_or_update_reaction');
     }
@@ -153,7 +218,7 @@ class CatGame_Reactions {
 
     public static function reaction_labels(): array {
         return [
-            'adorable' => ['emoji' => '😻', 'label' => 'Adorable'],
+            'adorable' => ['emoji' => '😺', 'label' => 'Adorable'],
             'funny' => ['emoji' => '😂', 'label' => 'Me hizo reír'],
             'cute' => ['emoji' => '🥰', 'label' => 'Tierno'],
             'wow' => ['emoji' => '🤩', 'label' => 'Impresionante'],
@@ -161,18 +226,31 @@ class CatGame_Reactions {
         ];
     }
 
-    public static function render_widget(int $submission_id, bool $is_logged_in): void {
+    public static function render_widget(int $submission_id, bool $is_logged_in, array $reaction_payload = []): void {
         if ($submission_id <= 0) {
             return;
         }
 
         $labels = self::reaction_labels();
+        $counts = array_fill_keys(self::allowed_reactions(), 0);
+        $incoming_counts = $reaction_payload['reaction_counts'] ?? [];
+        if (is_array($incoming_counts)) {
+            foreach ($counts as $key => $value) {
+                $counts[$key] = isset($incoming_counts[$key]) ? (int) $incoming_counts[$key] : 0;
+            }
+        }
+
+        $my_reaction_raw = $reaction_payload['my_reaction'] ?? null;
+        $my_reaction = is_string($my_reaction_raw) && in_array($my_reaction_raw, self::allowed_reactions(), true) ? $my_reaction_raw : null;
         ?>
-        <div class="cg-reactions" data-submission-id="<?php echo (int) $submission_id; ?>" data-logged-in="<?php echo $is_logged_in ? '1' : '0'; ?>">
+        <div class="cg-reactions" data-submission-id="<?php echo (int) $submission_id; ?>" data-logged-in="<?php echo $is_logged_in ? '1' : '0'; ?>" data-my-reaction="<?php echo esc_attr($my_reaction ?? ''); ?>" data-reaction-counts="<?php echo esc_attr(wp_json_encode($counts)); ?>">
             <div class="cg-reaction-buttons" role="group" aria-label="Reacciones de la publicación">
                 <?php foreach ($labels as $slug => $meta): ?>
-                    <button type="button" class="cg-reaction-btn" data-reaction="<?php echo esc_attr($slug); ?>" data-label="<?php echo esc_attr($meta['label']); ?>">
-                        <?php echo esc_html($meta['emoji']); ?>
+                    <?php $is_selected = $my_reaction === $slug; ?>
+                    <button type="button" class="cg-reaction-btn <?php echo $is_selected ? 'is-active is-selected' : ''; ?>" data-reaction="<?php echo esc_attr($slug); ?>" data-label="<?php echo esc_attr($meta['label']); ?>">
+                        <span class="emoji"><?php echo esc_html($meta['emoji']); ?></span>
+                        <span class="count"><?php echo (int) ($counts[$slug] ?? 0); ?></span>
+                        <span class="catgv-tooltip"><?php echo esc_html($meta['label']); ?></span>
                     </button>
                 <?php endforeach; ?>
             </div>

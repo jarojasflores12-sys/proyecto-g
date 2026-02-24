@@ -71,7 +71,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                 <?php endif; ?>
 
 
-                <?php CatGame_Reactions::render_widget((int) $item['id'], is_user_logged_in()); ?>
+                <?php CatGame_Reactions::render_widget((int) $item['id'], is_user_logged_in(), ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)]); ?>
             </article>
         <?php endforeach; ?>
     </div>

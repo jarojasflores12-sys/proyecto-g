@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.24.3
+- Reacciones: payload de publicaciones ahora incluye `reaction_counts` (5 keys fijas) y `my_reaction` en feed/ranking/inicio/perfil/detalle.
+- Reacciones UI: chips renderizan solo emoji + contador (sin nombre visible), con marca persistente de la reacción del usuario.
+- Reacciones UX: tap rápido vota inmediato con actualización optimista; long-press (~400ms) muestra tooltip con nombre y vota al soltar.
+- Reacciones mobile: cancelación por movimiento (>10px) y mantenimiento de anti-selección iOS.
+
 ## 0.24.2
 - Reacciones UI: se vuelve al formato visual solo emoji + contador (sin nombre visible permanente en botones).
 - Reacciones UX: nombre de reacción visible únicamente en long-press (~400ms) mediante tooltip; tap/click rápido vota inmediato.

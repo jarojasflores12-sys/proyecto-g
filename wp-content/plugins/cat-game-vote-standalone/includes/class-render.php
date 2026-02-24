@@ -35,6 +35,38 @@ class CatGame_Render {
         return $positions;
     }
 
+
+    private static function with_reaction_payload(array $items, int $user_id): array {
+        if (empty($items)) {
+            return [];
+        }
+
+        $submission_ids = [];
+        foreach ($items as $item) {
+            $submission_ids[] = (int) ($item['id'] ?? 0);
+        }
+
+        $payload_map = CatGame_Reactions::reaction_payload_map($submission_ids, $user_id);
+        foreach ($items as &$item) {
+            $id = (int) ($item['id'] ?? 0);
+            $payload = $payload_map[$id] ?? ['reaction_counts' => array_fill_keys(CatGame_Reactions::allowed_reactions(), 0), 'my_reaction' => null];
+            $item['reaction_counts'] = is_array($payload['reaction_counts'] ?? null) ? $payload['reaction_counts'] : array_fill_keys(CatGame_Reactions::allowed_reactions(), 0);
+            $item['my_reaction'] = $payload['my_reaction'] ?? null;
+        }
+        unset($item);
+
+        return $items;
+    }
+
+    private static function with_reaction_payload_single(?array $item, int $user_id): ?array {
+        if (!is_array($item)) {
+            return null;
+        }
+
+        $list = self::with_reaction_payload([$item], $user_id);
+        return !empty($list[0]) ? $list[0] : $item;
+    }
+
     private static function page_data(string $page): array {
 
         $event = CatGame_Events::get_active_event();
@@ -96,13 +128,13 @@ class CatGame_Render {
                     'event' => $event,
                     'selected_tag' => $filter_tag,
                     'feed_tags' => $feed_tags,
-                    'submissions' => $event ? CatGame_Submissions::list_feed((int) $event['id'], 20, 0, $filter_tag) : [],
+                    'submissions' => $event ? self::with_reaction_payload(CatGame_Submissions::list_feed((int) $event['id'], 20, 0, $filter_tag), $current_user_id) : [],
                     'top3_positions' => $top3_positions,
                     'current_user_id' => $current_user_id,
                 ];
             case 'submission':
                 $submission_id = (int) get_query_var('submission_id');
-                $submission = CatGame_Submissions::get_submission($submission_id);
+                $submission = self::with_reaction_payload_single(CatGame_Submissions::get_submission($submission_id), $current_user_id);
                 $already_voted = false;
                 if ($submission && is_user_logged_in()) {
                     $already_voted = CatGame_Votes::has_user_voted((int) $submission['id'], get_current_user_id());
@@ -124,7 +156,7 @@ class CatGame_Render {
                 if (!in_array($scope, ['global', 'country', 'city'], true)) {
                     $scope = 'global';
                 }
-                $items = $event ? CatGame_Submissions::leaderboard((int) $event['id'], $scope, $country, $city, 20, []) : [];
+                $items = $event ? self::with_reaction_payload(CatGame_Submissions::leaderboard((int) $event['id'], $scope, $country, $city, 20, []), $current_user_id) : [];
                 return [
                     'page' => $page,
                     'event' => $event,
@@ -194,7 +226,7 @@ class CatGame_Render {
 
                 $user_id = get_current_user_id();
                 $event_id = ($scope === 'event' && $event) ? (int) $event['id'] : 0;
-                $items = CatGame_Submissions::list_user_submissions($user_id, $event_id);
+                $items = self::with_reaction_payload(CatGame_Submissions::list_user_submissions($user_id, $event_id), $current_user_id);
                 $stats = CatGame_Submissions::user_stats($user_id, $event_id);
 
                 $best_photo = null;
@@ -217,7 +249,7 @@ class CatGame_Render {
                     });
 
                     if (!empty($active_items) && (int) ($active_items[0]['total_reactions'] ?? 0) > 0) {
-                        $best_photo = $active_items[0];
+                        $best_photo = self::with_reaction_payload_single($active_items[0], $current_user_id);
                     }
                 }
 
@@ -257,8 +289,8 @@ class CatGame_Render {
                     ],
                 ];
             case 'home':
-                $top_items = $event ? CatGame_Submissions::leaderboard((int) $event['id'], 'global', '', '', 3) : [];
-                $latest_items = $event ? CatGame_Submissions::list_feed((int) $event['id'], 5, 0) : [];
+                $top_items = $event ? self::with_reaction_payload(CatGame_Submissions::leaderboard((int) $event['id'], 'global', '', '', 3), $current_user_id) : [];
+                $latest_items = $event ? self::with_reaction_payload(CatGame_Submissions::list_feed((int) $event['id'], 5, 0), $current_user_id) : [];
                 return [
                     'page' => 'home',
                     'event' => $event,

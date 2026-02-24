@@ -253,7 +253,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
         <article class="cg-card cg-profile-best-photo">
             <?php echo wp_get_attachment_image((int) $best_photo['attachment_id'], 'medium_large', false, ['loading' => 'lazy', 'class' => 'cg-profile-thumb']); ?>
             <span class="cg-badge">#<?php echo (int) ($best_photo['id'] ?? 0); ?></span><strong><?php echo esc_html($best_title); ?></strong>
-            <?php CatGame_Reactions::render_widget((int) ($best_photo['id'] ?? 0), is_user_logged_in()); ?>
+            <?php CatGame_Reactions::render_widget((int) ($best_photo['id'] ?? 0), is_user_logged_in(), ['reaction_counts' => (array) ($best_photo['reaction_counts'] ?? []), 'my_reaction' => ($best_photo['my_reaction'] ?? null)]); ?>
         </article>
     <?php else: ?>
         <p>Aún no tienes una publicación con reacciones.</p>
@@ -314,7 +314,7 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
                     <input type="hidden" name="submission_id" value="<?php echo (int) ($item['id'] ?? 0); ?>">
                     <button type="submit" class="cg-tag-delete">Eliminar mi publicación</button>
                 </form>
-                <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in()); ?>
+                <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in(), (array) ($item['reaction_counts'] ?? []) ? ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)] : []); ?>
             </article>
         <?php endforeach; ?>
     </div>
