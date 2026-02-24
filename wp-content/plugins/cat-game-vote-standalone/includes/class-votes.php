@@ -9,6 +9,7 @@ class CatGame_Votes {
 
     public static function init(): void {
         add_action('admin_post_catgame_vote', [__CLASS__, 'handle_vote']);
+        add_action('admin_post_nopriv_catgame_vote', [__CLASS__, 'handle_vote']);
     }
 
     public static function has_user_voted(int $submission_id, int $user_id): bool {
@@ -31,7 +32,8 @@ class CatGame_Votes {
 
     public static function handle_vote(): void {
         if (!is_user_logged_in()) {
-            wp_die('Debes iniciar sesión para votar.');
+            wp_safe_redirect(add_query_arg('catgame_error', 'login_required', home_url('/catgame/profile')));
+            exit;
         }
 
         check_admin_referer('catgame_vote');
