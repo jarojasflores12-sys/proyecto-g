@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.24.5
+- Reacciones UX: long-press mantiene tooltip con nombre y ahora sí envía voto al soltar (alineado al comportamiento solicitado).
+- Reacciones UX: se corrige bloqueo de interacción removiendo la prevención extra en `pointerdown` que impedía reaccionar en algunos dispositivos.
+- Reacciones: tap/click rápido sigue permitiendo votar y cambiar reacción con actualización optimista, conteos y resaltado.
+
 ## 0.24.4
 - Reacciones UX: tap rápido ahora permite cambiar reacción siempre (sin bloqueo por reacción previa), manteniendo conteos y resaltado seleccionado.
 - Reacciones mobile: long-press (~450ms) muestra tooltip de nombre y al soltar no vota; tap/click rápido sí vota/cambia.

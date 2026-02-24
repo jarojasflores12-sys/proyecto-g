@@ -835,6 +835,7 @@
         if (longPressActive) {
           event.preventDefault();
           clearHoldState();
+          submitReaction();
           return;
         }
 
@@ -866,9 +867,6 @@
       btn.addEventListener('pointermove', moveHold);
       btn.addEventListener('pointerleave', cancelHold);
       btn.addEventListener('pointercancel', cancelHold);
-      btn.addEventListener('pointerdown', (event) => {
-        event.preventDefault();
-      });
       btn.addEventListener('contextmenu', (event) => event.preventDefault());
     });
 
