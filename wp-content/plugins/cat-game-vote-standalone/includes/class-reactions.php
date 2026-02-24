@@ -171,8 +171,8 @@ class CatGame_Reactions {
         <div class="cg-reactions" data-submission-id="<?php echo (int) $submission_id; ?>" data-logged-in="<?php echo $is_logged_in ? '1' : '0'; ?>">
             <div class="cg-reaction-buttons" role="group" aria-label="Reacciones de la publicación">
                 <?php foreach ($labels as $slug => $meta): ?>
-                    <button type="button" class="cg-reaction-btn" data-reaction="<?php echo esc_attr($slug); ?>">
-                        <?php echo esc_html($meta['emoji'] . ' ' . $meta['label']); ?>
+                    <button type="button" class="cg-reaction-btn" data-reaction="<?php echo esc_attr($slug); ?>" data-label="<?php echo esc_attr($meta['label']); ?>">
+                        <?php echo esc_html($meta['emoji']); ?>
                     </button>
                 <?php endforeach; ?>
             </div>

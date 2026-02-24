@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.24.2
+- Reacciones UI: se vuelve al formato visual solo emoji + contador (sin nombre visible permanente en botones).
+- Reacciones UX: nombre de reacción visible únicamente en long-press (~400ms) mediante tooltip; tap/click rápido vota inmediato.
+- Reacciones mobile: cancelación de long-press por movimiento (>10px) y mejoras anti-selección iOS (`user-select`, `-webkit-touch-callout`, `touch-action`).
+
 ## 0.24.1
 - Ranking: se elimina por completo el filtro por etiquetas en UI y en el flujo de query params del frontend.
 - Reacciones: para usuarios no logueados se muestran en modo solo lectura (contadores visibles) y, al intentar interactuar, se muestra aviso "Inicia sesión para reaccionar".

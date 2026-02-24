@@ -606,6 +606,7 @@
   }
 
   const HOLD_MS = 400;
+  const MOVE_CANCEL_PX = 10;
   const labels = {
     adorable: { emoji: '😻', label: 'Adorable' },
     funny: { emoji: '😂', label: 'Me hizo reír' },
@@ -620,7 +621,8 @@
     if (!meta) return;
 
     btn.classList.add('reaction-btn');
-    btn.dataset.label = meta.label;
+    const label = btn.dataset.label || meta.label;
+    btn.dataset.label = label;
 
     if (!btn.querySelector('.emoji')) {
       btn.textContent = '';
@@ -635,7 +637,7 @@
 
       const tooltip = document.createElement('div');
       tooltip.className = 'catgv-tooltip';
-      tooltip.textContent = meta.label;
+      tooltip.textContent = label;
 
       btn.appendChild(emoji);
       btn.appendChild(count);
@@ -715,9 +717,7 @@
 
     if (!isLoggedIn) {
       widget.classList.add('is-readonly');
-      buttons.forEach((btn) => {
-        initReactionButton(btn);
-      });
+      buttons.forEach((btn) => initReactionButton(btn));
 
       widget.addEventListener('click', (event) => {
         const target = event.target;
@@ -737,13 +737,17 @@
 
       let holdTimer = null;
       let hasLongPress = false;
+      let startX = 0;
+      let startY = 0;
 
       const clearHoldState = () => {
         btn.classList.remove('active-hold', 'show-tooltip');
       };
 
-      const startHold = () => {
+      const startHold = (event) => {
         hasLongPress = false;
+        startX = Number(event.clientX || 0);
+        startY = Number(event.clientY || 0);
         clearTimeout(holdTimer);
         holdTimer = window.setTimeout(() => {
           hasLongPress = true;
@@ -752,19 +756,17 @@
       };
 
       const submitReaction = () => {
-        if (widget.dataset.loggedIn !== '1') {
-          window.catgameToast?.('Inicia sesión para reaccionar', 'info');
-          return;
-        }
-
         widget.classList.add('is-busy');
         sendReaction(widget, btn).finally(() => {
           widget.classList.remove('is-busy');
         });
       };
 
-      const endHold = () => {
+      const endHold = (event) => {
         clearTimeout(holdTimer);
+        if (hasLongPress) {
+          event.preventDefault();
+        }
         clearHoldState();
         submitReaction();
       };
@@ -774,17 +776,20 @@
         clearHoldState();
       };
 
+      const moveHold = (event) => {
+        const dx = Math.abs(Number(event.clientX || 0) - startX);
+        const dy = Math.abs(Number(event.clientY || 0) - startY);
+        if (dx > MOVE_CANCEL_PX || dy > MOVE_CANCEL_PX) {
+          cancelHold();
+        }
+      };
+
       btn.addEventListener('pointerdown', startHold);
       btn.addEventListener('pointerup', endHold);
+      btn.addEventListener('pointermove', moveHold);
       btn.addEventListener('pointerleave', cancelHold);
       btn.addEventListener('pointercancel', cancelHold);
       btn.addEventListener('contextmenu', (event) => event.preventDefault());
-      btn.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (!hasLongPress) {
-          // Tap rápido: el voto se procesa en pointerup.
-        }
-      });
     });
 
     fetchCounts(widget).catch(() => null);
