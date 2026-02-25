@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.26.2
+- Feed (JS): se corrige el encadenado de IIFEs en `app.js` (faltaba `;` de separación), evitando error de ejecución que podía impedir inicializar el módulo de `Cargar más`.
+
 ## 0.26.1
 - Feed: se corrige `Cargar más` para cargar bloques incrementales de publicaciones del evento activo y ocultar el botón al llegar al final real (`has_more=false`).
 - Feed: se elimina el filtro por etiqueta en la pantalla de Publicaciones para mostrar todas las publicaciones del evento activo en una sola lista paginada.

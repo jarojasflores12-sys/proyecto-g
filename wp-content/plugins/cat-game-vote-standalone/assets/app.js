@@ -982,7 +982,7 @@
 
   window.catgameInitReactions = bootstrapReactions;
   bootstrapReactions(document);
-})()
+})();
 
 (function () {
   const config = window.CATGAME_FEED;
