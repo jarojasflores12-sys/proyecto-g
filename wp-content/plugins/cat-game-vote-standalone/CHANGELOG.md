@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.26.6
+- Reacciones (UX visual): se refuerza el resaltado "patita" del seleccionado con contorno de mayor contraste (2px), sombra suave y pseudo-elemento tipo outline para mejor visibilidad en móvil, manteniendo tamaño compacto.
+
 ## 0.26.5
 - Reacciones (UX): long-press robusto en móvil con tooltip global fijo (siempre visible sobre la UI) y voto al soltar, manteniendo tap rápido para votar/cambiar.
 - Reacciones (UX): pills compactadas adicionalmente (gap y tamaño menores) para mejorar densidad visual en Ranking/Feed/Detalle sin scroll horizontal.
