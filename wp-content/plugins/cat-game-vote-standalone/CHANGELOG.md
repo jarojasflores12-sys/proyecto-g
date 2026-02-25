@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.26.8
+- Reacciones (UX visual): se corrige la "patita" del seleccionado para que aparezca como detalle externo pequeño (arriba-derecha) sin cubrir emoji/conteo ni deformar el chip.
+
 ## 0.26.7
 - Reacciones (UX visual): se refuerza visibilidad del contorno "patita" seleccionado en móvil (outline SVG más grande/contrastado, trazo más grueso y sombra más notoria) sin cambiar tamaño de la pill.
 
