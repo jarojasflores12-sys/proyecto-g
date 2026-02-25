@@ -861,17 +861,36 @@ body.cg-has-custom-bg .cg-main {
 }
 
 .cg-rank-item {
+  position: relative;
   display: grid;
-  grid-template-columns: auto 128px minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
+  gap: 10px;
+}
+
+.cg-rank-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  padding-right: 74px;
+}
+
+.cg-rank-headings {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cg-rank-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .cg-rank-thumb {
-  width: 128px;
-  height: 128px;
+  width: 100%;
   border-radius: 16px;
   overflow: hidden;
+  background: rgba(199, 206, 234, 0.2);
 }
 
 .cg-rank-badge {
@@ -887,21 +906,48 @@ body.cg-has-custom-bg .cg-main {
 
 .cg-rank-thumb img {
   width: 100%;
-  height: 100%;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
   display: block;
 }
 
 .cg-rank-meta {
   display: grid;
-  gap: 4px;
+  gap: 8px;
   min-width: 0;
 }
 
 .cg-rank-title {
+  margin: 0;
   text-decoration: none;
   color: var(--cg-text);
   font-weight: 700;
+}
+
+.cg-rank-reactions .cg-reactions {
+  margin-top: 0;
+}
+
+.cg-rank-reactions .cg-reaction-buttons {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.cg-rank-delete-form {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.cg-rank-delete-btn {
+  font-size: 11px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #f57f98;
+  border-color: #f57f98;
+  color: #fff;
 }
 
 .cg-filter-tags {
@@ -1440,12 +1486,10 @@ body.cg-has-custom-bg .cg-main {
 
 @media (max-width: 560px) {
   .cg-rank-item {
-    grid-template-columns: auto 118px minmax(0, 1fr);
-    gap: 10px;
+    gap: 8px;
   }
 
-  .cg-rank-thumb {
-    width: 118px;
-    height: 118px;
+  .cg-rank-thumb img {
+    aspect-ratio: 1 / 1;
   }
 }

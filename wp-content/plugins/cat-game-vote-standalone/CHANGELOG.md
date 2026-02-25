@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.26.3
+- Ranking (mobile-first): se reestructura cada card para mostrar arriba `#puesto + título + autor`, luego una imagen grande a ancho completo y debajo la metadata en líneas separadas (ubicación y reacciones).
+- Ranking: el botón "Eliminar" de publicación propia pasa a estilo compacto color sandía y se posiciona en la esquina superior derecha de la card.
+
 ## 0.26.2
 - Feed (JS): se corrige el encadenado de IIFEs en `app.js` (faltaba `;` de separación), evitando error de ejecución que podía impedir inicializar el módulo de `Cargar más`.
 
