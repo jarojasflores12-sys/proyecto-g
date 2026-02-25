@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.26.0
+- Ranking: miniaturas más grandes en cards (mobile-first) con contenedor dedicado y `object-fit: cover`, manteniendo layout de badge y metadatos.
+- Reacciones: resaltado tipo “patita” aplicado solo a la reacción seleccionada del usuario, persistente al cambiar; se refuerza anti-selección táctil iOS en contenedor/botones.
+- Publicaciones: nuevo flujo eficiente de “Cargar más” con `offset/per_page` (default 20, máximo 50), append incremental en frontend y mensaje final cuando no hay más items.
+
 ## 0.25.9
 - Admin Eventos UX: orden vertical optimizado (Creación/edición → Detalle → Listado → Calendario) y mejoras visuales en CTA del panel.
 - Admin Eventos reglas: nuevo modo mixto con sección opcional de reglas repetibles (Título, Tipo, Valor condicional, Descripción), soporte para evento sin reglas y edición completa al reabrir.

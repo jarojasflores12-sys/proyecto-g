@@ -126,6 +126,10 @@ window.CATGAME_REACTIONS = {
     addOrUpdateUrl: <?php echo wp_json_encode(CatGame_Reactions::endpoint_add_or_update_url()); ?>,
     getCountsUrl: <?php echo wp_json_encode(CatGame_Reactions::endpoint_get_counts_url()); ?>,
 };
+window.CATGAME_FEED = {
+    nonce: <?php echo wp_json_encode(wp_create_nonce('catgame_feed_more')); ?>,
+    moreUrl: <?php echo wp_json_encode(admin_url('admin-post.php?action=catgame_feed_more')); ?>,
+};
 </script>
 <script src="<?php echo esc_url(CATGAME_PLUGIN_URL . 'assets/app.js'); ?>?v=<?php echo esc_attr(CATGAME_VERSION); ?>"></script>
 </body>

@@ -626,8 +626,7 @@
 
 (function () {
   const config = window.CATGAME_REACTIONS;
-  const widgets = Array.from(document.querySelectorAll('.cg-reactions'));
-  if (!config || !widgets.length) {
+  if (!config) {
     return;
   }
 
@@ -792,7 +791,10 @@
     window.setTimeout(() => floating.remove(), 850);
   };
 
-  widgets.forEach((widget) => {
+  const initReactionWidget = (widget) => {
+    if (!(widget instanceof HTMLElement)) return;
+    if (widget.dataset.reactionsReady === '1') return;
+    widget.dataset.reactionsReady = '1';
     const buttons = Array.from(widget.querySelectorAll('.cg-reaction-btn'));
     const isLoggedIn = widget.dataset.loggedIn === '1';
     let currentState = (() => {
@@ -970,6 +972,81 @@
         paintWidget(widget, currentState);
       }
     }).catch(() => null);
-  });
+  };
+
+  const bootstrapReactions = (root = document) => {
+    const scope = root instanceof HTMLElement || root instanceof Document ? root : document;
+    const widgets = Array.from(scope.querySelectorAll('.cg-reactions'));
+    widgets.forEach((widget) => initReactionWidget(widget));
+  };
+
+  window.catgameInitReactions = bootstrapReactions;
+  bootstrapReactions(document);
+})()
+
+(function () {
+  const config = window.CATGAME_FEED;
+  const container = document.querySelector('[data-feed-more="1"]');
+  const list = document.getElementById('catgame-feed-list');
+  const button = container ? container.querySelector('[data-feed-more-btn="1"]') : null;
+  const end = container ? container.querySelector('[data-feed-end="1"]') : null;
+  if (!config || !container || !list || !button || !end) {
+    return;
+  }
+
+  const perPage = Number(container.dataset.perPage || '20');
+  const tag = container.dataset.tag || '';
+  let nextOffset = Number(container.dataset.nextOffset || '0');
+  let hasMore = container.dataset.hasMore === '1';
+  let isLoading = false;
+
+  const syncUi = () => {
+    button.hidden = !hasMore;
+    button.disabled = isLoading;
+    button.textContent = isLoading ? 'Cargando…' : 'Cargar más';
+    end.hidden = hasMore;
+  };
+
+  const loadMore = async () => {
+    if (!hasMore || isLoading) return;
+    isLoading = true;
+    syncUi();
+
+    try {
+      const url = new URL(config.moreUrl, window.location.origin);
+      url.searchParams.set('_wpnonce', config.nonce || '');
+      url.searchParams.set('offset', String(nextOffset));
+      url.searchParams.set('per_page', String(perPage));
+      if (tag) {
+        url.searchParams.set('tag', tag);
+      }
+
+      const response = await fetch(url.toString(), { credentials: 'same-origin' });
+      const payload = await response.json();
+      if (!payload?.success || !payload.data) {
+        throw new Error('invalid_payload');
+      }
+
+      const html = String(payload.data.html || '');
+      if (html !== '') {
+        const fragment = document.createRange().createContextualFragment(html);
+        list.appendChild(fragment);
+        window.catgameInitReactions?.(list);
+      }
+
+      hasMore = !!payload.data.has_more;
+      nextOffset = Number(payload.data.next_offset || nextOffset);
+      container.dataset.nextOffset = String(nextOffset);
+      container.dataset.hasMore = hasMore ? '1' : '0';
+    } catch (_) {
+      window.catgameToast?.('No se pudo cargar más publicaciones', 'error');
+    } finally {
+      isLoading = false;
+      syncUi();
+    }
+  };
+
+  button.addEventListener('click', loadMore);
+  syncUi();
 })();
-;
+

@@ -1,0 +1,48 @@
+<?php
+$item = $template_item ?? [];
+$top3_positions = $top3_positions ?? [];
+$current_user_id = (int) ($current_user_id ?? 0);
+$item_tags = CatGame_Submissions::submission_tags($item);
+$title_label = CatGame_Submissions::title_label($item);
+$author = get_userdata((int) ($item['user_id'] ?? 0));
+$author_name = $author ? (string) $author->user_login : 'usuario';
+$position = isset($top3_positions[(int) $item['id']]) ? (int) $top3_positions[(int) $item['id']] : 0;
+$is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_user_id;
+?>
+<article class="cg-card <?php echo ($is_mine || $position > 0) ? 'cg-is-mine' : ''; ?>">
+    <div class="cg-img-wrap">
+        <?php echo wp_get_attachment_image(
+            (int) $item['attachment_id'],
+            'medium',
+            false,
+            [
+                'class' => 'cg-img',
+                'loading' => 'lazy',
+                'alt' => 'Foto enviada al juego',
+            ]
+        ); ?>
+        <div class="cg-skel cg-skel-img" aria-hidden="true"></div>
+        <div class="cg-img-error" aria-hidden="true">No se pudo cargar la imagen</div>
+    </div>
+
+    <div class="cg-card-meta">
+        <div class="cg-card-header">
+            <span class="cg-badge">#<?php echo (int) $item['id']; ?></span>
+            <p class="cg-title"><?php echo esc_html($title_label); ?></p>
+            <small class="cg-author">por @<?php echo esc_html($author_name); ?></small>
+            <?php if ($is_mine): ?><span class="cg-inline-badge">Tu publicación</span><?php endif; ?>
+            <?php if ($position > 0): ?><span class="cg-inline-badge">Top 3 #<?php echo (int) $position; ?></span><?php endif; ?>
+            <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
+        </div>
+    </div>
+
+    <?php if (!empty($item_tags)): ?>
+        <div class="cg-chip-row" aria-label="Etiquetas de la publicación">
+            <?php foreach ($item_tags as $tag): ?>
+                <span class="cg-chip"><?php echo esc_html(CatGame_Submissions::label_for_tag($tag, (int) ($item['user_id'] ?? 0))); ?></span>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+
+    <?php CatGame_Reactions::render_widget((int) $item['id'], is_user_logged_in(), ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)]); ?>
+</article>

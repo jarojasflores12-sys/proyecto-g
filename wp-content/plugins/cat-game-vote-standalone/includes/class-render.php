@@ -124,12 +124,18 @@ class CatGame_Render {
                     ? CatGame_Submissions::available_tags_for_user(get_current_user_id())
                     : CatGame_Submissions::predefined_tags();
 
+                $feed_per_page = 20;
+                $feed_page = $event ? CatGame_Submissions::list_feed_paginated((int) $event['id'], $feed_per_page, 0, $filter_tag) : ['items' => [], 'has_more' => false, 'next_offset' => 0];
+
                 return [
                     'page' => $page,
                     'event' => $event,
                     'selected_tag' => $filter_tag,
                     'feed_tags' => $feed_tags,
-                    'submissions' => $event ? self::with_reaction_payload(CatGame_Submissions::list_feed((int) $event['id'], 20, 0, $filter_tag), $current_user_id) : [],
+                    'submissions' => $event ? self::with_reaction_payload((array) ($feed_page['items'] ?? []), $current_user_id) : [],
+                    'feed_per_page' => $feed_per_page,
+                    'feed_has_more' => !empty($feed_page['has_more']),
+                    'feed_next_offset' => (int) ($feed_page['next_offset'] ?? 0),
                     'top3_positions' => $top3_positions,
                     'current_user_id' => $current_user_id,
                 ];

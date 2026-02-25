@@ -862,9 +862,16 @@ body.cg-has-custom-bg .cg-main {
 
 .cg-rank-item {
   display: grid;
-  grid-template-columns: auto 72px 1fr;
-  gap: 10px;
+  grid-template-columns: auto 104px minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
+}
+
+.cg-rank-thumb {
+  width: 104px;
+  height: 104px;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .cg-rank-badge {
@@ -879,15 +886,16 @@ body.cg-has-custom-bg .cg-main {
 }
 
 .cg-rank-thumb img {
-  width: 72px;
-  height: 72px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 12px;
+  display: block;
 }
 
 .cg-rank-meta {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
 .cg-rank-title {
@@ -1190,6 +1198,10 @@ body.cg-has-custom-bg .cg-main {
   gap: 8px;
   position: relative;
   overflow: visible;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
 }
 
 .reaction-btn,
@@ -1238,11 +1250,35 @@ body.cg-has-custom-bg .cg-main {
   z-index: 10;
 }
 
-.cg-reaction-btn.is-active,
+.cg-reaction-btn.is-active {
+  background: rgba(247, 183, 195, 0.35);
+  border-color: rgba(247, 183, 195, 0.7);
+  color: #4a3f47;
+}
+
 .cg-reaction-btn.is-selected {
   background: rgba(247, 183, 195, 0.55);
   border-color: rgba(247, 183, 195, 0.95);
   color: #4a3f47;
+}
+
+.cg-reaction-btn.is-selected::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 2px solid rgba(247, 183, 195, 0.95);
+  border-radius: 22px;
+  pointer-events: none;
+}
+
+.cg-reaction-btn.is-selected::after {
+  content: '🐾';
+  position: absolute;
+  top: -10px;
+  right: -8px;
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .cg-reaction-help {
@@ -1386,5 +1422,30 @@ body.cg-has-custom-bg .cg-main {
 @media (max-width: 640px) {
   .cg-profile-location-fields {
     grid-template-columns: 1fr;
+  }
+}
+
+.cg-feed-more {
+  margin-top: 10px;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.cg-feed-end {
+  margin: 0;
+  color: #6d7285;
+  font-size: 13px;
+}
+
+@media (max-width: 560px) {
+  .cg-rank-item {
+    grid-template-columns: auto 92px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .cg-rank-thumb {
+    width: 92px;
+    height: 92px;
   }
 }

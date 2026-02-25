@@ -4,6 +4,9 @@ $feed_tags = $data['feed_tags'] ?? [];
 $selected_tag = $data['selected_tag'] ?? '';
 $top3_positions = $data['top3_positions'] ?? [];
 $current_user_id = (int) ($data['current_user_id'] ?? 0);
+$feed_per_page = (int) ($data['feed_per_page'] ?? 20);
+$feed_next_offset = (int) ($data['feed_next_offset'] ?? count($items));
+$feed_has_more = !empty($data['feed_has_more']);
 ?>
 <section>
     <h2>Publicaciones</h2>
@@ -22,57 +25,17 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
         <button type="submit">Filtrar</button>
     </form>
 
-    <div class="cg-grid">
+    <div class="cg-grid" id="catgame-feed-list">
         <?php if (!$items): ?>
             <p class="cg-empty-state">Aún no hay publicaciones en este evento. Sé la primera persona en subir una foto.</p>
         <?php endif; ?>
         <?php foreach ($items as $item): ?>
-            <?php
-            $item_tags = CatGame_Submissions::submission_tags($item);
-            $title_label = CatGame_Submissions::title_label($item);
-            $author = get_userdata((int) ($item['user_id'] ?? 0));
-            $author_name = $author ? (string) $author->user_login : 'usuario';
-            $position = isset($top3_positions[(int) $item['id']]) ? (int) $top3_positions[(int) $item['id']] : 0;
-            $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_user_id;
-            ?>
-            <article class="cg-card <?php echo ($is_mine || $position > 0) ? 'cg-is-mine' : ''; ?>">
-                <div class="cg-img-wrap">
-                    <?php echo wp_get_attachment_image(
-                        (int) $item['attachment_id'],
-                        'medium',
-                        false,
-                        [
-                            'class' => 'cg-img',
-                            'loading' => 'lazy',
-                            'alt' => 'Foto enviada al juego',
-                        ]
-                    ); ?>
-                    <div class="cg-skel cg-skel-img" aria-hidden="true"></div>
-                    <div class="cg-img-error" aria-hidden="true">No se pudo cargar la imagen</div>
-                </div>
-
-                <div class="cg-card-meta">
-                    <div class="cg-card-header">
-                        <span class="cg-badge">#<?php echo (int) $item['id']; ?></span>
-                        <p class="cg-title"><?php echo esc_html($title_label); ?></p>
-                        <small class="cg-author">por @<?php echo esc_html($author_name); ?></small>
-                        <?php if ($is_mine): ?><span class="cg-inline-badge">Tu publicación</span><?php endif; ?>
-                        <?php if ($position > 0): ?><span class="cg-inline-badge">Top 3 #<?php echo (int) $position; ?></span><?php endif; ?>
-                        <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
-                    </div>
-                </div>
-
-                <?php if (!empty($item_tags)): ?>
-                    <div class="cg-chip-row" aria-label="Etiquetas de la publicación">
-                        <?php foreach ($item_tags as $tag): ?>
-                            <span class="cg-chip"><?php echo esc_html(CatGame_Submissions::label_for_tag($tag, (int) ($item['user_id'] ?? 0))); ?></span>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-
-
-                <?php CatGame_Reactions::render_widget((int) $item['id'], is_user_logged_in(), ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)]); ?>
-            </article>
+            <?php $template_item = $item; include CATGAME_PLUGIN_DIR . 'templates/partials/feed-card.php'; ?>
         <?php endforeach; ?>
+    </div>
+
+    <div class="cg-feed-more" data-feed-more="1" data-tag="<?php echo esc_attr($selected_tag); ?>" data-per-page="<?php echo (int) $feed_per_page; ?>" data-next-offset="<?php echo (int) $feed_next_offset; ?>" data-has-more="<?php echo $feed_has_more ? '1' : '0'; ?>">
+        <button type="button" class="secondary" data-feed-more-btn="1" <?php echo $feed_has_more ? '' : 'hidden'; ?>>Cargar más</button>
+        <p class="cg-feed-end" data-feed-end="1" <?php echo $feed_has_more ? 'hidden' : ''; ?>>No hay más publicaciones</p>
     </div>
 </section>

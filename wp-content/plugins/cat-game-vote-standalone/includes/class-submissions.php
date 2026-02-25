@@ -11,6 +11,8 @@ class CatGame_Submissions {
         add_action('admin_post_catgame_upload', [__CLASS__, 'handle_upload']);
         add_action('admin_post_catgame_delete_custom_tag', [__CLASS__, 'handle_delete_custom_tag']);
         add_action('admin_post_catgame_delete_submission', [__CLASS__, 'handle_delete_submission']);
+        add_action('admin_post_catgame_feed_more', [__CLASS__, 'handle_feed_more']);
+        add_action('admin_post_nopriv_catgame_feed_more', [__CLASS__, 'handle_feed_more']);
     }
 
     public static function predefined_tag_labels(): array {
@@ -421,8 +423,16 @@ class CatGame_Submissions {
     }
 
     public static function list_feed(int $event_id, int $limit = 20, int $offset = 0, string $tag = ''): array {
+        $result = self::list_feed_paginated($event_id, $limit, $offset, $tag);
+        return $result['items'];
+    }
+
+    public static function list_feed_paginated(int $event_id, int $per_page = 20, int $offset = 0, string $tag = ''): array {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
+
+        $per_page = max(1, min(50, $per_page));
+        $offset = max(0, $offset);
 
         $where = ['event_id = %d', "status = 'active'"];
         $params = [$event_id];
@@ -440,12 +450,76 @@ class CatGame_Submissions {
             }
         }
 
-        $params[] = $limit;
+        $limit_plus_one = $per_page + 1;
+        $params[] = $limit_plus_one;
         $params[] = $offset;
 
-        $sql = "SELECT * FROM {$table} WHERE " . implode(' AND ', $where) . ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
+        $sql = "SELECT * FROM {$table} WHERE " . implode(' AND ', $where) . ' ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d';
         $prepared = $wpdb->prepare($sql, ...$params);
-        return $wpdb->get_results($prepared, ARRAY_A);
+        $rows = $wpdb->get_results($prepared, ARRAY_A);
+
+        $has_more = count($rows) > $per_page;
+        if ($has_more) {
+            $rows = array_slice($rows, 0, $per_page);
+        }
+
+        return [
+            'items' => $rows,
+            'has_more' => $has_more,
+            'next_offset' => $offset + count($rows),
+        ];
+    }
+
+    public static function handle_feed_more(): void {
+        $nonce = wp_unslash($_REQUEST['_wpnonce'] ?? '');
+        if (!is_string($nonce) || !wp_verify_nonce($nonce, 'catgame_feed_more')) {
+            wp_send_json_error(['message' => 'Solicitud inválida (nonce).'], 403);
+        }
+
+        $event = CatGame_Events::get_active_event();
+        if (!$event) {
+            wp_send_json_success(['items' => [], 'has_more' => false, 'next_offset' => 0]);
+        }
+
+        $offset = isset($_GET['offset']) ? (int) $_GET['offset'] : 0;
+        $per_page = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 20;
+        $tag = self::normalize_tag(wp_unslash($_GET['tag'] ?? ''));
+
+        $page = self::list_feed_paginated((int) $event['id'], $per_page, $offset, $tag);
+        $items = $page['items'];
+
+        $current_user_id = is_user_logged_in() ? get_current_user_id() : 0;
+        $top_items = self::leaderboard((int) $event['id'], 'global', '', '', 3, []);
+        $top3_positions = [];
+        foreach ($top_items as $idx => $top_item) {
+            $top3_positions[(int) ($top_item['id'] ?? 0)] = $idx + 1;
+        }
+
+        $submission_ids = array_values(array_filter(array_map(static function (array $item): int {
+            return (int) ($item['id'] ?? 0);
+        }, $items)));
+        $payload_map = CatGame_Reactions::reaction_payload_map($submission_ids, $current_user_id);
+
+        foreach ($items as &$item) {
+            $id = (int) ($item['id'] ?? 0);
+            $payload = $payload_map[$id] ?? ['reaction_counts' => array_fill_keys(CatGame_Reactions::allowed_reactions(), 0), 'my_reaction' => null];
+            $item['reaction_counts'] = is_array($payload['reaction_counts'] ?? null) ? $payload['reaction_counts'] : array_fill_keys(CatGame_Reactions::allowed_reactions(), 0);
+            $item['my_reaction'] = $payload['my_reaction'] ?? null;
+        }
+        unset($item);
+
+        ob_start();
+        foreach ($items as $item) {
+            $template_item = $item;
+            include CATGAME_PLUGIN_DIR . 'templates/partials/feed-card.php';
+        }
+        $html = (string) ob_get_clean();
+
+        wp_send_json_success([
+            'html' => $html,
+            'has_more' => (bool) ($page['has_more'] ?? false),
+            'next_offset' => (int) ($page['next_offset'] ?? 0),
+        ]);
     }
 
     public static function calculate_score(array $submission, array $rules = []): float {
