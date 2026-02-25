@@ -67,16 +67,21 @@ class CatGame_Admin {
         $table = CatGame_DB::table('events');
         $events = $wpdb->get_results("SELECT * FROM {$table} ORDER BY starts_at DESC", ARRAY_A);
         $selected_event_id = isset($_GET['event_id']) ? (int) $_GET['event_id'] : 0;
+        $has_event_id_param = isset($_GET['event_id']);
+        $mode = isset($_GET['mode']) ? sanitize_key(wp_unslash($_GET['mode'])) : '';
+        $is_create_mode = $mode === 'create' || ($has_event_id_param && $selected_event_id === 0);
 
         $event_in_edit = null;
-        foreach ($events as $event_item) {
-            if ((int) $event_item['id'] === $selected_event_id) {
-                $event_in_edit = $event_item;
-                break;
+        if (!$is_create_mode && $selected_event_id > 0) {
+            foreach ($events as $event_item) {
+                if ((int) $event_item['id'] === $selected_event_id) {
+                    $event_in_edit = $event_item;
+                    break;
+                }
             }
         }
 
-        if (!$event_in_edit && !empty($events)) {
+        if (!$is_create_mode && !$has_event_id_param && !$event_in_edit && !empty($events)) {
             $event_in_edit = $events[0];
         }
 
@@ -92,7 +97,11 @@ class CatGame_Admin {
         <div class="wrap catgame-admin-page">
             <h1>Cat Game - Gestor de eventos</h1>
 
-            <?php if ($success === 'saved'): ?>
+            <?php if ($success === 'created'): ?>
+                <div class="notice notice-success is-dismissible"><p>Evento creado correctamente.</p></div>
+            <?php elseif ($success === 'updated'): ?>
+                <div class="notice notice-success is-dismissible"><p>Evento actualizado correctamente.</p></div>
+            <?php elseif ($success === 'saved'): ?>
                 <div class="notice notice-success is-dismissible"><p>Evento guardado correctamente.</p></div>
             <?php elseif ($success === 'activated'): ?>
                 <div class="notice notice-success is-dismissible"><p>Evento activo actualizado.</p></div>
@@ -101,7 +110,7 @@ class CatGame_Admin {
             <div class="catgame-admin-grid">
                 <section class="catgame-panel">
                     <h2>Creación / edición</h2>
-                    <p class="description">Completa los campos y guarda. Si elegiste un evento en el listado, se actualizará ese evento.</p>
+                    <p class="description">Usa "Crear evento" para uno nuevo o "Actualizar evento" cuando estés editando desde el listado.</p>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                         <?php wp_nonce_field('catgame_save_event'); ?>
                         <input type="hidden" name="action" value="catgame_save_event" />
@@ -149,7 +158,7 @@ class CatGame_Admin {
                         </table>
                         <div class="catgame-actions-row">
                             <?php submit_button(($event_in_edit ? 'Actualizar evento' : 'Crear evento'), 'primary', 'submit', false); ?>
-                            <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=catgame-events')); ?>">Nuevo evento</a>
+                            <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=catgame-events&mode=create&event_id=0')); ?>">Nuevo evento</a>
                         </div>
                     </form>
                 </section>
@@ -157,7 +166,7 @@ class CatGame_Admin {
                 <section class="catgame-panel">
                     <h2>Detalle</h2>
                     <?php if (!$event_in_edit): ?>
-                        <p class="description">Todavía no hay eventos cargados.</p>
+                        <p class="description">Modo crear activo. Completa el formulario para crear un evento nuevo.</p>
                     <?php else: ?>
                         <?php
                         $start_ts = strtotime((string) $event_in_edit['starts_at']);
@@ -175,7 +184,8 @@ class CatGame_Admin {
                             <?php wp_nonce_field('catgame_save_event'); ?>
                             <input type="hidden" name="action" value="catgame_save_event" />
                             <input type="hidden" name="activate_id" value="<?php echo (int) $event_in_edit['id']; ?>" />
-                            <?php submit_button('Marcar como evento activo', 'secondary', 'submit', false); ?>
+                            <p><strong>Evento activo:</strong> usa este botón para dejar este evento como vigente en la app.</p>
+                            <?php submit_button('Marcar como evento activo', 'primary', 'submit', false); ?>
                         </form>
                     <?php endif; ?>
                 </section>
@@ -277,6 +287,8 @@ class CatGame_Admin {
             'rules_json' => $rules_json,
         ];
 
+        $saved_status = 'updated';
+
         if ($event_id > 0) {
             $wpdb->update(
                 $table,
@@ -286,6 +298,7 @@ class CatGame_Admin {
                 ['%d']
             );
         } else {
+            $saved_status = 'created';
             $data['created_at'] = current_time('mysql');
             $wpdb->insert(
                 $table,
@@ -301,7 +314,7 @@ class CatGame_Admin {
 
         CatGame_Submissions::clear_leaderboard_cache();
 
-        wp_safe_redirect(admin_url('admin.php?page=catgame-events&status=saved&event_id=' . $event_id));
+        wp_safe_redirect(admin_url('admin.php?page=catgame-events&status=' . $saved_status . '&event_id=' . $event_id));
         exit;
     }
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.25.8
+- Admin eventos: se corrige modo crear real en Gestor de eventos (`mode=create` / `event_id=0`) para evitar autoselección del primer evento y permitir INSERT correcto al crear.
+- Admin eventos: se mantiene modo editar desde listado con carga de datos y UPDATE del evento seleccionado.
+- UX admin: botones del formulario más claros ("Crear evento"/"Actualizar evento" + "Nuevo evento" siempre visible) y CTA de "Marcar como evento activo" más visible en detalle.
+
 ## 0.25.7
 - Reacciones (DX/i18n-ready): se centralizan mensajes de toast del módulo de reacciones en un objeto único (`loginRequired`, `saveError`, `rateLimited`) manteniendo el comportamiento actual.
 
