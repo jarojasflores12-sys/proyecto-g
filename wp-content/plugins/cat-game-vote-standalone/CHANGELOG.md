@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.26.1
+- Feed: se corrige `Cargar más` para cargar bloques incrementales de publicaciones del evento activo y ocultar el botón al llegar al final real (`has_more=false`).
+- Feed: se elimina el filtro por etiqueta en la pantalla de Publicaciones para mostrar todas las publicaciones del evento activo en una sola lista paginada.
+- Ranking (mobile-first): se aumenta de forma perceptible el tamaño del contenedor de miniatura en cards para mejorar legibilidad visual en móviles.
+
 ## 0.26.0
 - Ranking: miniaturas más grandes en cards (mobile-first) con contenedor dedicado y `object-fit: cover`, manteniendo layout de badge y metadatos.
 - Reacciones: resaltado tipo “patita” aplicado solo a la reacción seleccionada del usuario, persistente al cambiar; se refuerza anti-selección táctil iOS en contenedor/botones.

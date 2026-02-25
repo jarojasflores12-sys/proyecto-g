@@ -995,7 +995,6 @@
   }
 
   const perPage = Number(container.dataset.perPage || '20');
-  const tag = container.dataset.tag || '';
   let nextOffset = Number(container.dataset.nextOffset || '0');
   let hasMore = container.dataset.hasMore === '1';
   let isLoading = false;
@@ -1017,13 +1016,12 @@
       url.searchParams.set('_wpnonce', config.nonce || '');
       url.searchParams.set('offset', String(nextOffset));
       url.searchParams.set('per_page', String(perPage));
-      if (tag) {
-        url.searchParams.set('tag', tag);
-      }
-
       const response = await fetch(url.toString(), { credentials: 'same-origin' });
+      if (!response.ok) {
+        throw new Error('http_error');
+      }
       const payload = await response.json();
-      if (!payload?.success || !payload.data) {
+      if (!payload || payload.success !== true || !payload.data || typeof payload.data !== 'object') {
         throw new Error('invalid_payload');
       }
 

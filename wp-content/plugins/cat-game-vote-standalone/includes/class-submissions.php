@@ -478,14 +478,12 @@ class CatGame_Submissions {
 
         $event = CatGame_Events::get_active_event();
         if (!$event) {
-            wp_send_json_success(['items' => [], 'has_more' => false, 'next_offset' => 0]);
+            wp_send_json_success(['html' => '', 'has_more' => false, 'next_offset' => 0]);
         }
 
         $offset = isset($_GET['offset']) ? (int) $_GET['offset'] : 0;
         $per_page = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 20;
-        $tag = self::normalize_tag(wp_unslash($_GET['tag'] ?? ''));
-
-        $page = self::list_feed_paginated((int) $event['id'], $per_page, $offset, $tag);
+        $page = self::list_feed_paginated((int) $event['id'], $per_page, $offset);
         $items = $page['items'];
 
         $current_user_id = is_user_logged_in() ? get_current_user_id() : 0;

@@ -1,7 +1,5 @@
 <?php
 $items = $data['submissions'] ?? [];
-$feed_tags = $data['feed_tags'] ?? [];
-$selected_tag = $data['selected_tag'] ?? '';
 $top3_positions = $data['top3_positions'] ?? [];
 $current_user_id = (int) ($data['current_user_id'] ?? 0);
 $feed_per_page = (int) ($data['feed_per_page'] ?? 20);
@@ -10,20 +8,6 @@ $feed_has_more = !empty($data['feed_has_more']);
 ?>
 <section>
     <h2>Publicaciones</h2>
-
-    <form method="get" action="<?php echo esc_url(home_url('/catgame/feed')); ?>" class="cg-form-inline">
-        <label>Etiqueta
-            <select name="tag">
-                <option value="">Todas</option>
-                <?php foreach ($feed_tags as $tag): ?>
-                    <option value="<?php echo esc_attr($tag); ?>" <?php selected($selected_tag, $tag); ?>>
-                        <?php echo esc_html(CatGame_Submissions::label_for_tag($tag, get_current_user_id())); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </label>
-        <button type="submit">Filtrar</button>
-    </form>
 
     <div class="cg-grid" id="catgame-feed-list">
         <?php if (!$items): ?>
@@ -34,7 +18,7 @@ $feed_has_more = !empty($data['feed_has_more']);
         <?php endforeach; ?>
     </div>
 
-    <div class="cg-feed-more" data-feed-more="1" data-tag="<?php echo esc_attr($selected_tag); ?>" data-per-page="<?php echo (int) $feed_per_page; ?>" data-next-offset="<?php echo (int) $feed_next_offset; ?>" data-has-more="<?php echo $feed_has_more ? '1' : '0'; ?>">
+    <div class="cg-feed-more" data-feed-more="1" data-per-page="<?php echo (int) $feed_per_page; ?>" data-next-offset="<?php echo (int) $feed_next_offset; ?>" data-has-more="<?php echo $feed_has_more ? '1' : '0'; ?>">
         <button type="button" class="secondary" data-feed-more-btn="1" <?php echo $feed_has_more ? '' : 'hidden'; ?>>Cargar más</button>
         <p class="cg-feed-end" data-feed-end="1" <?php echo $feed_has_more ? 'hidden' : ''; ?>>No hay más publicaciones</p>
     </div>

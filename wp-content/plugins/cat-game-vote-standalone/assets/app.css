@@ -862,14 +862,14 @@ body.cg-has-custom-bg .cg-main {
 
 .cg-rank-item {
   display: grid;
-  grid-template-columns: auto 104px minmax(0, 1fr);
+  grid-template-columns: auto 128px minmax(0, 1fr);
   gap: 12px;
   align-items: center;
 }
 
 .cg-rank-thumb {
-  width: 104px;
-  height: 104px;
+  width: 128px;
+  height: 128px;
   border-radius: 16px;
   overflow: hidden;
 }
@@ -1440,12 +1440,12 @@ body.cg-has-custom-bg .cg-main {
 
 @media (max-width: 560px) {
   .cg-rank-item {
-    grid-template-columns: auto 92px minmax(0, 1fr);
+    grid-template-columns: auto 118px minmax(0, 1fr);
     gap: 10px;
   }
 
   .cg-rank-thumb {
-    width: 92px;
-    height: 92px;
+    width: 118px;
+    height: 118px;
   }
 }

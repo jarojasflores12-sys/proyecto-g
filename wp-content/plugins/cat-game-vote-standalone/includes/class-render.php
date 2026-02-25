@@ -119,19 +119,12 @@ class CatGame_Render {
                     'requires_location' => $requires_location,
                 ];
             case 'feed':
-                $filter_tag = CatGame_Submissions::normalize_tag(wp_unslash($_GET['tag'] ?? ''));
-                $feed_tags = is_user_logged_in()
-                    ? CatGame_Submissions::available_tags_for_user(get_current_user_id())
-                    : CatGame_Submissions::predefined_tags();
-
                 $feed_per_page = 20;
-                $feed_page = $event ? CatGame_Submissions::list_feed_paginated((int) $event['id'], $feed_per_page, 0, $filter_tag) : ['items' => [], 'has_more' => false, 'next_offset' => 0];
+                $feed_page = $event ? CatGame_Submissions::list_feed_paginated((int) $event['id'], $feed_per_page, 0) : ['items' => [], 'has_more' => false, 'next_offset' => 0];
 
                 return [
                     'page' => $page,
                     'event' => $event,
-                    'selected_tag' => $filter_tag,
-                    'feed_tags' => $feed_tags,
                     'submissions' => $event ? self::with_reaction_payload((array) ($feed_page['items'] ?? []), $current_user_id) : [],
                     'feed_per_page' => $feed_per_page,
                     'feed_has_more' => !empty($feed_page['has_more']),
