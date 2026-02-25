@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.25.9
+- Admin Eventos UX: orden vertical optimizado (Creación/edición → Detalle → Listado → Calendario) y mejoras visuales en CTA del panel.
+- Admin Eventos reglas: nuevo modo mixto con sección opcional de reglas repetibles (Título, Tipo, Valor condicional, Descripción), soporte para evento sin reglas y edición completa al reabrir.
+- Admin Eventos preview/acciones: nueva previsualización (estado, fechas, reglas formateadas, modo Competitivo/Temático) y botón Duplicar evento desde listado (copia reglas, deja inactivo y abre edición de la copia).
+
 ## 0.25.8
 - Admin eventos: se corrige modo crear real en Gestor de eventos (`mode=create` / `event_id=0`) para evitar autoselección del primer evento y permitir INSERT correcto al crear.
 - Admin eventos: se mantiene modo editar desde listado con carga de datos y UPDATE del evento seleccionado.

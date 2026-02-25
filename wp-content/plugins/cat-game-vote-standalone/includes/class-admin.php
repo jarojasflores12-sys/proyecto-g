@@ -10,6 +10,7 @@ class CatGame_Admin {
     public static function init(): void {
         add_action('admin_menu', [__CLASS__, 'menu']);
         add_action('admin_post_catgame_save_event', [__CLASS__, 'save_event']);
+        add_action('admin_post_catgame_duplicate_event', [__CLASS__, 'duplicate_event']);
         add_action('admin_post_catgame_toggle_submission', [__CLASS__, 'toggle_submission']);
         add_action('admin_post_catgame_save_settings', [__CLASS__, 'save_settings']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_assets']);
@@ -88,8 +89,7 @@ class CatGame_Admin {
         $form_name = $event_in_edit['name'] ?? '';
         $form_starts_at = isset($event_in_edit['starts_at']) ? self::to_datetime_local($event_in_edit['starts_at']) : '';
         $form_ends_at = isset($event_in_edit['ends_at']) ? self::to_datetime_local($event_in_edit['ends_at']) : '';
-        $form_rules = CatGame_Events::decode_rules($event_in_edit['rules_json'] ?? null);
-        $rule_fields = self::rule_fields();
+        $form_rules_data = self::parse_rules_for_admin($event_in_edit['rules_json'] ?? null);
         $form_is_active = isset($event_in_edit['is_active']) && (int) $event_in_edit['is_active'] === 1;
         $success = isset($_GET['status']) ? sanitize_key(wp_unslash($_GET['status'])) : '';
         $now_ts = current_time('timestamp');
@@ -101,6 +101,8 @@ class CatGame_Admin {
                 <div class="notice notice-success is-dismissible"><p>Evento creado correctamente.</p></div>
             <?php elseif ($success === 'updated'): ?>
                 <div class="notice notice-success is-dismissible"><p>Evento actualizado correctamente.</p></div>
+            <?php elseif ($success === 'duplicated'): ?>
+                <div class="notice notice-success is-dismissible"><p>Evento duplicado correctamente.</p></div>
             <?php elseif ($success === 'saved'): ?>
                 <div class="notice notice-success is-dismissible"><p>Evento guardado correctamente.</p></div>
             <?php elseif ($success === 'activated'): ?>
@@ -129,26 +131,28 @@ class CatGame_Admin {
                                 <td><input type="datetime-local" name="ends_at" id="ends_at" value="<?php echo esc_attr($form_ends_at); ?>" required /></td>
                             </tr>
                             <tr>
-                                <th>Reglas de puntaje</th>
+                                <th>Reglas del evento (opcional)</th>
                                 <td>
-                                    <div class="catgame-rules-grid">
-                                        <?php foreach ($rule_fields as $rule_key => $rule_meta): ?>
-                                            <label class="catgame-rule-field" for="rules_<?php echo esc_attr($rule_key); ?>">
-                                                <span><?php echo esc_html($rule_meta['label']); ?></span>
-                                                <input
-                                                    type="number"
-                                                    name="rules[<?php echo esc_attr($rule_key); ?>]"
-                                                    id="rules_<?php echo esc_attr($rule_key); ?>"
-                                                    min="0"
-                                                    max="10"
-                                                    step="0.1"
-                                                    value="<?php echo esc_attr(number_format((float) ($form_rules[$rule_key] ?? $rule_meta['default']), 1, '.', '')); ?>"
-                                                />
-                                                <small class="description"><?php echo esc_html($rule_meta['help']); ?></small>
-                                            </label>
-                                        <?php endforeach; ?>
+                                    <label>
+                                        <input type="checkbox" name="rules_disabled" value="1" <?php checked(!$form_rules_data['uses_rules']); ?> data-rules-disabled-toggle="1" />
+                                        Este evento no usa reglas
+                                    </label>
+
+                                    <div class="catgame-rules-repeater" data-rules-repeater="1" <?php echo !$form_rules_data['uses_rules'] ? 'hidden' : ''; ?>>
+                                        <div class="catgame-rules-list" data-rules-list="1">
+                                            <?php foreach ($form_rules_data['items'] as $index => $rule_item): ?>
+                                                <?php self::render_rule_row($index, $rule_item); ?>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <p>
+                                            <button type="button" class="button" data-rules-add="1">Agregar regla</button>
+                                        </p>
+                                        <p class="description">Cada regla permite título, tipo, valor (si aplica) y descripción corta.</p>
                                     </div>
-                                    <p class="description">Valores de bonificación por regla. Usa decimales con punto (ej: 0.5).</p>
+
+                                    <template id="catgame-rule-row-template">
+                                        <?php self::render_rule_row('__INDEX__', ['title' => '', 'type' => 'tema', 'value' => '', 'desc' => '']); ?>
+                                    </template>
                                 </td>
                             </tr>
                             <tr>
@@ -187,6 +191,8 @@ class CatGame_Admin {
                             <p><strong>Evento activo:</strong> usa este botón para dejar este evento como vigente en la app.</p>
                             <?php submit_button('Marcar como evento activo', 'primary', 'submit', false); ?>
                         </form>
+
+                        <?php self::render_event_preview($event_in_edit, $now_ts); ?>
                     <?php endif; ?>
                 </section>
             </div>
@@ -212,6 +218,12 @@ class CatGame_Admin {
                                 <td><span class="catgame-pill"><?php echo esc_html($status_label); ?></span></td>
                                 <td class="catgame-table-actions">
                                     <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=catgame-events&event_id=' . (int) $event['id'])); ?>">Editar / ver detalle</a>
+                                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                        <?php wp_nonce_field('catgame_duplicate_event'); ?>
+                                        <input type="hidden" name="action" value="catgame_duplicate_event" />
+                                        <input type="hidden" name="event_id" value="<?php echo (int) $event['id']; ?>" />
+                                        <?php submit_button('Duplicar', 'secondary small', 'submit', false); ?>
+                                    </form>
                                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                                         <?php wp_nonce_field('catgame_save_event'); ?>
                                         <input type="hidden" name="action" value="catgame_save_event" />
@@ -248,6 +260,79 @@ class CatGame_Admin {
                 </div>
             </section>
         </div>
+        <script>
+            (function () {
+                const panel = document.querySelector('[data-rules-repeater="1"]');
+                const toggle = document.querySelector('[data-rules-disabled-toggle="1"]');
+                const list = document.querySelector('[data-rules-list="1"]');
+                const addBtn = document.querySelector('[data-rules-add="1"]');
+                const tpl = document.getElementById('catgame-rule-row-template');
+                if (!panel || !toggle || !list || !addBtn || !tpl) {
+                    return;
+                }
+
+                const updateVisibility = () => {
+                    panel.hidden = !!toggle.checked;
+                };
+
+                const normalizeIndexes = () => {
+                    const rows = Array.from(list.querySelectorAll('[data-rule-row="1"]'));
+                    rows.forEach((row, index) => {
+                        row.querySelectorAll('[data-rule-field]').forEach((field) => {
+                            const key = field.getAttribute('data-rule-field');
+                            field.setAttribute('name', `rules_items[${index}][${key}]`);
+                        });
+                    });
+                };
+
+                const bindRow = (row) => {
+                    const typeSelect = row.querySelector('[data-rule-field="type"]');
+                    const valueInput = row.querySelector('[data-rule-field="value"]');
+                    const removeBtn = row.querySelector('[data-rules-remove="1"]');
+                    const onTypeChange = () => {
+                        const isTema = (typeSelect?.value || '') === 'tema';
+                        if (valueInput) {
+                            valueInput.disabled = isTema;
+                            valueInput.closest('.catgame-rule-col').hidden = isTema;
+                            if (isTema) {
+                                valueInput.value = '';
+                            }
+                        }
+                    };
+
+                    if (typeSelect) {
+                        typeSelect.addEventListener('change', onTypeChange);
+                    }
+
+                    if (removeBtn) {
+                        removeBtn.addEventListener('click', () => {
+                            row.remove();
+                            normalizeIndexes();
+                        });
+                    }
+
+                    onTypeChange();
+                };
+
+                addBtn.addEventListener('click', () => {
+                    const html = tpl.innerHTML.replace(/__INDEX__/g, String(list.querySelectorAll('[data-rule-row="1"]').length));
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = html.trim();
+                    const row = wrapper.firstElementChild;
+                    if (!row) {
+                        return;
+                    }
+                    list.appendChild(row);
+                    bindRow(row);
+                    normalizeIndexes();
+                });
+
+                list.querySelectorAll('[data-rule-row="1"]').forEach((row) => bindRow(row));
+                toggle.addEventListener('change', updateVisibility);
+                normalizeIndexes();
+                updateVisibility();
+            })();
+        </script>
         <?php
     }
 
@@ -315,6 +400,50 @@ class CatGame_Admin {
         CatGame_Submissions::clear_leaderboard_cache();
 
         wp_safe_redirect(admin_url('admin.php?page=catgame-events&status=' . $saved_status . '&event_id=' . $event_id));
+        exit;
+    }
+
+    public static function duplicate_event(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        check_admin_referer('catgame_duplicate_event');
+
+        $event_id = isset($_POST['event_id']) ? (int) $_POST['event_id'] : 0;
+        if ($event_id <= 0) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-events'));
+            exit;
+        }
+
+        $event = CatGame_Events::get_event($event_id);
+        if (!$event) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-events'));
+            exit;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('events');
+        $wpdb->insert(
+            $table,
+            [
+                'name' => 'Copia de ' . sanitize_text_field((string) ($event['name'] ?? 'Evento')),
+                'starts_at' => (string) ($event['starts_at'] ?? current_time('mysql')),
+                'ends_at' => (string) ($event['ends_at'] ?? current_time('mysql')),
+                'is_active' => 0,
+                'rules_json' => (string) ($event['rules_json'] ?? ''),
+                'created_at' => current_time('mysql'),
+            ],
+            ['%s', '%s', '%s', '%d', '%s', '%s']
+        );
+
+        $new_event_id = (int) $wpdb->insert_id;
+        if ($new_event_id <= 0) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-events'));
+            exit;
+        }
+
+        wp_safe_redirect(admin_url('admin.php?page=catgame-events&event_id=' . $new_event_id . '&status=duplicated'));
         exit;
     }
 
@@ -448,18 +577,234 @@ class CatGame_Admin {
     }
 
     private static function build_rules_json_from_post(array $post_data): string {
-        $rule_fields = self::rule_fields();
-        $posted_rules = isset($post_data['rules']) && is_array($post_data['rules']) ? $post_data['rules'] : [];
-        $normalized_rules = [];
-
-        foreach ($rule_fields as $rule_key => $rule_meta) {
-            $raw_value = $posted_rules[$rule_key] ?? $rule_meta['default'];
-            $value = is_scalar($raw_value) ? (float) str_replace(',', '.', (string) $raw_value) : (float) $rule_meta['default'];
-            $value = max(0, min(10, $value));
-            $normalized_rules[$rule_key] = round($value, 2);
+        if (!empty($post_data['rules_disabled'])) {
+            return wp_json_encode([
+                'mode' => 'none',
+                'items' => [],
+            ]);
         }
 
-        return wp_json_encode($normalized_rules);
+        $posted_items = isset($post_data['rules_items']) && is_array($post_data['rules_items']) ? $post_data['rules_items'] : [];
+        $items = [];
+
+        foreach ($posted_items as $raw_item) {
+            if (!is_array($raw_item)) {
+                continue;
+            }
+
+            $title = sanitize_text_field(wp_unslash($raw_item['title'] ?? ''));
+            $type = sanitize_key(wp_unslash($raw_item['type'] ?? 'tema'));
+            $desc = sanitize_text_field(wp_unslash($raw_item['desc'] ?? ''));
+            if ($title === '') {
+                continue;
+            }
+
+            if (!in_array($type, ['tema', 'bonus', 'penalizacion'], true)) {
+                $type = 'tema';
+            }
+
+            $value = null;
+            if ($type !== 'tema') {
+                $raw_value = is_scalar($raw_item['value'] ?? null) ? (string) $raw_item['value'] : '';
+                $raw_value = str_replace(',', '.', $raw_value);
+                if ($raw_value !== '' && is_numeric($raw_value)) {
+                    $value = round((float) $raw_value, 2);
+                }
+            }
+
+            $items[] = [
+                'title' => $title,
+                'type' => $type,
+                'value' => $value,
+                'desc' => $desc,
+            ];
+        }
+
+        return wp_json_encode([
+            'mode' => empty($items) ? 'none' : 'rules',
+            'items' => $items,
+        ]);
+    }
+
+    private static function parse_rules_for_admin(?string $rules_json): array {
+        if (!is_string($rules_json) || trim($rules_json) === '') {
+            return [
+                'uses_rules' => false,
+                'items' => [
+                    ['title' => '', 'type' => 'tema', 'value' => '', 'desc' => ''],
+                ],
+            ];
+        }
+
+        $decoded = json_decode((string) $rules_json, true);
+        $items = [];
+
+        if (is_array($decoded) && isset($decoded['items']) && is_array($decoded['items'])) {
+            foreach ($decoded['items'] as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                $title = sanitize_text_field((string) ($item['title'] ?? ''));
+                $type = sanitize_key((string) ($item['type'] ?? 'tema'));
+                $desc = sanitize_text_field((string) ($item['desc'] ?? ''));
+                if ($title === '') {
+                    continue;
+                }
+                if (!in_array($type, ['tema', 'bonus', 'penalizacion'], true)) {
+                    $type = 'tema';
+                }
+
+                $value = '';
+                if ($type !== 'tema' && isset($item['value']) && is_numeric($item['value'])) {
+                    $value = (string) round((float) $item['value'], 2);
+                }
+
+                $items[] = [
+                    'title' => $title,
+                    'type' => $type,
+                    'value' => $value,
+                    'desc' => $desc,
+                ];
+            }
+
+            $mode = sanitize_key((string) ($decoded['mode'] ?? 'rules'));
+            $uses_rules = $mode !== 'none';
+            if (!$uses_rules) {
+                $items = [];
+            }
+        } else {
+            $legacy_rules = CatGame_Events::decode_rules($rules_json);
+            $legacy_labels = self::legacy_rule_labels();
+            foreach ($legacy_rules as $key => $value) {
+                if (!is_numeric($value)) {
+                    continue;
+                }
+                $items[] = [
+                    'title' => $legacy_labels[$key] ?? self::humanize_rule_key((string) $key),
+                    'type' => 'bonus',
+                    'value' => (string) round((float) $value, 2),
+                    'desc' => '',
+                ];
+            }
+        }
+
+        if (empty($items)) {
+            $items[] = ['title' => '', 'type' => 'tema', 'value' => '', 'desc' => ''];
+        }
+
+        return [
+            'uses_rules' => !empty(array_filter($items, static function (array $item): bool {
+                return trim((string) ($item['title'] ?? '')) !== '';
+            })),
+            'items' => $items,
+        ];
+    }
+
+    private static function render_rule_row($index, array $rule_item): void {
+        $title = (string) ($rule_item['title'] ?? '');
+        $type = sanitize_key((string) ($rule_item['type'] ?? 'tema'));
+        if (!in_array($type, ['tema', 'bonus', 'penalizacion'], true)) {
+            $type = 'tema';
+        }
+        $value = (string) ($rule_item['value'] ?? '');
+        $desc = (string) ($rule_item['desc'] ?? '');
+        ?>
+        <div class="catgame-rule-row" data-rule-row="1">
+            <div class="catgame-rule-col">
+                <label>Título
+                    <input type="text" data-rule-field="title" name="rules_items[<?php echo esc_attr((string) $index); ?>][title]" value="<?php echo esc_attr($title); ?>" maxlength="80" />
+                </label>
+            </div>
+            <div class="catgame-rule-col">
+                <label>Tipo
+                    <select data-rule-field="type" name="rules_items[<?php echo esc_attr((string) $index); ?>][type]">
+                        <option value="tema" <?php selected($type, 'tema'); ?>>Tema</option>
+                        <option value="bonus" <?php selected($type, 'bonus'); ?>>Bonus</option>
+                        <option value="penalizacion" <?php selected($type, 'penalizacion'); ?>>Penalización</option>
+                    </select>
+                </label>
+            </div>
+            <div class="catgame-rule-col" <?php echo $type === 'tema' ? 'hidden' : ''; ?>>
+                <label>Valor
+                    <input type="number" step="0.1" data-rule-field="value" name="rules_items[<?php echo esc_attr((string) $index); ?>][value]" value="<?php echo esc_attr($value); ?>" <?php echo $type === 'tema' ? 'disabled' : ''; ?> />
+                </label>
+            </div>
+            <div class="catgame-rule-col">
+                <label>Descripción (opcional)
+                    <input type="text" data-rule-field="desc" name="rules_items[<?php echo esc_attr((string) $index); ?>][desc]" value="<?php echo esc_attr($desc); ?>" maxlength="120" />
+                </label>
+            </div>
+            <div class="catgame-rule-col catgame-rule-col--actions">
+                <button type="button" class="button button-small" data-rules-remove="1">Eliminar</button>
+            </div>
+        </div>
+        <?php
+    }
+
+    private static function render_event_preview(array $event, int $now_ts): void {
+        $start_ts = strtotime((string) ($event['starts_at'] ?? ''));
+        $end_ts = strtotime((string) ($event['ends_at'] ?? ''));
+        $status_label = self::event_status_label($start_ts, $end_ts, (int) ($event['is_active'] ?? 0), $now_ts);
+        $rules = self::parse_rules_for_admin((string) ($event['rules_json'] ?? ''));
+        $rules_items = array_values(array_filter($rules['items'], static function (array $item): bool {
+            return trim((string) ($item['title'] ?? '')) !== '';
+        }));
+
+        $has_competitive = false;
+        foreach ($rules_items as $item) {
+            $type = sanitize_key((string) ($item['type'] ?? 'tema'));
+            if (in_array($type, ['bonus', 'penalizacion'], true)) {
+                $has_competitive = true;
+                break;
+            }
+        }
+
+        $mode_label = $has_competitive ? 'Competitivo' : 'Temático';
+        ?>
+        <section class="catgame-event-preview">
+            <h3>Previsualización</h3>
+            <p><strong>Nombre:</strong> <?php echo esc_html((string) ($event['name'] ?? 'Sin nombre')); ?></p>
+            <p><strong>Estado:</strong> <?php echo esc_html($status_label); ?></p>
+            <p><strong>Inicio:</strong> <?php echo esc_html(wp_date('d M Y H:i', $start_ts)); ?></p>
+            <p><strong>Fin:</strong> <?php echo esc_html(wp_date('d M Y H:i', $end_ts)); ?></p>
+            <p><strong>Modo del evento:</strong> <?php echo esc_html($mode_label); ?></p>
+            <ul class="catgame-preview-rules">
+                <?php if (empty($rules_items)): ?>
+                    <li>🎯 Sin reglas definidas.</li>
+                <?php else: ?>
+                    <?php foreach ($rules_items as $item): ?>
+                        <?php
+                        $type = sanitize_key((string) ($item['type'] ?? 'tema'));
+                        $title = (string) ($item['title'] ?? 'Regla');
+                        $value = is_numeric($item['value'] ?? null) ? (float) $item['value'] : null;
+                        $desc = trim((string) ($item['desc'] ?? ''));
+                        ?>
+                        <?php if ($type === 'bonus'): ?>
+                            <li>✨ <?php echo esc_html($title); ?><?php if ($value !== null): ?> (+<?php echo esc_html((string) $value); ?>)<?php endif; ?><?php if ($desc !== ''): ?> — <?php echo esc_html($desc); ?><?php endif; ?></li>
+                        <?php elseif ($type === 'penalizacion'): ?>
+                            <li>⚠️ <?php echo esc_html($title); ?><?php if ($value !== null): ?> (-<?php echo esc_html((string) $value); ?>)<?php endif; ?><?php if ($desc !== ''): ?> — <?php echo esc_html($desc); ?><?php endif; ?></li>
+                        <?php else: ?>
+                            <li>🎯 <?php echo esc_html($title); ?><?php if ($desc !== ''): ?> — <?php echo esc_html($desc); ?><?php endif; ?></li>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </ul>
+        </section>
+        <?php
+    }
+
+    private static function legacy_rule_labels(): array {
+        return [
+            'black_cat' => 'Gato negro',
+            'night_photo' => 'Foto nocturna',
+            'funny_pose' => 'Pose divertida',
+            'weird_place' => 'Lugar raro',
+        ];
+    }
+
+    private static function humanize_rule_key(string $key): string {
+        return ucwords(str_replace(['_', '-'], ' ', $key));
     }
 
     private static function rule_fields(): array {

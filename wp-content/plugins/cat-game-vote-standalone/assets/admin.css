@@ -96,3 +96,64 @@
 .catgame-admin-page .catgame-rule-field input {
   max-width: 100%;
 }
+
+.catgame-admin-page .catgame-admin-grid {
+  grid-template-columns: 1fr;
+}
+
+.catgame-admin-page .catgame-rules-repeater {
+  margin-top: 10px;
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f8f9ff;
+}
+
+.catgame-admin-page .catgame-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.catgame-admin-page .catgame-rule-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.2fr) minmax(120px, 0.8fr) minmax(100px, 0.6fr) minmax(170px, 1.1fr) auto;
+  gap: 8px;
+  align-items: end;
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
+}
+
+.catgame-admin-page .catgame-rule-col label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.catgame-admin-page .catgame-rule-col input,
+.catgame-admin-page .catgame-rule-col select {
+  width: 100%;
+}
+
+.catgame-admin-page .catgame-rule-col--actions {
+  align-self: center;
+}
+
+.catgame-admin-page .catgame-event-preview {
+  margin-top: 14px;
+  border-top: 1px solid #dcdcde;
+  padding-top: 10px;
+}
+
+.catgame-admin-page .catgame-preview-rules {
+  margin: 8px 0 0 18px;
+}
+
+@media (max-width: 1080px) {
+  .catgame-admin-page .catgame-rule-row {
+    grid-template-columns: 1fr;
+  }
+}
