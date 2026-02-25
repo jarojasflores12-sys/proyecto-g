@@ -642,6 +642,12 @@
   const LONG_PRESS_MS = 450;
   const CANCEL_MOVE_PX = 10;
 
+  const REACTION_MESSAGES = {
+    loginRequired: 'Inicia sesión para reaccionar',
+    saveError: 'No se pudo guardar la reacción',
+    rateLimited: (seconds) => `Has alcanzado el límite. Intenta nuevamente en ${seconds}s.`,
+  };
+
   const initReactionButton = (btn) => {
     const reaction = btn.dataset.reaction || '';
     const meta = labels[reaction];
@@ -810,7 +816,7 @@
         if (!(target instanceof HTMLElement)) return;
         if (target.closest('.cg-reaction-btn')) {
           event.preventDefault();
-          window.catgameToast?.('Inicia sesión para reaccionar', 'info');
+          window.catgameToast?.(REACTION_MESSAGES.loginRequired, 'info');
         }
       });
 
@@ -842,15 +848,15 @@
             paintWidget(widget, currentState);
             const retryAfter = Number(result?.retryAfter || 0);
             const retryMessage = retryAfter > 0
-              ? `Has alcanzado el límite. Intenta nuevamente en ${retryAfter}s.`
+              ? REACTION_MESSAGES.rateLimited(retryAfter)
               : '';
-            window.catgameToast?.(retryMessage || result?.message || 'No se pudo guardar la reacción', 'error');
+            window.catgameToast?.(retryMessage || result?.message || REACTION_MESSAGES.saveError, 'error');
           }
         })
         .catch(() => {
           currentState = previousState;
           paintWidget(widget, currentState);
-          window.catgameToast?.('No se pudo guardar la reacción', 'error');
+          window.catgameToast?.(REACTION_MESSAGES.saveError, 'error');
         })
         .finally(() => {
           widget.classList.remove('is-busy');

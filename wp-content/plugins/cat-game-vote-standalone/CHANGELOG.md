@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.25.7
+- Reacciones (DX/i18n-ready): se centralizan mensajes de toast del módulo de reacciones en un objeto único (`loginRequired`, `saveError`, `rateLimited`) manteniendo el comportamiento actual.
+
 ## 0.25.6
 - Reacciones (UX): cuando el backend devuelve `retry_after` por rate limit, el toast ahora indica tiempo de espera explícito (ej: "Intenta nuevamente en Xs").
 
