@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.26.7
+- Reacciones (UX visual): se refuerza visibilidad del contorno "patita" seleccionado en móvil (outline SVG más grande/contrastado, trazo más grueso y sombra más notoria) sin cambiar tamaño de la pill.
+
 ## 0.26.6
 - Reacciones (UX visual): se refuerza el resaltado "patita" del seleccionado con contorno de mayor contraste (2px), sombra suave y pseudo-elemento tipo outline para mejor visibilidad en móvil, manteniendo tamaño compacto.
 
