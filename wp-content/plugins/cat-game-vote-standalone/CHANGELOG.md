@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.26.11
+- Upload UX: reemplaza selector único por dos CTAs explícitos: **Subir archivo** y **Tomar foto** (con `capture="environment"` para cámara en móviles).
+- Upload UX: botón principal **Enviar** pasa a color morado para destacar el CTA de envío.
+- Upload UX: se oculta el texto de estado/tamaño de compresión en pantalla de subida para una interfaz más limpia.
+- Validación título: mantiene campo obligatorio y agrega mensaje nativo personalizado "El título es obligatorio." cuando falta completar.
+
 ## 0.26.10
 - Perfil/Ubicación: se centraliza lectura de ubicación por usuario en helpers (`get_user_default_location` / `has_user_default_location`) para evitar volver a exigir ciudad/país tras re-login cuando ya existe en `user_meta`.
 - Perfil: guardado valida ciudad/país obligatorios; ante error mantiene inputs ingresados y muestra mensaje claro sin sobrescribir metadatos con vacío.

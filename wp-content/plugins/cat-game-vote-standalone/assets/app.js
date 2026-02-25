@@ -124,6 +124,11 @@
   const stateEl = document.getElementById('catgame-compress-status');
   const previewEl = document.getElementById('catgame-image-preview');
   const filePickerText = document.querySelector('.cg-file-picker-text');
+  const filePickerBtn = document.querySelector('[data-catgame-pick-file="1"]');
+  const cameraPickerBtn = document.querySelector('[data-catgame-pick-camera="1"]');
+  const fileProxyInput = document.getElementById('catgame-cat-image-file');
+  const cameraProxyInput = document.getElementById('catgame-cat-image-camera');
+  const titleInput = form.querySelector('input[name="title"]');
   const submitButton = form.querySelector('button[type="submit"]');
 
   const TARGET_MAX_SIDE = 1280;
@@ -136,11 +141,56 @@
   let compressing = false;
   let previewObjectUrl = null;
 
+  const syncFileToMainInput = (sourceInput) => {
+    if (!sourceInput || typeof DataTransfer !== 'function') {
+      return;
+    }
+
+    const nextFile = sourceInput.files && sourceInput.files[0] ? sourceInput.files[0] : null;
+    if (!nextFile) {
+      return;
+    }
+
+    const dt = new DataTransfer();
+    dt.items.add(nextFile);
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+
   const setState = (text, isBusy) => {
     if (stateEl) stateEl.textContent = text;
     if (submitButton) submitButton.disabled = !!isBusy;
     compressing = !!isBusy;
   };
+
+  if (titleInput) {
+    titleInput.addEventListener('invalid', () => {
+      const requiredMessage = titleInput.getAttribute('data-required-message') || 'Este campo es obligatorio.';
+      if (titleInput.validity.valueMissing) {
+        titleInput.setCustomValidity(requiredMessage);
+      } else {
+        titleInput.setCustomValidity('');
+      }
+    });
+
+    titleInput.addEventListener('input', () => {
+      titleInput.setCustomValidity('');
+    });
+  }
+
+  if (filePickerBtn && fileProxyInput) {
+    filePickerBtn.addEventListener('click', () => {
+      fileProxyInput.click();
+    });
+    fileProxyInput.addEventListener('change', () => syncFileToMainInput(fileProxyInput));
+  }
+
+  if (cameraPickerBtn && cameraProxyInput) {
+    cameraPickerBtn.addEventListener('click', () => {
+      cameraProxyInput.click();
+    });
+    cameraProxyInput.addEventListener('change', () => syncFileToMainInput(cameraProxyInput));
+  }
 
 
   const supportsWebP = () => {
@@ -1073,4 +1123,3 @@
   button.addEventListener('click', loadMore);
   syncUi();
 })();
-

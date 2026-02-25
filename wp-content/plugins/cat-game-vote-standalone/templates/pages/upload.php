@@ -23,7 +23,19 @@ $location_text = trim($location_text, ' ,');
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data" class="cg-form">
             <?php wp_nonce_field('catgame_upload'); ?>
             <input type="hidden" name="action" value="catgame_upload">
-            <label>Título <input type="text" name="title" required minlength="2" maxlength="40" value="<?php echo esc_attr((string) ($upload_state['title'] ?? '')); ?>" placeholder="Ej: Michi, Pelusa, Tom"></label>
+            <label>
+                Título
+                <input
+                    type="text"
+                    name="title"
+                    required
+                    minlength="2"
+                    maxlength="40"
+                    value="<?php echo esc_attr((string) ($upload_state['title'] ?? '')); ?>"
+                    placeholder="Ej: Michi, Pelusa, Tom"
+                    data-required-message="El título es obligatorio."
+                >
+            </label>
             <fieldset>
                 <legend>Etiquetas</legend>
                 <?php foreach ($user_tags as $tag): ?>
@@ -38,18 +50,25 @@ $location_text = trim($location_text, ' ,');
                 <textarea name="custom_tags" rows="3" placeholder="ej: gato_travieso, siesta_eternal"><?php echo esc_textarea((string) ($upload_state['custom_tags'] ?? '')); ?></textarea>
             </label>
 
-            <label class="cg-file-picker" for="catgame-cat-image">
-                <span class="cg-file-picker-btn">Seleccionar imagen</span>
-                <span class="cg-file-picker-text">JPG, PNG o WEBP</span>
-            </label>
-            <input type="file" name="cat_image" id="catgame-cat-image" class="cg-file-input" accept="image/*" required>
+            <div class="cg-upload-picker" data-catgame-upload-picker>
+                <p class="cg-upload-picker__title">Selecciona tu foto</p>
+                <div class="cg-upload-picker__actions">
+                    <button type="button" class="cg-upload-picker__btn" data-catgame-pick-file="1">Subir archivo</button>
+                    <button type="button" class="cg-upload-picker__btn cg-upload-picker__btn--camera" data-catgame-pick-camera="1">Tomar foto</button>
+                </div>
+                <p class="cg-file-picker-text">JPG, PNG o WEBP</p>
+            </div>
 
-            <p id="catgame-compress-status" class="cg-file-size">Estado: esperando archivo</p>
+            <input type="file" name="cat_image" id="catgame-cat-image" class="cg-file-input" accept="image/*" required>
+            <input type="file" id="catgame-cat-image-file" class="cg-file-input" accept="image/*" tabindex="-1" aria-hidden="true">
+            <input type="file" id="catgame-cat-image-camera" class="cg-file-input" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+
+            <p id="catgame-compress-status" class="cg-file-size cg-visually-hidden" aria-live="polite">Estado: esperando archivo</p>
             <img id="catgame-image-preview" class="cg-image-preview" alt="Preview de imagen seleccionada" style="display:none;" />
 
             <label><input type="checkbox" name="confirm_no_people" value="1" required <?php checked(!empty($upload_state['confirm_no_people'])); ?>> Acepto los términos</label>
             <button type="button" class="secondary" data-open-upload-rules="1">Ver reglas del juego</button>
-            <button type="submit">Enviar</button>
+            <button type="submit" class="cg-upload-submit">Enviar</button>
         </form>
 
         <div class="cg-modal" id="catgame-upload-rules-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-upload-rules-title">
