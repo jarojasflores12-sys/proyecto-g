@@ -668,13 +668,8 @@
       count.className = 'count';
       count.textContent = '0';
 
-      const tooltip = document.createElement('span');
-      tooltip.className = 'catgv-tooltip';
-      tooltip.textContent = label;
-
       btn.appendChild(emoji);
       btn.appendChild(count);
-      btn.appendChild(tooltip);
     }
   };
 
@@ -763,12 +758,46 @@
     };
   };
 
+  let globalTooltip = null;
+
+  const getGlobalTooltip = () => {
+    if (globalTooltip && document.body.contains(globalTooltip)) {
+      return globalTooltip;
+    }
+    globalTooltip = document.createElement('span');
+    globalTooltip.className = 'catgv-tooltip';
+    globalTooltip.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(globalTooltip);
+    return globalTooltip;
+  };
+
+  const hideLongPressTooltip = () => {
+    if (!globalTooltip) return;
+    globalTooltip.style.opacity = '0';
+    globalTooltip.style.transform = 'translate(-50%, -6px)';
+  };
+
+  const showLongPressTooltip = (btn) => {
+    const tooltip = getGlobalTooltip();
+    const label = btn.dataset.label || '';
+    if (!label) return;
+
+    const rect = btn.getBoundingClientRect();
+    tooltip.textContent = label;
+    tooltip.style.left = `${rect.left + (rect.width / 2)}px`;
+    tooltip.style.top = `${rect.top - 10}px`;
+    tooltip.style.opacity = '1';
+    tooltip.style.transform = 'translate(-50%, -100%)';
+  };
+
   const clearLongPressUI = (btn) => {
-    btn.classList.remove('active-hold', 'show-tooltip');
+    btn.classList.remove('active-hold');
+    hideLongPressTooltip();
   };
 
   const showLongPressUI = (btn) => {
-    btn.classList.add('active-hold', 'show-tooltip');
+    btn.classList.add('active-hold');
+    showLongPressTooltip(btn);
   };
 
   const floatReaction = (widget, btn) => {

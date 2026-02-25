@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.26.5
+- Reacciones (UX): long-press robusto en móvil con tooltip global fijo (siempre visible sobre la UI) y voto al soltar, manteniendo tap rápido para votar/cambiar.
+- Reacciones (UX): pills compactadas adicionalmente (gap y tamaño menores) para mejorar densidad visual en Ranking/Feed/Detalle sin scroll horizontal.
+
 ## 0.26.4
 - Reacciones (UX): barra compacta sin scroll horizontal en cards (Ranking/Publicaciones/Detalle), con wrap en 2 filas cuando hace falta.
 - Reacciones (UX): se refuerza visibilidad de selección tipo patita y se mejora tooltip de long-press (>=350ms) manteniendo tap rápido para votar.
