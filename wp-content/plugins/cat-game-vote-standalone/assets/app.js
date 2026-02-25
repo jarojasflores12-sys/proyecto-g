@@ -638,7 +638,7 @@
     epic: { emoji: '🔥', label: 'Épico' },
   };
 
-  const LONG_PRESS_MS = 450;
+  const LONG_PRESS_MS = 350;
   const CANCEL_MOVE_PX = 10;
 
   const REACTION_MESSAGES = {
@@ -776,19 +776,16 @@
     if (!emoji) return;
 
     const anchorRect = btn.getBoundingClientRect();
-    const host = widget.querySelector('.cg-reaction-buttons') || widget;
-    const hostRect = host.getBoundingClientRect();
-
     const floating = document.createElement('span');
     floating.className = 'catgv-float-emoji';
     floating.setAttribute('aria-hidden', 'true');
     floating.textContent = emoji;
-    floating.style.left = `${anchorRect.left - hostRect.left + (anchorRect.width / 2)}px`;
-    floating.style.top = `${anchorRect.top - hostRect.top + (anchorRect.height / 2)}px`;
+    floating.style.left = `${anchorRect.left + (anchorRect.width / 2)}px`;
+    floating.style.top = `${anchorRect.top + (anchorRect.height / 2)}px`;
 
-    host.appendChild(floating);
+    document.body.appendChild(floating);
     floating.addEventListener('animationend', () => floating.remove(), { once: true });
-    window.setTimeout(() => floating.remove(), 850);
+    window.setTimeout(() => floating.remove(), 700);
   };
 
   const initReactionWidget = (widget) => {

@@ -928,12 +928,6 @@ body.cg-has-custom-bg .cg-main {
   margin-top: 0;
 }
 
-.cg-rank-reactions .cg-reaction-buttons {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-bottom: 2px;
-}
-
 .cg-rank-delete-form {
   position: absolute;
   top: 12px;
@@ -1153,6 +1147,18 @@ body.cg-has-custom-bg .cg-main {
   margin: 8px 0 12px;
 }
 
+
+@media (max-width: 380px) {
+  .cg-reaction-buttons {
+    gap: 8px;
+  }
+
+  .reaction-btn,
+  .cg-reaction-btn {
+    min-width: 52px;
+  }
+}
+
 @media (max-width: 560px) {
   .cg-profile-user-actions {
     width: 100%;
@@ -1234,16 +1240,21 @@ body.cg-has-custom-bg .cg-main {
 
 .cg-reactions {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   margin-top: 8px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .cg-reaction-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   position: relative;
   overflow: visible;
+  overflow-x: hidden;
+  align-items: center;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -1254,14 +1265,18 @@ body.cg-has-custom-bg .cg-main {
 .cg-reaction-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 20px;
-  border: 1px solid rgba(199, 206, 234, 0.7);
-  background: rgba(255, 255, 255, 0.92);
+  justify-content: center;
+  min-width: 56px;
+  height: 40px;
+  gap: 0;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(199, 206, 234, 0.72);
+  background: rgba(255, 255, 255, 0.93);
   color: #5a5162;
-  transition: transform .15s ease, background-color .2s ease, border-color .2s ease;
+  transition: transform .15s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
   position: relative;
+  line-height: 1;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -1279,14 +1294,15 @@ body.cg-has-custom-bg .cg-main {
 
 .reaction-btn .emoji,
 .cg-reaction-btn .emoji {
-  font-size: 22px;
+  font-size: 18px;
   line-height: 1;
 }
 
 .reaction-btn .count,
 .cg-reaction-btn .count {
   font-size: 14px;
-  font-weight: 700;
+  margin-left: 8px;
+  font-weight: 600;
   color: #4f566a;
 }
 
@@ -1303,28 +1319,37 @@ body.cg-has-custom-bg .cg-main {
 }
 
 .cg-reaction-btn.is-selected {
-  background: rgba(247, 183, 195, 0.55);
-  border-color: rgba(247, 183, 195, 0.95);
+  background: rgba(247, 183, 195, 0.62);
+  border-color: rgba(239, 132, 161, 0.98);
   color: #4a3f47;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
 }
 
 .cg-reaction-btn.is-selected::before {
   content: '';
   position: absolute;
-  inset: -4px;
-  border: 2px solid rgba(247, 183, 195, 0.95);
-  border-radius: 22px;
+  inset: -6px;
+  border: 3px solid rgba(239, 132, 161, 0.98);
+  border-radius: 999px;
+  opacity: 0.85;
+  z-index: 0;
   pointer-events: none;
 }
 
 .cg-reaction-btn.is-selected::after {
   content: '🐾';
   position: absolute;
-  top: -10px;
-  right: -8px;
+  top: -11px;
+  right: -7px;
   font-size: 14px;
   line-height: 1;
+  z-index: 2;
   pointer-events: none;
+}
+
+.cg-reaction-btn > * {
+  position: relative;
+  z-index: 1;
 }
 
 .cg-reaction-help {
@@ -1337,35 +1362,37 @@ body.cg-has-custom-bg .cg-main {
 }
 
 .catgv-float-emoji {
-  position: absolute;
-  animation: catgvFloat 700ms ease-out forwards;
+  position: fixed;
+  z-index: 9999;
+  animation: catgvFloat 540ms ease-out forwards;
   pointer-events: none;
-  font-size: 28px;
+  font-size: 26px;
   transform: translate(-50%, -50%);
 }
 
 @keyframes catgvFloat {
   0% { transform: translate(-50%, -50%) translateY(0) scale(1); opacity: 1; }
-  100% { transform: translate(-50%, -50%) translateY(-40px) scale(1.4); opacity: 0; }
+  100% { transform: translate(-50%, -50%) translateY(-16px) scale(1.2); opacity: 0; }
 }
 
 .catgv-tooltip {
   position: absolute;
-  background: rgba(255, 244, 248, 0.98);
-  color: #4a3f47;
-  border: 1px solid rgba(247, 183, 195, 0.85);
-  box-shadow: 0 6px 16px rgba(73, 56, 80, 0.15);
-  padding: 3px 8px;
+  z-index: 90;
+  background: rgba(255, 247, 250, 0.98);
+  color: #3f3444;
+  border: 1px solid rgba(247, 183, 195, 0.96);
+  box-shadow: 0 8px 18px rgba(73, 56, 80, 0.2);
+  padding: 4px 9px;
   border-radius: 999px;
   font-size: 11px;
-  font-weight: 600;
-  bottom: calc(100% + 6px);
+  font-weight: 700;
+  bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  transition: opacity .15s ease;
+  transition: opacity .16s ease;
 }
 
 .cg-reaction-btn.show-tooltip .catgv-tooltip {

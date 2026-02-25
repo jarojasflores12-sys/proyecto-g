@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.26.4
+- Reacciones (UX): barra compacta sin scroll horizontal en cards (Ranking/Publicaciones/Detalle), con wrap en 2 filas cuando hace falta.
+- Reacciones (UX): se refuerza visibilidad de selección tipo patita y se mejora tooltip de long-press (>=350ms) manteniendo tap rápido para votar.
+- Reacciones (UX): emoji flotante al votar/cambiar ahora usa posicionamiento fijo para mantenerse visible incluso con scroll.
+
 ## 0.26.3
 - Ranking (mobile-first): se reestructura cada card para mostrar arriba `#puesto + título + autor`, luego una imagen grande a ancho completo y debajo la metadata en líneas separadas (ubicación y reacciones).
 - Ranking: el botón "Eliminar" de publicación propia pasa a estilo compacto color sandía y se posiciona en la esquina superior derecha de la card.
