@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.26.9
+- Reacciones (UX visual): el indicador de selección vuelve a 2 huellitas azules rellenas, pequeñas y fuera del chip (arriba/derecha), eliminando la patita rosada grande sin cambiar tamaño/layout de la pill.
+
 ## 0.26.8
 - Reacciones (UX visual): se corrige la "patita" del seleccionado para que aparezca como detalle externo pequeño (arriba-derecha) sin cubrir emoji/conteo ni deformar el chip.
 
