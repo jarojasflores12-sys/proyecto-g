@@ -215,12 +215,28 @@ class CatGame_Auth {
 
         $user_id = get_current_user_id();
         $avatar_color = sanitize_key(wp_unslash($_POST['avatar_color'] ?? 'rose'));
-        $city = sanitize_text_field(wp_unslash($_POST['default_city'] ?? ''));
-        $country = sanitize_text_field(wp_unslash($_POST['default_country'] ?? ''));
+        $location = self::sanitize_location_values(
+            wp_unslash($_POST['default_city'] ?? ''),
+            wp_unslash($_POST['default_country'] ?? '')
+        );
+        $city = $location['city'];
+        $country = $location['country'];
 
         $allowed_avatar_colors = ['rose', 'mint', 'lavender', 'yellow', 'sky'];
         if (!in_array($avatar_color, $allowed_avatar_colors, true)) {
             $avatar_color = 'rose';
+        }
+
+        if ($city === '' || $country === '') {
+            $query = [
+                'complete_profile' => '1',
+                'profile_error' => 'missing_location',
+                'profile_city' => $city,
+                'profile_country' => $country,
+                'profile_avatar' => $avatar_color,
+            ];
+            wp_safe_redirect(add_query_arg($query, home_url('/catgame/profile')));
+            exit;
         }
 
         update_user_meta($user_id, 'catgame_avatar_color', $avatar_color);
@@ -231,16 +247,43 @@ class CatGame_Auth {
         exit;
     }
 
+    public static function get_user_default_location(int $user_id): array {
+        if ($user_id <= 0) {
+            return ['city' => '', 'country' => ''];
+        }
 
-    private static function has_required_location(int $user_id): bool {
-        $city = trim((string) get_user_meta($user_id, 'catgame_default_city', true));
-        $country = trim((string) get_user_meta($user_id, 'catgame_default_country', true));
-        return $city !== '' && $country !== '';
+        return self::sanitize_location_values(
+            get_user_meta($user_id, 'catgame_default_city', true),
+            get_user_meta($user_id, 'catgame_default_country', true)
+        );
+    }
+
+    public static function has_user_default_location(int $user_id): bool {
+        $location = self::get_user_default_location($user_id);
+        return $location['city'] !== '' && $location['country'] !== '';
+    }
+
+    private static function sanitize_location_values($city_raw, $country_raw): array {
+        $city = trim(sanitize_text_field((string) $city_raw));
+        $country = trim(sanitize_text_field((string) $country_raw));
+
+        if (function_exists('mb_substr')) {
+            $city = mb_substr($city, 0, 120);
+            $country = mb_substr($country, 0, 120);
+        } else {
+            $city = substr($city, 0, 120);
+            $country = substr($country, 0, 120);
+        }
+
+        return [
+            'city' => $city,
+            'country' => $country,
+        ];
     }
 
     private static function redirect_after_auth(int $user_id, array $extra_query = []): void {
         $query = $extra_query;
-        if (!self::has_required_location($user_id)) {
+        if (!self::has_user_default_location($user_id)) {
             $query['complete_profile'] = '1';
         }
 

@@ -7,6 +7,7 @@ $registered = !empty($data['registered']);
 $tag_deleted = !empty($data['tag_deleted']);
 $profile_saved = !empty($data['profile_saved']);
 $complete_profile = !empty($data['complete_profile']);
+$profile_error = sanitize_key((string) ($data['profile_error'] ?? ''));
 $lost_sent = !empty($data['lost_sent']);
 $password_reset = !empty($data['password_reset']);
 $auth_view = (string) ($data['auth_view'] ?? 'login');
@@ -174,7 +175,10 @@ $location_missing = $default_city === '' || $default_country === '';
         <p class="cg-alert cg-alert-success">Etiqueta eliminada del catálogo personal.</p>
     <?php endif; ?>
     <?php if ($profile_saved): ?>
-        <p class="cg-alert cg-alert-success">Perfil actualizado correctamente.</p>
+        <p class="cg-alert cg-alert-success">Ubicación guardada.</p>
+    <?php endif; ?>
+    <?php if ($profile_error === 'missing_location'): ?>
+        <p class="cg-alert cg-alert-error">Debes completar ciudad y país para guardar.</p>
     <?php endif; ?>
 
     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form" id="catgame-profile-form">

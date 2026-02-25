@@ -88,7 +88,7 @@
   }
 
   if (profileSaved === '1') {
-    window.catgameToast('Perfil actualizado correctamente', 'success');
+    window.catgameToast('Ubicación guardada', 'success');
   }
 
   if (completeProfile === '1') {

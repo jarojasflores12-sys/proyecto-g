@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.26.10
+- Perfil/Ubicación: se centraliza lectura de ubicación por usuario en helpers (`get_user_default_location` / `has_user_default_location`) para evitar volver a exigir ciudad/país tras re-login cuando ya existe en `user_meta`.
+- Perfil: guardado valida ciudad/país obligatorios; ante error mantiene inputs ingresados y muestra mensaje claro sin sobrescribir metadatos con vacío.
+- Subir: mantiene uso de ubicación predeterminada desde `user_meta` y guarda snapshot en submissions con esos valores.
+
 ## 0.26.9
 - Reacciones (UX visual): el indicador de selección vuelve a 2 huellitas azules rellenas, pequeñas y fuera del chip (arriba/derecha), eliminando la patita rosada grande sin cambiar tamaño/layout de la pill.
 

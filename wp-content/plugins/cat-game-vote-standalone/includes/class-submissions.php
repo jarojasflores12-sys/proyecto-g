@@ -212,8 +212,9 @@ class CatGame_Submissions {
         check_admin_referer('catgame_upload');
 
         $user_id = get_current_user_id();
-        $city = sanitize_text_field((string) get_user_meta($user_id, 'catgame_default_city', true));
-        $country = sanitize_text_field((string) get_user_meta($user_id, 'catgame_default_country', true));
+        $location = CatGame_Auth::get_user_default_location($user_id);
+        $city = $location['city'];
+        $country = $location['country'];
         $title = sanitize_text_field(wp_unslash($_POST['title'] ?? ''));
         $title = trim($title);
         $title_length = function_exists('mb_strlen') ? mb_strlen($title) : strlen($title);
