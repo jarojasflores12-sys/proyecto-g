@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.25.5
+- Upload (performance): se revoca explícitamente el `ObjectURL` del preview al cambiar/limpiar archivo para evitar retención innecesaria de memoria en selecciones repetidas.
+
 ## 0.25.4
 - Upload (DX/performance): limpieza de código JS sin uso en compresión de imagen (variables huérfanas y helper vacío), manteniendo intacto el comportamiento del flujo de subida.
 

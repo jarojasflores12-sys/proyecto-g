@@ -134,6 +134,7 @@
 
   let compressedFile = null;
   let compressing = false;
+  let previewObjectUrl = null;
 
   const setState = (text, isBusy) => {
     if (stateEl) stateEl.textContent = text;
@@ -235,6 +236,10 @@
     compressedFile = null;
 
     if (previewEl) {
+      if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+      }
       previewEl.src = '';
       previewEl.style.display = 'none';
     }
@@ -247,7 +252,8 @@
 
 
     if (previewEl) {
-      previewEl.src = URL.createObjectURL(file);
+      previewObjectUrl = URL.createObjectURL(file);
+      previewEl.src = previewObjectUrl;
       previewEl.style.display = 'block';
     }
 
