@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.25.6
+- Reacciones (UX): cuando el backend devuelve `retry_after` por rate limit, el toast ahora indica tiempo de espera explícito (ej: "Intenta nuevamente en Xs").
+
 ## 0.25.5
 - Upload (performance): se revoca explícitamente el `ObjectURL` del preview al cambiar/limpiar archivo para evitar retención innecesaria de memoria en selecciones repetidas.
 

@@ -840,7 +840,11 @@
           } else {
             currentState = previousState;
             paintWidget(widget, currentState);
-            window.catgameToast?.(result?.message || 'No se pudo guardar la reacción', 'error');
+            const retryAfter = Number(result?.retryAfter || 0);
+            const retryMessage = retryAfter > 0
+              ? `Has alcanzado el límite. Intenta nuevamente en ${retryAfter}s.`
+              : '';
+            window.catgameToast?.(retryMessage || result?.message || 'No se pudo guardar la reacción', 'error');
           }
         })
         .catch(() => {
