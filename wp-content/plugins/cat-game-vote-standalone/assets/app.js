@@ -124,10 +124,10 @@
   const stateEl = document.getElementById('catgame-compress-status');
   const previewEl = document.getElementById('catgame-image-preview');
   const filePickerText = document.querySelector('.cg-file-picker-text');
-  const photosPickerBtn = document.querySelector('[data-catgame-pick-photos="1"]');
+  const universalPickerBtn = document.querySelector('[data-catgame-pick-universal="1"]');
   const filePickerBtn = document.querySelector('[data-catgame-pick-file="1"]');
   const cameraPickerBtn = document.querySelector('[data-catgame-pick-camera="1"]');
-  const photosProxyInput = document.getElementById('catgame-cat-image-photos');
+  const universalProxyInput = document.getElementById('catgame-cat-image-universal');
   const fileProxyInput = document.getElementById('catgame-cat-image-file');
   const cameraProxyInput = document.getElementById('catgame-cat-image-camera');
   const titleInput = form.querySelector('input[name="title"]');
@@ -178,10 +178,11 @@
   };
 
   const isiOSClient = isIOS();
-  if (photosPickerBtn) photosPickerBtn.classList.toggle('is-hidden', !isiOSClient);
+  if (universalPickerBtn) universalPickerBtn.classList.toggle('is-hidden', !isiOSClient);
   if (filePickerBtn) filePickerBtn.classList.toggle('is-hidden', isiOSClient);
+  if (cameraPickerBtn) cameraPickerBtn.classList.toggle('is-hidden', isiOSClient);
   if (filePickerText) {
-    filePickerText.textContent = isiOSClient ? 'Desde tu fototeca o cámara' : 'JPG, PNG o WEBP';
+    filePickerText.textContent = isiOSClient ? 'Selecciona desde Fotos o Cámara de iOS' : 'JPG, PNG o WEBP';
   }
 
   if (titleInput) {
@@ -199,11 +200,16 @@
     });
   }
 
-  if (photosPickerBtn && photosProxyInput) {
-    photosPickerBtn.addEventListener('click', () => {
-      photosProxyInput.click();
+  if (universalPickerBtn && universalProxyInput) {
+    universalPickerBtn.addEventListener('click', () => {
+      universalProxyInput.click();
     });
-    photosProxyInput.addEventListener('change', () => syncFileToMainInput(photosProxyInput));
+    universalProxyInput.addEventListener('change', () => syncFileToMainInput(universalProxyInput));
+  }
+
+
+  if (isiOSClient && cameraProxyInput) {
+    cameraProxyInput.disabled = true;
   }
 
   if (filePickerBtn && fileProxyInput) {
@@ -213,7 +219,7 @@
     fileProxyInput.addEventListener('change', () => syncFileToMainInput(fileProxyInput));
   }
 
-  if (cameraPickerBtn && cameraProxyInput) {
+  if (!isiOSClient && cameraPickerBtn && cameraProxyInput) {
     cameraPickerBtn.addEventListener('click', () => {
       cameraProxyInput.click();
     });

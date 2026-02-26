@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.26.14
+- Upload UX (iOS Safari): se simplifica a un solo CTA **Seleccionar foto** y se ocultan por completo **Subir archivo** y **Tomar foto** para evitar duplicación visual de opciones.
+- Upload UX (Android/desktop): se mantienen dos CTAs explícitos **Subir archivo** + **Tomar foto**.
+- Upload inputs: se usa `inputUniversal` en iOS (`accept="image/*"`, sin `capture`), `inputUpload` sin `capture` y `inputCamera` con `capture="environment"` fuera de iOS.
+- Flujo unificado: todos los inputs continúan en el mismo handler de selección/preview/compresión/envío.
+
 ## 0.26.13
 - Upload UX (iOS): nueva detección robusta `isIOS()` (UA + platform + touch heuristic) para mostrar solo **Elegir de Fotos** + **Tomar foto** y ocultar **Subir archivo**.
 - Upload UX (Android/otros): se mantiene **Subir archivo** + **Tomar foto** como acciones separadas.
