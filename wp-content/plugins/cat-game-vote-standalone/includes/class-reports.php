@@ -10,11 +10,12 @@ class CatGame_Reports {
 
     public static function init(): void {
         add_action('admin_post_catgame_report_submission', [__CLASS__, 'handle_report_submission']);
+        add_action('wp_ajax_catgame_report_submission', [__CLASS__, 'handle_report_submission']);
         add_action('admin_post_catgame_moderate_report', [__CLASS__, 'handle_moderate_report']);
     }
 
     public static function endpoint_report_url(): string {
-        return admin_url('admin-post.php?action=catgame_report_submission');
+        return admin_url('admin-ajax.php');
     }
 
     public static function can_user_participate(int $user_id, string &$message = ''): bool {
@@ -134,7 +135,7 @@ class CatGame_Reports {
             return '';
         }
 
-        $nonce = wp_create_nonce('catgame_report_submission');
+        $nonce = wp_create_nonce('catgame_nonce');
         return '<button type="button" class="secondary cg-report-btn" data-report-btn="1" data-submission-id="' . (int) $submission_id . '" data-nonce="' . esc_attr($nonce) . '">Reportar</button>';
     }
 
@@ -143,8 +144,8 @@ class CatGame_Reports {
             wp_send_json_error(['message' => 'Debes iniciar sesión para reportar.'], 401);
         }
 
-        $nonce = (string) wp_unslash($_POST['_wpnonce'] ?? '');
-        if (!wp_verify_nonce($nonce, 'catgame_report_submission')) {
+        if (!check_ajax_referer('catgame_nonce', 'nonce', false)) {
+            error_log('catgame_report_submission: invalid nonce');
             wp_send_json_error(['message' => 'Solicitud inválida.'], 403);
         }
 
@@ -155,6 +156,7 @@ class CatGame_Reports {
         }
 
         if (!self::within_report_rate_limit($user_id)) {
+            error_log('catgame_report_submission: rate limit user ' . (string) $user_id);
             wp_send_json_error(['message' => 'Has alcanzado el límite de reportes. Intenta nuevamente en un minuto.'], 429);
         }
 
@@ -202,6 +204,7 @@ class CatGame_Reports {
         );
 
         if ($inserted === false) {
+            error_log('catgame_report_submission: insert failed for submission ' . (string) $submission_id . ' user ' . (string) $user_id);
             wp_send_json_error(['message' => 'No se pudo registrar el reporte.'], 500);
         }
 

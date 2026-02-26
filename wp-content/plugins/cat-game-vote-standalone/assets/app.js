@@ -1162,12 +1162,12 @@
 })();
 
 (function () {
-  const config = window.CATGAME_REPORTS;
+  const config = window.CATGAME || {};
   const modal = document.getElementById('catgame-report-modal');
   const form = document.getElementById('catgame-report-form');
   const idInput = document.getElementById('catgame-report-submission-id');
   const nonceInput = document.getElementById('catgame-report-nonce');
-  if (!config || !config.reportUrl || !modal || !form || !idInput || !nonceInput) {
+  if (!config || !config.ajaxUrl || !config.nonce || !modal || !form || !idInput || !nonceInput) {
     return;
   }
 
@@ -1189,29 +1189,41 @@
     if (!btn) return;
 
     const submissionId = Number(btn.getAttribute('data-submission-id') || '0');
-    const nonce = btn.getAttribute('data-nonce') || '';
-    if (!submissionId || !nonce) return;
+    if (!submissionId) return;
 
     idInput.value = String(submissionId);
-    nonceInput.value = nonce;
+    nonceInput.value = String(config.nonce || '');
     setOpen(true);
   });
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+
     const fd = new FormData(form);
-    fd.append('action', 'catgame_report_submission');
-    if (!fd.get('_wpnonce')) {
-      fd.append('_wpnonce', nonceInput.value || '');
-    }
+    const params = new URLSearchParams();
+    params.set('action', 'catgame_report_submission');
+    params.set('nonce', String(config.nonce || nonceInput.value || ''));
+    params.set('submission_id', String(fd.get('submission_id') || '0'));
+    params.set('reason', String(fd.get('reason') || ''));
+    params.set('detail', String(fd.get('detail') || ''));
+
+    console.debug('[catgame] report submit', {
+      action: params.get('action'),
+      submission_id: params.get('submission_id'),
+      reason: params.get('reason'),
+    });
 
     try {
-      const response = await fetch(config.reportUrl, {
+      const response = await fetch(config.ajaxUrl, {
         method: 'POST',
         credentials: 'same-origin',
-        body: fd,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
+        body: params.toString(),
       });
       const payload = await response.json();
+      console.debug('[catgame] report response', payload);
       if (!payload?.success) {
         window.catgameToast?.(payload?.data?.message || 'No se pudo enviar el reporte.', 'error');
         return;

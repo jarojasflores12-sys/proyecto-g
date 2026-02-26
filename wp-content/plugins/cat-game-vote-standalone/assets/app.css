@@ -629,13 +629,28 @@ body.cg-has-custom-bg .cg-main {
   flex-wrap: wrap;
 }
 
-.catgame-card-action-wrap {
+.catgame-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.catgame-card-head-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.catgame-card-head-action {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
 }
 
-.catgame-card-action {
+.catgame-mini-action {
   border-radius: 999px;
   padding: 4px 9px;
   font-size: 11px;
@@ -643,9 +658,10 @@ body.cg-has-custom-bg .cg-main {
   font-weight: 700;
   background: #7c3aed;
   color: #fff;
+  white-space: nowrap;
 }
 
-.catgame-card-action:hover {
+.catgame-mini-action:hover {
   filter: brightness(1.05);
 }
 
@@ -896,14 +912,6 @@ body.cg-has-custom-bg .cg-main {
   position: relative;
   display: grid;
   gap: 10px;
-}
-
-.cg-rank-header {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
-  align-items: start;
-  padding-right: 74px;
 }
 
 .cg-rank-headings {
@@ -1540,7 +1548,8 @@ body.cg-has-custom-bg .cg-main {
 }
 
 .cg-report-reasons {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
@@ -1553,6 +1562,17 @@ body.cg-has-custom-bg .cg-main {
 @media (max-width: 640px) {
   .cg-profile-location-fields {
     grid-template-columns: 1fr;
+  }
+}
+
+
+@media (max-width: 640px) {
+  .catgame-card-head {
+    gap: 8px;
+  }
+
+  .catgame-card-head-left {
+    gap: 8px;
   }
 }
 

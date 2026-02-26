@@ -127,7 +127,7 @@ if ($has_background) {
         <h2 id="catgame-report-title">Reportar publicación</h2>
         <form id="catgame-report-form">
             <input type="hidden" name="submission_id" id="catgame-report-submission-id" value="0">
-            <input type="hidden" name="_wpnonce" id="catgame-report-nonce" value="">
+            <input type="hidden" name="nonce" id="catgame-report-nonce" value="">
             <div class="cg-report-reasons">
                 <label><input type="radio" name="reason" value="not_pet" checked> No es una mascota</label>
                 <label><input type="radio" name="reason" value="human"> Aparece una persona</label>
@@ -156,8 +156,9 @@ window.CATGAME_FEED = {
     nonce: <?php echo wp_json_encode(wp_create_nonce('catgame_feed_more')); ?>,
     moreUrl: <?php echo wp_json_encode(admin_url('admin-post.php?action=catgame_feed_more')); ?>,
 };
-window.CATGAME_REPORTS = {
-    reportUrl: <?php echo wp_json_encode(class_exists('CatGame_Reports') ? CatGame_Reports::endpoint_report_url() : ''); ?>,
+window.CATGAME = {
+    ajaxUrl: <?php echo wp_json_encode(admin_url('admin-ajax.php')); ?>,
+    nonce: <?php echo wp_json_encode(wp_create_nonce('catgame_nonce')); ?>,
 };
 </script>
 <script src="<?php echo esc_url(CATGAME_PLUGIN_URL . 'assets/app.js'); ?>?v=<?php echo esc_attr(CATGAME_VERSION); ?>"></script>

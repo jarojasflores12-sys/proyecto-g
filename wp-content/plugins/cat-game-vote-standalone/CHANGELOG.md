@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.26.18
+- Reportes AJAX: envío del modal mediante `admin-ajax.php` con `application/x-www-form-urlencoded`, `credentials: same-origin` y payload explícito (`action`, `nonce`, `submission_id`, `reason`, `detail`).
+- Backend reportes: nuevo hook `wp_ajax_catgame_report_submission` con validación `check_ajax_referer('catgame_nonce','nonce')` y respuestas JSON consistentes.
+- Cards de Publicaciones/Ranking: CTA contextual movido a cabecera superior derecha fuera de la foto con estilo mini (`Eliminar` para dueño, `Reportar` para terceros logueados).
+
 ## 0.26.17
 - UI cards (Publicaciones/Ranking): acción pequeña en cabecera (arriba-derecha) fuera de la foto con lógica exclusiva por usuario: dueño => **Eliminar**, tercero logueado => **Reportar**.
 - Reportes UX: radios del modal de reporte en lista vertical para mejor legibilidad móvil.
