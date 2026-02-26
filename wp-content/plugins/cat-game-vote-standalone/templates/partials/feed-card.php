@@ -28,6 +28,18 @@ $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_us
 
     <div class="cg-card-meta">
         <div class="cg-card-header">
+            <div class="catgame-card-action-wrap">
+                <?php if ($is_mine && is_user_logged_in()): ?>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-inline-delete-form" data-cg-confirm="1" data-cg-confirm-title="Eliminar publicación" data-cg-confirm-text="Esta acción no se puede deshacer. ¿Eliminar esta publicación?">
+                        <?php wp_nonce_field('catgame_delete_submission'); ?>
+                        <input type="hidden" name="action" value="catgame_delete_submission">
+                        <input type="hidden" name="submission_id" value="<?php echo (int) ($item['id'] ?? 0); ?>">
+                        <button type="submit" class="catgame-card-action">Eliminar</button>
+                    </form>
+                <?php elseif (is_user_logged_in()): ?>
+                    <?php echo class_exists('CatGame_Reports') ? str_replace('cg-report-btn', 'cg-report-btn catgame-card-action', CatGame_Reports::report_button_html($item, $current_user_id)) : ''; ?>
+                <?php endif; ?>
+            </div>
             <span class="cg-badge">#<?php echo (int) $item['id']; ?></span>
             <p class="cg-title"><?php echo esc_html($title_label); ?></p>
             <small class="cg-author">por <a href="<?php echo esc_url($author_profile_url); ?>">@<?php echo esc_html($author_name); ?></a></small>
@@ -46,5 +58,4 @@ $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_us
     <?php endif; ?>
 
     <?php CatGame_Reactions::render_widget((int) $item['id'], is_user_logged_in(), ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)]); ?>
-    <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::report_button_html($item, $current_user_id) : ''; ?>
 </article>

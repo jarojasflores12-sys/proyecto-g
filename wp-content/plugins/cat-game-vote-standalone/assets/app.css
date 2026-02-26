@@ -629,6 +629,26 @@ body.cg-has-custom-bg .cg-main {
   flex-wrap: wrap;
 }
 
+.catgame-card-action-wrap {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.catgame-card-action {
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 11px;
+  line-height: 1.1;
+  font-weight: 700;
+  background: #7c3aed;
+  color: #fff;
+}
+
+.catgame-card-action:hover {
+  filter: brightness(1.05);
+}
+
 .cg-badge {
   display: inline-flex;
   align-items: center;
@@ -938,22 +958,6 @@ body.cg-has-custom-bg .cg-main {
 
 .cg-rank-reactions .cg-reactions {
   margin-top: 0;
-}
-
-.cg-rank-delete-form {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 2;
-}
-
-.cg-rank-delete-btn {
-  font-size: 11px;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: #f57f98;
-  border-color: #f57f98;
-  color: #fff;
 }
 
 .cg-filter-tags {
@@ -1533,6 +1537,17 @@ body.cg-has-custom-bg .cg-main {
 
 .cg-upload-submit:hover {
   filter: brightness(1.05);
+}
+
+.cg-report-reasons {
+  display: grid;
+  gap: 6px;
+}
+
+.cg-report-reasons label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 @media (max-width: 640px) {

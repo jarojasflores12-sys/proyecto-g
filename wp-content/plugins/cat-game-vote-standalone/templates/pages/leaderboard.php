@@ -36,16 +36,19 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
             $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_user_id;
             ?>
             <article class="cg-card cg-rank-item <?php echo ($is_mine || $position > 0) ? 'cg-is-mine' : ''; ?>">
-                <?php if ($is_mine && is_user_logged_in()): ?>
-                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-inline-delete-form cg-rank-delete-form" data-cg-confirm="1" data-cg-confirm-title="Eliminar publicación" data-cg-confirm-text="Esta acción no se puede deshacer. ¿Eliminar esta publicación?">
-                        <?php wp_nonce_field('catgame_delete_submission'); ?>
-                        <input type="hidden" name="action" value="catgame_delete_submission">
-                        <input type="hidden" name="submission_id" value="<?php echo (int) ($item['id'] ?? 0); ?>">
-                        <button type="submit" class="cg-tag-delete cg-rank-delete-btn">Eliminar</button>
-                    </form>
-                <?php endif; ?>
-
                 <div class="cg-rank-header">
+                    <div class="catgame-card-action-wrap">
+                        <?php if ($is_mine && is_user_logged_in()): ?>
+                            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-inline-delete-form" data-cg-confirm="1" data-cg-confirm-title="Eliminar publicación" data-cg-confirm-text="Esta acción no se puede deshacer. ¿Eliminar esta publicación?">
+                                <?php wp_nonce_field('catgame_delete_submission'); ?>
+                                <input type="hidden" name="action" value="catgame_delete_submission">
+                                <input type="hidden" name="submission_id" value="<?php echo (int) ($item['id'] ?? 0); ?>">
+                                <button type="submit" class="catgame-card-action">Eliminar</button>
+                            </form>
+                        <?php elseif (is_user_logged_in()): ?>
+                            <?php echo class_exists('CatGame_Reports') ? str_replace('cg-report-btn', 'cg-report-btn catgame-card-action', CatGame_Reports::report_button_html($item, $current_user_id)) : ''; ?>
+                        <?php endif; ?>
+                    </div>
                     <span class="cg-rank-badge">#<?php echo (int) $idx + 1; ?></span>
                     <div class="cg-rank-headings">
                         <p class="cg-rank-title"><?php echo esc_html($title_label); ?></p>
@@ -65,7 +68,6 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                     <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
                     <div class="cg-rank-reactions">
                         <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in(), (array) ($item['reaction_counts'] ?? []) ? ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)] : []); ?>
-                        <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::report_button_html($item, $current_user_id) : ''; ?>
                     </div>
                 </div>
             </article>

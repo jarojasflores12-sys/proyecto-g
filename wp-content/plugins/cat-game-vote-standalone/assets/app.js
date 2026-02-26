@@ -1200,6 +1200,10 @@
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const fd = new FormData(form);
+    fd.append('action', 'catgame_report_submission');
+    if (!fd.get('_wpnonce')) {
+      fd.append('_wpnonce', nonceInput.value || '');
+    }
 
     try {
       const response = await fetch(config.reportUrl, {

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.26.17
+- UI cards (Publicaciones/Ranking): acción pequeña en cabecera (arriba-derecha) fuera de la foto con lógica exclusiva por usuario: dueño => **Eliminar**, tercero logueado => **Reportar**.
+- Reportes UX: radios del modal de reporte en lista vertical para mejor legibilidad móvil.
+- Reportes fix: envío del formulario agrega `action=catgame_report_submission` y nonce en `FormData`, corrigiendo el fallo de envío.
+
 ## 0.26.16
 - Moderación/Reportes: nuevo sistema de reportes con ocultamiento inmediato (`is_hidden=1`) al primer reporte y registro en tabla `catgame_reports`.
 - Moderación Admin: pantalla de reportes pendientes/resueltos con acciones Restaurar, Eliminar (leve/moderado/grave) y Reporte falso.

@@ -128,10 +128,12 @@ if ($has_background) {
         <form id="catgame-report-form">
             <input type="hidden" name="submission_id" id="catgame-report-submission-id" value="0">
             <input type="hidden" name="_wpnonce" id="catgame-report-nonce" value="">
-            <label><input type="radio" name="reason" value="not_pet" checked> No es una mascota</label>
-            <label><input type="radio" name="reason" value="human"> Aparece una persona</label>
-            <label><input type="radio" name="reason" value="inappropriate"> Contenido inapropiado</label>
-            <label><input type="radio" name="reason" value="other"> Otro</label>
+            <div class="cg-report-reasons">
+                <label><input type="radio" name="reason" value="not_pet" checked> No es una mascota</label>
+                <label><input type="radio" name="reason" value="human"> Aparece una persona</label>
+                <label><input type="radio" name="reason" value="inappropriate"> Contenido inapropiado</label>
+                <label><input type="radio" name="reason" value="other"> Otro</label>
+            </div>
             <label>Detalle (opcional, máx 250)
                 <textarea name="detail" maxlength="250" rows="3" placeholder="Describe brevemente el problema"></textarea>
             </label>
