@@ -1222,8 +1222,39 @@
         },
         body: params.toString(),
       });
-      const payload = await response.json();
-      console.debug('[catgame] report response', payload);
+
+      const rawResponse = await response.text();
+      let payload = null;
+      if (rawResponse) {
+        try {
+          payload = JSON.parse(rawResponse);
+        } catch (_) {
+          payload = null;
+        }
+      }
+
+      console.debug('[catgame] report response', {
+        status: response.status,
+        ok: response.ok,
+        raw: rawResponse,
+        payload,
+      });
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          window.catgameToast?.('Tu red está bloqueando la conexión al servidor (403). Prueba con datos móviles u otra Wi-Fi.', 'error');
+          return;
+        }
+
+        if (response.status === 0) {
+          window.catgameToast?.('No se pudo conectar al servidor desde esta red. Prueba otra conexión.', 'error');
+          return;
+        }
+
+        window.catgameToast?.(payload?.data?.message || 'No se pudo enviar el reporte.', 'error');
+        return;
+      }
+
       if (!payload?.success) {
         window.catgameToast?.(payload?.data?.message || 'No se pudo enviar el reporte.', 'error');
         return;
@@ -1240,7 +1271,13 @@
       window.catgameToast?.('Reporte enviado. Esta publicación quedó en revisión.', 'success');
       setOpen(false);
       form.reset();
-    } catch (_) {
+    } catch (error) {
+      const message = String(error?.message || '');
+      if (error instanceof TypeError || /Failed to fetch|NetworkError/i.test(message)) {
+        window.catgameToast?.('No se pudo conectar al servidor desde esta red. Prueba otra conexión.', 'error');
+        return;
+      }
+
       window.catgameToast?.('No se pudo enviar el reporte.', 'error');
     }
   });

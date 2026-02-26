@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.26.19
+- Reportes UX (red/proxy): en el submit se valida `response.ok` antes de procesar éxito; si llega HTTP `403` se muestra mensaje explícito de bloqueo de red/proxy.
+- Reportes UX (conectividad): si el envío falla por `Failed to fetch` / `NetworkError`, se muestra mensaje claro de problema de conexión en la red actual.
+- Seguridad UX de estado: la publicación solo se remueve y el modal solo se cierra en éxito real (`response.ok` + `payload.success`).
+
 ## 0.26.18
 - Reportes AJAX: envío del modal mediante `admin-ajax.php` con `application/x-www-form-urlencoded`, `credentials: same-origin` y payload explícito (`action`, `nonce`, `submission_id`, `reason`, `detail`).
 - Backend reportes: nuevo hook `wp_ajax_catgame_report_submission` con validación `check_ajax_referer('catgame_nonce','nonce')` y respuestas JSON consistentes.
