@@ -1517,6 +1517,10 @@ body.cg-has-custom-bg .cg-main {
   filter: brightness(0.92);
 }
 
+.cg-upload-picker__btn.is-hidden {
+  display: none;
+}
+
 .cg-file-picker-text {
   font-size: 12px;
   color: #6d7285;

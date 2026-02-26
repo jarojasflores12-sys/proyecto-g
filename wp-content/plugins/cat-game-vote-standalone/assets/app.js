@@ -124,8 +124,10 @@
   const stateEl = document.getElementById('catgame-compress-status');
   const previewEl = document.getElementById('catgame-image-preview');
   const filePickerText = document.querySelector('.cg-file-picker-text');
+  const photosPickerBtn = document.querySelector('[data-catgame-pick-photos="1"]');
   const filePickerBtn = document.querySelector('[data-catgame-pick-file="1"]');
   const cameraPickerBtn = document.querySelector('[data-catgame-pick-camera="1"]');
+  const photosProxyInput = document.getElementById('catgame-cat-image-photos');
   const fileProxyInput = document.getElementById('catgame-cat-image-file');
   const cameraProxyInput = document.getElementById('catgame-cat-image-camera');
   const titleInput = form.querySelector('input[name="title"]');
@@ -163,6 +165,25 @@
     compressing = !!isBusy;
   };
 
+
+  const isIOS = () => {
+    const ua = window.navigator.userAgent || '';
+    const platform = window.navigator.platform || '';
+    const maxTouchPoints = Number(window.navigator.maxTouchPoints || 0);
+    const iOSUA = /iPad|iPhone|iPod/i.test(ua);
+    const iOSPlatform = /iPad|iPhone|iPod/i.test(platform);
+    const iPadOS = platform === 'MacIntel' && maxTouchPoints > 1;
+    const isAppleWebKit = /AppleWebKit/i.test(ua);
+    return (iOSUA || iOSPlatform || iPadOS) && isAppleWebKit;
+  };
+
+  const isiOSClient = isIOS();
+  if (photosPickerBtn) photosPickerBtn.classList.toggle('is-hidden', !isiOSClient);
+  if (filePickerBtn) filePickerBtn.classList.toggle('is-hidden', isiOSClient);
+  if (filePickerText) {
+    filePickerText.textContent = isiOSClient ? 'Desde tu fototeca o cámara' : 'JPG, PNG o WEBP';
+  }
+
   if (titleInput) {
     titleInput.addEventListener('invalid', () => {
       const requiredMessage = titleInput.getAttribute('data-required-message') || 'Este campo es obligatorio.';
@@ -176,6 +197,13 @@
     titleInput.addEventListener('input', () => {
       titleInput.setCustomValidity('');
     });
+  }
+
+  if (photosPickerBtn && photosProxyInput) {
+    photosPickerBtn.addEventListener('click', () => {
+      photosProxyInput.click();
+    });
+    photosProxyInput.addEventListener('change', () => syncFileToMainInput(photosProxyInput));
   }
 
   if (filePickerBtn && fileProxyInput) {

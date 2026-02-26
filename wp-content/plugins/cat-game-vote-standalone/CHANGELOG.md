@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.26.13
+- Upload UX (iOS): nueva detección robusta `isIOS()` (UA + platform + touch heuristic) para mostrar solo **Elegir de Fotos** + **Tomar foto** y ocultar **Subir archivo**.
+- Upload UX (Android/otros): se mantiene **Subir archivo** + **Tomar foto** como acciones separadas.
+- Upload inputs: se agrega `inputPhotos` (`accept="image/*"`, sin `capture`) para iOS, se mantiene `inputUpload` sin `capture` y `inputCamera` con `capture="environment"`.
+- Upload flujo: `inputPhotos`, `inputUpload` e `inputCamera` convergen al mismo handler de selección/preview/compresión/envío.
+
 ## 0.26.12
 - Upload (iOS/Android): se ajustan inputs separados para acciones explícitas: **Subir archivo** (sin `capture`, `accept=".jpg,.jpeg,.png,.webp"`) y **Tomar foto** (`accept="image/*"` + `capture="environment"`).
 - Upload UX: ambos CTAs quedan con estilo activo consistente en morado fuerte (sin apariencia deshabilitada) y estado de presión visual (`:active`).
