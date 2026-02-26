@@ -258,7 +258,7 @@ class CatGame_Reactions {
         ];
     }
 
-    public static function render_widget(int $submission_id, bool $is_logged_in, array $reaction_payload = []): void {
+    public static function render_widget(int $submission_id, bool $is_logged_in, array $reaction_payload = [], array $options = []): void {
         if ($submission_id <= 0) {
             return;
         }
@@ -274,19 +274,22 @@ class CatGame_Reactions {
 
         $my_reaction_raw = $reaction_payload['my_reaction'] ?? null;
         $my_reaction = is_string($my_reaction_raw) && in_array($my_reaction_raw, self::allowed_reactions(), true) ? $my_reaction_raw : null;
+        $is_readonly = !empty($options['readonly']);
+        $readonly_reason = sanitize_text_field((string) ($options['readonly_reason'] ?? ''));
+        $readonly_message = $readonly_reason !== '' ? $readonly_reason : (!$is_logged_in ? 'Inicia sesión para reaccionar' : 'No disponible');
         ?>
-        <div class="cg-reactions" data-submission-id="<?php echo (int) $submission_id; ?>" data-logged-in="<?php echo $is_logged_in ? '1' : '0'; ?>" data-my-reaction="<?php echo esc_attr($my_reaction ?? ''); ?>" data-reaction-counts="<?php echo esc_attr(wp_json_encode($counts)); ?>">
+        <div class="cg-reactions" data-submission-id="<?php echo (int) $submission_id; ?>" data-logged-in="<?php echo $is_logged_in ? '1' : '0'; ?>" data-readonly="<?php echo $is_readonly ? '1' : '0'; ?>" data-readonly-message="<?php echo esc_attr($readonly_message); ?>" data-my-reaction="<?php echo esc_attr($my_reaction ?? ''); ?>" data-reaction-counts="<?php echo esc_attr(wp_json_encode($counts)); ?>">
             <div class="cg-reaction-buttons" role="group" aria-label="Reacciones de la publicación">
                 <?php foreach ($labels as $slug => $meta): ?>
                     <?php $is_selected = $my_reaction === $slug; ?>
-                    <button type="button" class="cg-reaction-btn <?php echo $is_selected ? 'is-active is-selected' : ''; ?>" data-reaction="<?php echo esc_attr($slug); ?>" data-label="<?php echo esc_attr($meta['label']); ?>">
+                    <button type="button" class="cg-reaction-btn <?php echo $is_selected ? 'is-active is-selected' : ''; ?>" data-reaction="<?php echo esc_attr($slug); ?>" data-label="<?php echo esc_attr($meta['label']); ?>" <?php echo $is_readonly ? 'disabled title="' . esc_attr($readonly_message) . '"' : ''; ?>>
                         <span class="emoji"><?php echo esc_html($meta['emoji']); ?></span>
                         <span class="count"><?php echo (int) ($counts[$slug] ?? 0); ?></span>
                         <span class="catgv-tooltip"><?php echo esc_html($meta['label']); ?></span>
                     </button>
                 <?php endforeach; ?>
             </div>
-            <?php if (!$is_logged_in): ?><small class="cg-reaction-help">Inicia sesión para reaccionar.</small><?php endif; ?>
+            <?php if ($is_readonly): ?><small class="cg-reaction-help"><?php echo esc_html($readonly_message); ?></small><?php elseif (!$is_logged_in): ?><small class="cg-reaction-help">Inicia sesión para reaccionar.</small><?php endif; ?>
         </div>
         <?php
     }

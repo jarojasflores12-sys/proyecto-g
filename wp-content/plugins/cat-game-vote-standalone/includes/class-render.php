@@ -21,6 +21,15 @@ class CatGame_Render {
         include CATGAME_PLUGIN_DIR . 'templates/layout.php';
     }
 
+    private static function public_profile_url(string $username): string {
+        $safe = sanitize_user($username, true);
+        if ($safe === '') {
+            return home_url('/catgame/feed');
+        }
+
+        return home_url('/catgame/user/' . rawurlencode($safe));
+    }
+
     private static function top3_positions(?array $event): array {
         if (!$event) {
             return [];
@@ -299,6 +308,60 @@ class CatGame_Render {
                         'language' => (string) get_user_meta($user_id, 'catgame_language', true),
                     ],
                 ];
+            case 'user':
+                $username = sanitize_user((string) get_query_var('catgame_username', ''), true);
+                if ($username === '') {
+                    $username = sanitize_user((string) wp_unslash($_GET['u'] ?? ''), true);
+                }
+
+                $public_user = $username !== '' ? get_user_by('login', $username) : false;
+                if (!$public_user instanceof WP_User) {
+                    return [
+                        'page' => 'user',
+                        'event' => $event,
+                        'user_not_found' => true,
+                        'public_profile_username' => $username,
+                        'active_items' => [],
+                        'recent_items' => [],
+                        'public_profile_url' => home_url('/catgame/feed'),
+                    ];
+                }
+
+                $public_user_id = (int) $public_user->ID;
+                $location = CatGame_Auth::get_user_default_location($public_user_id);
+                if ($location['city'] === '' || $location['country'] === '') {
+                    $latest_location = CatGame_Submissions::latest_submission_location($public_user_id);
+                    if ($location['city'] === '') {
+                        $location['city'] = $latest_location['city'] ?? '';
+                    }
+                    if ($location['country'] === '') {
+                        $location['country'] = $latest_location['country'] ?? '';
+                    }
+                }
+
+                $active_items = [];
+                if ($event) {
+                    $active_items = CatGame_Submissions::list_user_submissions((int) $public_user_id, (int) $event['id'], 30);
+                }
+                $recent_items = CatGame_Submissions::list_user_recent_closed_submissions((int) $public_user_id, 30, 30);
+
+                $active_items = self::with_reaction_payload($active_items, $current_user_id);
+                $recent_items = self::with_reaction_payload($recent_items, $current_user_id);
+
+                return [
+                    'page' => 'user',
+                    'event' => $event,
+                    'user_not_found' => false,
+                    'public_user_id' => $public_user_id,
+                    'public_profile_username' => (string) $public_user->user_login,
+                    'public_profile_location' => $location,
+                    'active_items' => $active_items,
+                    'recent_items' => $recent_items,
+                    'viewer_logged_in' => is_user_logged_in(),
+                    'viewer_user_id' => $current_user_id,
+                    'public_profile_url' => self::public_profile_url((string) $public_user->user_login),
+                ];
+
             case 'home':
                 $top_items = $event ? self::with_reaction_payload(CatGame_Submissions::leaderboard((int) $event['id'], 'global', '', '', 3), $current_user_id) : [];
                 $latest_items = $event ? self::with_reaction_payload(CatGame_Submissions::list_feed((int) $event['id'], 5, 0), $current_user_id) : [];

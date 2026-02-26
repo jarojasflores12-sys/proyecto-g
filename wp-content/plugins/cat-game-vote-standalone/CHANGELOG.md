@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.26.15
+- Perfil público: nueva ruta `/catgame/user/{username}` (read-only) con header de `@usuario` y ubicación (meta de perfil con fallback a última publicación).
+- Perfil público: secciones **Evento activo** (reacciones habilitadas solo para visitantes logueados) y **Recientes (30 días)** para eventos cerrados (solo lectura con mensaje "Evento finalizado").
+- Navegación: desde cards de Publicaciones y Ranking, el `@usuario` ahora enlaza al perfil público.
+- Reacciones: `render_widget` ahora soporta modo `readonly` con motivo configurable para deshabilitar interacción sin perder conteos/estado visual.
+
 ## 0.26.14
 - Upload UX (iOS Safari): se simplifica a un solo CTA **Seleccionar foto** y se ocultan por completo **Subir archivo** y **Tomar foto** para evitar duplicación visual de opciones.
 - Upload UX (Android/desktop): se mantienen dos CTAs explícitos **Subir archivo** + **Tomar foto**.

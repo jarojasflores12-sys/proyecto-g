@@ -727,6 +727,7 @@
 
   const REACTION_MESSAGES = {
     loginRequired: 'Inicia sesión para reaccionar',
+    readonly: 'No disponible',
     saveError: 'No se pudo guardar la reacción',
     rateLimited: (seconds) => `Has alcanzado el límite. Intenta nuevamente en ${seconds}s.`,
   };
@@ -907,6 +908,8 @@
     widget.dataset.reactionsReady = '1';
     const buttons = Array.from(widget.querySelectorAll('.cg-reaction-btn'));
     const isLoggedIn = widget.dataset.loggedIn === '1';
+    const isReadonly = widget.dataset.readonly === '1';
+    const readonlyMessage = widget.dataset.readonlyMessage || (isLoggedIn ? REACTION_MESSAGES.readonly : REACTION_MESSAGES.loginRequired);
     let currentState = (() => {
       const base = { adorable: 0, funny: 0, cute: 0, wow: 0, epic: 0, user_reaction: widget.dataset.myReaction || null };
       try {
@@ -919,7 +922,7 @@
 
     buttons.forEach((btn) => initReactionButton(btn));
 
-    if (!isLoggedIn) {
+    if (!isLoggedIn || isReadonly) {
       widget.classList.add('is-readonly');
       paintWidget(widget, currentState);
 
@@ -928,7 +931,7 @@
         if (!(target instanceof HTMLElement)) return;
         if (target.closest('.cg-reaction-btn')) {
           event.preventDefault();
-          window.catgameToast?.(REACTION_MESSAGES.loginRequired, 'info');
+          window.catgameToast?.(isReadonly ? readonlyMessage : REACTION_MESSAGES.loginRequired, 'info');
         }
       });
 

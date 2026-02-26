@@ -31,6 +31,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
             $title_label = CatGame_Submissions::title_label($item);
             $author = get_userdata((int) ($item['user_id'] ?? 0));
             $author_name = $author ? (string) $author->user_login : 'usuario';
+            $author_profile_url = home_url('/catgame/user/' . rawurlencode(sanitize_user($author_name, true)));
             $position = isset($top3_positions[(int) $item['id']]) ? (int) $top3_positions[(int) $item['id']] : 0;
             $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_user_id;
             ?>
@@ -48,7 +49,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                     <span class="cg-rank-badge">#<?php echo (int) $idx + 1; ?></span>
                     <div class="cg-rank-headings">
                         <p class="cg-rank-title"><?php echo esc_html($title_label); ?></p>
-                        <small class="cg-author">por @<?php echo esc_html($author_name); ?></small>
+                        <small class="cg-author">por <a href="<?php echo esc_url($author_profile_url); ?>">@<?php echo esc_html($author_name); ?></a></small>
                         <div class="cg-rank-tags">
                             <?php if ($is_mine): ?><span class="cg-inline-badge">Tú</span><?php endif; ?>
                             <?php if ($position > 0): ?><span class="cg-inline-badge">Top 3</span><?php endif; ?>

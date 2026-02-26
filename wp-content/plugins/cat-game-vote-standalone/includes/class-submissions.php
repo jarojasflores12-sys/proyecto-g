@@ -548,7 +548,7 @@ class CatGame_Submissions {
         self::clear_leaderboard_cache();
     }
 
-    public static function list_user_submissions(int $user_id, int $event_id = 0): array {
+    public static function list_user_submissions(int $user_id, int $event_id = 0, int $limit = 0): array {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
         $reactions_table = CatGame_DB::table('reactions');
@@ -559,32 +559,100 @@ class CatGame_Submissions {
             GROUP BY submission_id
         ";
 
+        $limit_sql = '';
+        $limit = max(0, (int) $limit);
+        if ($limit > 0) {
+            $limit_sql = $wpdb->prepare(' LIMIT %d', $limit);
+        }
+
         if ($event_id > 0) {
-            return $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT s.*, COALESCE(r.total_reactions, 0) AS total_reactions, r.first_reaction_at
+            $sql = $wpdb->prepare(
+                "SELECT s.*, COALESCE(r.total_reactions, 0) AS total_reactions, r.first_reaction_at
                     FROM {$table} s
                     LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id
                     WHERE s.user_id = %d AND s.event_id = %d
-                    ORDER BY s.created_at DESC",
-                    $user_id,
-                    $event_id
-                ),
-                ARRAY_A
-            );
+                    ORDER BY s.created_at DESC, s.id DESC",
+                $user_id,
+                $event_id
+            ) . $limit_sql;
+
+            return $wpdb->get_results($sql, ARRAY_A);
         }
 
-        return $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT s.*, COALESCE(r.total_reactions, 0) AS total_reactions, r.first_reaction_at
+        $sql = $wpdb->prepare(
+            "SELECT s.*, COALESCE(r.total_reactions, 0) AS total_reactions, r.first_reaction_at
                 FROM {$table} s
                 LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id
                 WHERE s.user_id = %d
-                ORDER BY s.created_at DESC",
+                ORDER BY s.created_at DESC, s.id DESC",
+            $user_id
+        ) . $limit_sql;
+
+        return $wpdb->get_results($sql, ARRAY_A);
+    }
+
+
+
+    public static function latest_submission_location(int $user_id): array {
+        if ($user_id <= 0) {
+            return ['city' => '', 'country' => ''];
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT city, country FROM {$table} WHERE user_id = %d ORDER BY created_at DESC, id DESC LIMIT 1",
                 $user_id
             ),
             ARRAY_A
         );
+
+        return [
+            'city' => trim(sanitize_text_field((string) ($row['city'] ?? ''))),
+            'country' => trim(sanitize_text_field((string) ($row['country'] ?? ''))),
+        ];
+    }
+
+    public static function list_user_recent_closed_submissions(int $user_id, int $days = 30, int $limit = 30): array {
+        if ($user_id <= 0) {
+            return [];
+        }
+
+        global $wpdb;
+        $submissions_table = CatGame_DB::table('submissions');
+        $events_table = CatGame_DB::table('events');
+        $reactions_table = CatGame_DB::table('reactions');
+
+        $days = max(1, (int) $days);
+        $limit = max(1, (int) $limit);
+        $now = current_time('mysql');
+        $from = gmdate('Y-m-d H:i:s', strtotime($now . ' -' . $days . ' days'));
+
+        $reaction_agg_sql = "
+            SELECT submission_id, COUNT(*) AS total_reactions, MIN(created_at) AS first_reaction_at
+            FROM {$reactions_table}
+            GROUP BY submission_id
+        ";
+
+        $sql = $wpdb->prepare(
+            "SELECT s.*, COALESCE(r.total_reactions, 0) AS total_reactions, r.first_reaction_at
+            FROM {$submissions_table} s
+            INNER JOIN {$events_table} e ON e.id = s.event_id
+            LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id
+            WHERE s.user_id = %d
+              AND s.status = 'active'
+              AND e.ends_at < %s
+              AND e.ends_at >= %s
+            ORDER BY s.created_at DESC, s.id DESC
+            LIMIT %d",
+            $user_id,
+            $now,
+            $from,
+            $limit
+        );
+
+        return $wpdb->get_results($sql, ARRAY_A);
     }
 
     public static function user_stats(int $user_id, int $event_id = 0): array {
