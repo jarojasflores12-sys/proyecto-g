@@ -129,6 +129,7 @@ if (!empty($data['requires_login'])): ?>
 
 $stats = $data['stats'] ?? ['total_submissions' => 0, 'total_reactions' => 0, 'most_voted' => null, 'best_ranked' => null];
 $items = $data['items'] ?? [];
+$notifications = $data['notifications'] ?? [];
 $custom_tags = $data['custom_tags'] ?? [];
 $top_position_for_user = $data['top_position_for_user'] ?? null;
 $scope = $data['scope'] ?? 'event';
@@ -230,6 +231,15 @@ $location_missing = $default_city === '' || $default_country === '';
         </label>
         <button type="submit">Aplicar</button>
     </form>
+
+    <?php if (!empty($notifications)): ?>
+        <h3>Notificaciones</h3>
+        <ul class="cg-list-notifications">
+            <?php foreach ($notifications as $n): ?>
+                <li class="cg-card"><?php echo esc_html((string) ($n['message'] ?? '')); ?> <small><?php echo esc_html((string) ($n['created_at'] ?? '')); ?></small></li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
 
     <h3>Resumen</h3>
     <div class="cg-profile-stats-grid cg-profile-summary-grid">

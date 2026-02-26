@@ -12,6 +12,7 @@ class CatGame_Admin {
         add_action('admin_post_catgame_save_event', [__CLASS__, 'save_event']);
         add_action('admin_post_catgame_duplicate_event', [__CLASS__, 'duplicate_event']);
         add_action('admin_post_catgame_toggle_submission', [__CLASS__, 'toggle_submission']);
+        add_action('admin_post_catgame_moderate_report', ['CatGame_Reports', 'handle_moderate_report']);
         add_action('admin_post_catgame_save_settings', [__CLASS__, 'save_settings']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_assets']);
         add_action('admin_notices', [__CLASS__, 'permalink_notice']);
@@ -453,29 +454,95 @@ class CatGame_Admin {
         }
 
         global $wpdb;
-        $table = CatGame_DB::table('submissions');
-        $items = $wpdb->get_results("SELECT * FROM {$table} ORDER BY created_at DESC LIMIT 100", ARRAY_A);
+        $reports_table = CatGame_DB::table('reports');
+        $subs_table = CatGame_DB::table('submissions');
+        $status_filter = isset($_GET['status']) ? sanitize_key(wp_unslash($_GET['status'])) : 'pending';
+        if (!in_array($status_filter, ['pending', 'resolved'], true)) {
+            $status_filter = 'pending';
+        }
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT r.*, s.title, s.attachment_id, s.user_id AS author_id, s.is_hidden
+                FROM {$reports_table} r
+                INNER JOIN {$subs_table} s ON s.id = r.submission_id
+                WHERE r.status = %s
+                ORDER BY r.created_at DESC
+                LIMIT 200",
+                $status_filter
+            ),
+            ARRAY_A
+        );
         ?>
-        <div class="wrap">
-            <h1>Cat Game - Moderation</h1>
+        <div class="wrap catgame-admin-page">
+            <h1>Cat Game - Moderación</h1>
+            <p>
+                <a class="button <?php echo $status_filter === 'pending' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-moderation&status=pending')); ?>">Pendientes</a>
+                <a class="button <?php echo $status_filter === 'resolved' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-moderation&status=resolved')); ?>">Resueltos</a>
+            </p>
             <table class="widefat striped">
-                <thead><tr><th>ID</th><th>User</th><th>Status</th><th>Score</th><th>Created</th><th>Action</th></tr></thead>
+                <thead><tr><th>Miniatura</th><th>Publicación</th><th>Autor</th><th>Reportado por</th><th>Motivo</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
                 <tbody>
-                <?php foreach ($items as $item): ?>
+                <?php if (empty($rows)): ?>
+                    <tr><td colspan="8">No hay reportes para este filtro.</td></tr>
+                <?php endif; ?>
+                <?php foreach ($rows as $row): ?>
+                    <?php
+                    $author = get_userdata((int) ($row['author_id'] ?? 0));
+                    $author_name = $author ? (string) $author->user_login : 'usuario';
+                    $reporter = get_userdata((int) ($row['reported_user_id'] ?? 0));
+                    $reporter_name = $reporter ? (string) $reporter->user_login : 'usuario';
+                    $reason_label_map = [
+                        'not_pet' => 'No es una mascota',
+                        'human' => 'Aparece una persona',
+                        'inappropriate' => 'Contenido inapropiado',
+                        'other' => 'Otro',
+                    ];
+                    $reason = (string) ($row['reason'] ?? 'other');
+                    $reason_label = $reason_label_map[$reason] ?? 'Otro';
+                    ?>
                     <tr>
-                        <td><?php echo (int) $item['id']; ?></td>
-                        <td><?php echo (int) $item['user_id']; ?></td>
-                        <td><?php echo esc_html($item['status']); ?></td>
-                        <td><?php echo esc_html($item['score_cached']); ?></td>
-                        <td><?php echo esc_html($item['created_at']); ?></td>
+                        <td><?php echo wp_get_attachment_image((int) ($row['attachment_id'] ?? 0), [70, 70]); ?></td>
                         <td>
-                            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-                                <?php wp_nonce_field('catgame_toggle_submission'); ?>
-                                <input type="hidden" name="action" value="catgame_toggle_submission" />
-                                <input type="hidden" name="submission_id" value="<?php echo (int) $item['id']; ?>" />
-                                <input type="hidden" name="new_status" value="<?php echo $item['status'] === 'disqualified' ? 'active' : 'disqualified'; ?>" />
-                                <?php submit_button($item['status'] === 'disqualified' ? 'Restore' : 'Disqualify', 'secondary small', 'submit', false); ?>
-                            </form>
+                            <strong><?php echo esc_html(CatGame_Submissions::title_label((array) $row)); ?></strong><br>
+                            <small>#<?php echo (int) ($row['submission_id'] ?? 0); ?></small>
+                        </td>
+                        <td>@<?php echo esc_html($author_name); ?></td>
+                        <td>@<?php echo esc_html($reporter_name); ?></td>
+                        <td><?php echo esc_html($reason_label); ?><?php if (!empty($row['detail'])): ?><br><small><?php echo esc_html((string) $row['detail']); ?></small><?php endif; ?></td>
+                        <td><?php echo esc_html((string) ($row['created_at'] ?? '')); ?></td>
+                        <td><?php echo esc_html($status_filter === 'pending' ? 'Pendiente' : 'Resuelto'); ?></td>
+                        <td>
+                            <?php if ($status_filter === 'pending'): ?>
+                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline-block; margin-right:6px;">
+                                    <?php wp_nonce_field('catgame_moderate_report'); ?>
+                                    <input type="hidden" name="action" value="catgame_moderate_report" />
+                                    <input type="hidden" name="report_id" value="<?php echo (int) ($row['id'] ?? 0); ?>" />
+                                    <input type="hidden" name="resolution" value="restored" />
+                                    <button type="submit" class="button button-small">Restaurar</button>
+                                </form>
+                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline-block; margin-right:6px;">
+                                    <?php wp_nonce_field('catgame_moderate_report'); ?>
+                                    <input type="hidden" name="action" value="catgame_moderate_report" />
+                                    <input type="hidden" name="report_id" value="<?php echo (int) ($row['id'] ?? 0); ?>" />
+                                    <input type="hidden" name="resolution" value="removed" />
+                                    <select name="severity" required>
+                                        <option value="leve">Leve</option>
+                                        <option value="moderado">Moderado</option>
+                                        <option value="grave">Grave</option>
+                                    </select>
+                                    <button type="submit" class="button button-small button-primary">Eliminar</button>
+                                </form>
+                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline-block;">
+                                    <?php wp_nonce_field('catgame_moderate_report'); ?>
+                                    <input type="hidden" name="action" value="catgame_moderate_report" />
+                                    <input type="hidden" name="report_id" value="<?php echo (int) ($row['id'] ?? 0); ?>" />
+                                    <input type="hidden" name="resolution" value="false_report" />
+                                    <button type="submit" class="button button-small">Reporte falso</button>
+                                </form>
+                            <?php else: ?>
+                                <small><?php echo esc_html((string) ($row['resolution'] ?? '')); ?><?php if (!empty($row['severity'])): ?> (<?php echo esc_html((string) $row['severity']); ?>)<?php endif; ?></small>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

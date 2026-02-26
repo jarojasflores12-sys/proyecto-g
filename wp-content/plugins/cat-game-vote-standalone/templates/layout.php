@@ -119,6 +119,30 @@ if ($has_background) {
     </div>
 </div>
 
+
+<div class="cg-modal" id="catgame-report-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-report-title">
+    <div class="cg-modal__backdrop" data-report-close="1"></div>
+    <div class="cg-modal__content" role="document">
+        <button type="button" class="cg-modal__close" data-report-close="1" aria-label="Cerrar reporte">✕</button>
+        <h2 id="catgame-report-title">Reportar publicación</h2>
+        <form id="catgame-report-form">
+            <input type="hidden" name="submission_id" id="catgame-report-submission-id" value="0">
+            <input type="hidden" name="_wpnonce" id="catgame-report-nonce" value="">
+            <label><input type="radio" name="reason" value="not_pet" checked> No es una mascota</label>
+            <label><input type="radio" name="reason" value="human"> Aparece una persona</label>
+            <label><input type="radio" name="reason" value="inappropriate"> Contenido inapropiado</label>
+            <label><input type="radio" name="reason" value="other"> Otro</label>
+            <label>Detalle (opcional, máx 250)
+                <textarea name="detail" maxlength="250" rows="3" placeholder="Describe brevemente el problema"></textarea>
+            </label>
+            <div class="cg-confirm-actions">
+                <button type="button" class="secondary" data-report-close="1">Cancelar</button>
+                <button type="submit">Enviar reporte</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="catgame-toast" class="catgame-toast" aria-live="polite" aria-atomic="true"></div>
 <script>
 window.CATGAME_REACTIONS = {
@@ -129,6 +153,9 @@ window.CATGAME_REACTIONS = {
 window.CATGAME_FEED = {
     nonce: <?php echo wp_json_encode(wp_create_nonce('catgame_feed_more')); ?>,
     moreUrl: <?php echo wp_json_encode(admin_url('admin-post.php?action=catgame_feed_more')); ?>,
+};
+window.CATGAME_REPORTS = {
+    reportUrl: <?php echo wp_json_encode(class_exists('CatGame_Reports') ? CatGame_Reports::endpoint_report_url() : ''); ?>,
 };
 </script>
 <script src="<?php echo esc_url(CATGAME_PLUGIN_URL . 'assets/app.js'); ?>?v=<?php echo esc_attr(CATGAME_VERSION); ?>"></script>

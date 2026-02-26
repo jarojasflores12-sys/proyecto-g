@@ -39,6 +39,10 @@ class CatGame_Reactions {
         }
 
         $user_id = get_current_user_id();
+        $block_message = '';
+        if (class_exists('CatGame_Reports') && !CatGame_Reports::can_user_participate($user_id, $block_message)) {
+            wp_send_json_error(['message' => $block_message], 403);
+        }
         $retry_after = 0;
         if (!self::within_rate_limit($user_id, $retry_after)) {
             wp_send_json_error([
@@ -56,8 +60,8 @@ class CatGame_Reactions {
         }
 
         $submission = CatGame_Submissions::get_submission($submission_id);
-        if (!$submission) {
-            wp_send_json_error(['message' => 'La publicación no existe.'], 404);
+        if (!$submission || !empty($submission['is_hidden'])) {
+            wp_send_json_error(['message' => 'La publicación no está disponible.'], 404);
         }
 
         global $wpdb;

@@ -54,6 +54,7 @@ $location_text = trim($location_text, ' ,');
                         </div>
                     <?php endif; ?>
 
+                    <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::report_button_html($item, $current_user_id) : ''; ?>
                     <?php
                     CatGame_Reactions::render_widget(
                         (int) ($item['id'] ?? 0),

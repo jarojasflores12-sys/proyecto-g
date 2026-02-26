@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.26.16
+- Moderación/Reportes: nuevo sistema de reportes con ocultamiento inmediato (`is_hidden=1`) al primer reporte y registro en tabla `catgame_reports`.
+- Moderación Admin: pantalla de reportes pendientes/resueltos con acciones Restaurar, Eliminar (leve/moderado/grave) y Reporte falso.
+- Sanciones: nueva tabla `catgame_strikes` (expiran en 1 año), bloqueo de participación por strike grave o por acumulación de strikes activos, y sanción por reporte falso.
+- Notificaciones: tabla `catgame_notifications` y visualización en Perfil para decisiones de moderación.
+- Frontend: botón/modal "Reportar" (solo logueados, no autor) en cards/detalle/perfil público/ranking; al reportar, se oculta la publicación en la vista actual.
+
 ## 0.26.15
 - Perfil público: nueva ruta `/catgame/user/{username}` (read-only) con header de `@usuario` y ubicación (meta de perfil con fallback a última publicación).
 - Perfil público: secciones **Evento activo** (reacciones habilitadas solo para visitantes logueados) y **Recientes (30 días)** para eventos cerrados (solo lectura con mensaje "Evento finalizado").

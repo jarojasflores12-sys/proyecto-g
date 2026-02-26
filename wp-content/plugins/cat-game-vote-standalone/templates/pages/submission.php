@@ -10,6 +10,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
 $is_mine = $current_user_id > 0 && (int) ($submission['user_id'] ?? 0) === $current_user_id;
 $author = get_userdata((int) ($submission['user_id'] ?? 0));
 $author_name = $author ? (string) $author->user_login : 'usuario';
+$current_user_id = is_user_logged_in() ? get_current_user_id() : 0;
 ?>
 <section>
     <h2><?php echo esc_html($title_label); ?></h2>
@@ -26,6 +27,7 @@ $author_name = $author ? (string) $author->user_login : 'usuario';
     <div class="cg-detail-image"><?php echo wp_get_attachment_image((int) $submission['attachment_id'], 'large'); ?></div>
     <p>Ubicación: <?php echo esc_html($submission['city'] . ', ' . $submission['country']); ?></p>
     <?php CatGame_Reactions::render_widget((int) ($submission['id'] ?? 0), is_user_logged_in(), ['reaction_counts' => (array) ($submission['reaction_counts'] ?? []), 'my_reaction' => ($submission['my_reaction'] ?? null)]); ?>
+    <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::report_button_html($submission, $current_user_id) : ''; ?>
 
     <?php $size_bytes = isset($submission['image_size_bytes']) ? (int) $submission['image_size_bytes'] : 0; ?>
     <p>Tamaño imagen: <?php echo $size_bytes > 0 ? esc_html(number_format($size_bytes / 1024, 2)) . ' KB' : 'N/D'; ?></p>

@@ -212,6 +212,10 @@ class CatGame_Submissions {
         check_admin_referer('catgame_upload');
 
         $user_id = get_current_user_id();
+        $block_message = '';
+        if (class_exists('CatGame_Reports') && !CatGame_Reports::can_user_participate($user_id, $block_message)) {
+            self::upload_redirect_with_state('upload_failed', $upload_state ?? []);
+        }
         $location = CatGame_Auth::get_user_default_location($user_id);
         $city = $location['city'];
         $country = $location['country'];
@@ -405,6 +409,10 @@ class CatGame_Submissions {
 
         if ($tag !== '' && !in_array($tag, self::predefined_tags(), true)) {
             $user_id = get_current_user_id();
+        $block_message = '';
+        if (class_exists('CatGame_Reports') && !CatGame_Reports::can_user_participate($user_id, $block_message)) {
+            self::upload_redirect_with_state('upload_failed', $upload_state ?? []);
+        }
             $custom_map = self::user_custom_tag_map($user_id);
             if (isset($custom_map[$tag])) {
                 unset($custom_map[$tag]);
@@ -435,7 +443,7 @@ class CatGame_Submissions {
         $per_page = max(1, min(50, $per_page));
         $offset = max(0, $offset);
 
-        $where = ['event_id = %d', "status = 'active'"];
+        $where = ['event_id = %d', "status = 'active'", 'is_hidden = 0'];
         $params = [$event_id];
 
         if ($tag !== '') {
@@ -570,7 +578,7 @@ class CatGame_Submissions {
                 "SELECT s.*, COALESCE(r.total_reactions, 0) AS total_reactions, r.first_reaction_at
                     FROM {$table} s
                     LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id
-                    WHERE s.user_id = %d AND s.event_id = %d
+                    WHERE s.user_id = %d AND s.event_id = %d AND s.is_hidden = 0
                     ORDER BY s.created_at DESC, s.id DESC",
                 $user_id,
                 $event_id
@@ -583,7 +591,7 @@ class CatGame_Submissions {
             "SELECT s.*, COALESCE(r.total_reactions, 0) AS total_reactions, r.first_reaction_at
                 FROM {$table} s
                 LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id
-                WHERE s.user_id = %d
+                WHERE s.user_id = %d AND s.is_hidden = 0
                 ORDER BY s.created_at DESC, s.id DESC",
             $user_id
         ) . $limit_sql;
@@ -642,6 +650,7 @@ class CatGame_Submissions {
             LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id
             WHERE s.user_id = %d
               AND s.status = 'active'
+              AND s.is_hidden = 0
               AND e.ends_at < %s
               AND e.ends_at >= %s
             ORDER BY s.created_at DESC, s.id DESC
@@ -653,6 +662,68 @@ class CatGame_Submissions {
         );
 
         return $wpdb->get_results($sql, ARRAY_A);
+    }
+
+
+
+    public static function hide_submission(int $submission_id, string $reason = 'report_pending'): void {
+        if ($submission_id <= 0) {
+            return;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        $wpdb->update(
+            $table,
+            [
+                'is_hidden' => 1,
+                'hidden_reason' => sanitize_key($reason),
+                'hidden_at' => current_time('mysql'),
+            ],
+            ['id' => $submission_id],
+            ['%d', '%s', '%s'],
+            ['%d']
+        );
+        self::clear_leaderboard_cache();
+    }
+
+    public static function unhide_submission(int $submission_id): void {
+        if ($submission_id <= 0) {
+            return;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        $wpdb->update(
+            $table,
+            [
+                'is_hidden' => 0,
+                'hidden_reason' => null,
+                'hidden_at' => null,
+            ],
+            ['id' => $submission_id],
+            ['%d', '%s', '%s'],
+            ['%d']
+        );
+        self::clear_leaderboard_cache();
+    }
+
+    public static function hide_user_submissions(int $user_id, string $reason = 'removed'): void {
+        if ($user_id <= 0) {
+            return;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        $wpdb->query(
+            $wpdb->prepare(
+                "UPDATE {$table} SET is_hidden = 1, hidden_reason = %s, hidden_at = %s WHERE user_id = %d",
+                sanitize_key($reason),
+                current_time('mysql'),
+                $user_id
+            )
+        );
+        self::clear_leaderboard_cache();
     }
 
     public static function user_stats(int $user_id, int $event_id = 0): array {
@@ -722,7 +793,7 @@ class CatGame_Submissions {
             FROM {$reactions_table}
             GROUP BY submission_id
         ";
-        $where = ['event_id = %d', "status = 'active'"];
+        $where = ['event_id = %d', "status = 'active'", 'is_hidden = 0'];
         $params = [$event_id];
 
         if ($scope === 'country' && $country !== '') {

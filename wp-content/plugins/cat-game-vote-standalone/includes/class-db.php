@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_DB {
-    private const SCHEMA_VERSION = '5';
+    private const SCHEMA_VERSION = '6';
     private const SCHEMA_OPTION_KEY = 'catgame_schema_version';
 
     public static function init(): void {
@@ -37,6 +37,9 @@ class CatGame_DB {
         $votes = self::table('votes');
         $events = self::table('events');
         $reactions = self::table('reactions');
+        $reports = self::table('reports');
+        $strikes = self::table('strikes');
+        $notifications = self::table('notifications');
 
         $sql = [];
         $sql[] = "CREATE TABLE {$events} (
@@ -62,6 +65,9 @@ class CatGame_DB {
             title VARCHAR(80) NULL,
             attachment_id BIGINT UNSIGNED NOT NULL,
             image_size_bytes BIGINT UNSIGNED NULL,
+            is_hidden TINYINT(1) NOT NULL DEFAULT 0,
+            hidden_reason VARCHAR(32) NULL,
+            hidden_at DATETIME NULL,
             created_at DATETIME NOT NULL,
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             score_cached DECIMAL(5,2) NOT NULL DEFAULT 0,
@@ -70,7 +76,8 @@ class CatGame_DB {
             PRIMARY KEY (id),
             KEY event_status_score (event_id, status, score_cached),
             KEY geo (country, city),
-            KEY user_id (user_id)
+            KEY user_id (user_id),
+            KEY hidden_idx (is_hidden, event_id)
         ) {$charset};";
 
         $sql[] = "CREATE TABLE {$votes} (
@@ -95,6 +102,51 @@ class CatGame_DB {
             UNIQUE KEY unique_reaction (submission_id, user_id),
             KEY submission_id (submission_id),
             KEY user_id (user_id)
+        ) {$charset};";
+
+
+
+        $sql[] = "CREATE TABLE {$reports} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            submission_id BIGINT UNSIGNED NOT NULL,
+            reported_user_id BIGINT UNSIGNED NOT NULL,
+            reason VARCHAR(24) NOT NULL,
+            detail VARCHAR(250) NULL,
+            created_at DATETIME NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'pending',
+            resolved_at DATETIME NULL,
+            resolution VARCHAR(20) NULL,
+            admin_user_id BIGINT UNSIGNED NULL,
+            severity VARCHAR(20) NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY uniq_submission_reporter (submission_id, reported_user_id),
+            KEY submission_id (submission_id),
+            KEY status (status),
+            KEY reported_user_id (reported_user_id)
+        ) {$charset};";
+
+        $sql[] = "CREATE TABLE {$strikes} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            user_id BIGINT UNSIGNED NOT NULL,
+            kind VARCHAR(20) NOT NULL,
+            severity VARCHAR(20) NOT NULL,
+            reason_code VARCHAR(32) NOT NULL,
+            created_at DATETIME NOT NULL,
+            expires_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY user_id (user_id),
+            KEY expires_at (expires_at)
+        ) {$charset};";
+
+        $sql[] = "CREATE TABLE {$notifications} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            user_id BIGINT UNSIGNED NOT NULL,
+            message VARCHAR(255) NOT NULL,
+            created_at DATETIME NOT NULL,
+            read_at DATETIME NULL,
+            PRIMARY KEY (id),
+            KEY user_id (user_id),
+            KEY read_at (read_at)
         ) {$charset};";
 
         foreach ($sql as $statement) {

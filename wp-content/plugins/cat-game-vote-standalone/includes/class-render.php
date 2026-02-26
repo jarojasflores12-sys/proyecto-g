@@ -280,6 +280,9 @@ class CatGame_Render {
                 }
 
                 $location = CatGame_Auth::get_user_default_location($user_id);
+                if (class_exists('CatGame_Reports')) {
+                    CatGame_Reports::mark_notifications_read($user_id);
+                }
                 $avatar_color_pref = (string) get_user_meta($user_id, 'catgame_avatar_color', true);
 
                 return [
@@ -300,6 +303,7 @@ class CatGame_Render {
                     'current_user_id' => $current_user_id,
                     'top_position_for_user' => $top_position_for_user,
                     'best_photo' => $best_photo,
+                    'notifications' => class_exists('CatGame_Reports') ? CatGame_Reports::list_notifications($user_id, 15) : [],
                     'profile_prefs' => [
                         'display_name' => (string) get_user_meta($user_id, 'catgame_display_name', true),
                         'avatar_color' => $profile_error !== '' && $profile_avatar !== '' ? $profile_avatar : $avatar_color_pref,

@@ -79,11 +79,11 @@ $location_text = trim($location_text, ' ,');
                 <button type="button" class="cg-modal__close" data-upload-rules-close="1" aria-label="Cerrar reglas">✕</button>
                 <h2 id="catgame-upload-rules-title">Reglas del juego</h2>
                 <ul class="cg-modal__rules">
-                    <li>Solo mascotas en la foto.</li>
-                    <li>No incluir personas visibles.</li>
-                    <li>Sin contenido sexual o explícito.</li>
-                    <li>Sin violencia ni maltrato animal.</li>
-                    <li>Respeta a la comunidad y evita contenido ofensivo.</li>
+                    <li>Solo mascotas domésticas (incluye pez). No fauna salvaje.</li>
+                    <li>Prohibido incluir personas visibles.</li>
+                    <li>Contenido explícito/sexual/violento: expulsión inmediata.</li>
+                    <li>Reportes falsos generan sanción.</li>
+                    <li>Debes aceptar términos para publicar.</li>
                 </ul>
             </div>
         </div>

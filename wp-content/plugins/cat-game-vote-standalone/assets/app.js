@@ -1160,3 +1160,72 @@
   button.addEventListener('click', loadMore);
   syncUi();
 })();
+
+(function () {
+  const config = window.CATGAME_REPORTS;
+  const modal = document.getElementById('catgame-report-modal');
+  const form = document.getElementById('catgame-report-form');
+  const idInput = document.getElementById('catgame-report-submission-id');
+  const nonceInput = document.getElementById('catgame-report-nonce');
+  if (!config || !config.reportUrl || !modal || !form || !idInput || !nonceInput) {
+    return;
+  }
+
+  const setOpen = (open) => {
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+  };
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    if (target.closest('[data-report-close="1"]')) {
+      setOpen(false);
+      return;
+    }
+
+    const btn = target.closest('[data-report-btn="1"]');
+    if (!btn) return;
+
+    const submissionId = Number(btn.getAttribute('data-submission-id') || '0');
+    const nonce = btn.getAttribute('data-nonce') || '';
+    if (!submissionId || !nonce) return;
+
+    idInput.value = String(submissionId);
+    nonceInput.value = nonce;
+    setOpen(true);
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const fd = new FormData(form);
+
+    try {
+      const response = await fetch(config.reportUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: fd,
+      });
+      const payload = await response.json();
+      if (!payload?.success) {
+        window.catgameToast?.(payload?.data?.message || 'No se pudo enviar el reporte.', 'error');
+        return;
+      }
+
+      const submissionId = Number(idInput.value || '0');
+      if (submissionId > 0) {
+        document.querySelectorAll(`[data-submission-id="${submissionId}"]`).forEach((widget) => {
+          const card = widget.closest('.cg-card');
+          if (card) card.remove();
+        });
+      }
+
+      window.catgameToast?.('Reporte enviado. Esta publicación quedó en revisión.', 'success');
+      setOpen(false);
+      form.reset();
+    } catch (_) {
+      window.catgameToast?.('No se pudo enviar el reporte.', 'error');
+    }
+  });
+})();

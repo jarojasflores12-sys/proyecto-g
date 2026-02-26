@@ -46,4 +46,5 @@ $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_us
     <?php endif; ?>
 
     <?php CatGame_Reactions::render_widget((int) $item['id'], is_user_logged_in(), ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)]); ?>
+    <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::report_button_html($item, $current_user_id) : ''; ?>
 </article>
