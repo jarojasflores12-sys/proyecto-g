@@ -1500,15 +1500,21 @@ body.cg-has-custom-bg .cg-main {
 }
 
 .cg-upload-picker__btn {
-  background: var(--cg-accent);
+  background: #7c3aed;
   color: #fff;
   border-radius: 12px;
   padding: 8px 12px;
   font-weight: 700;
 }
 
-.cg-upload-picker__btn--camera {
-  background: #7c3aed;
+.cg-upload-picker__btn:hover,
+.cg-upload-picker__btn:focus-visible {
+  filter: brightness(1.05);
+}
+
+.cg-upload-picker__btn:active {
+  transform: scale(0.98);
+  filter: brightness(0.92);
 }
 
 .cg-file-picker-text {

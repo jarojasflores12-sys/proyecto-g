@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.26.12
+- Upload (iOS/Android): se ajustan inputs separados para acciones explícitas: **Subir archivo** (sin `capture`, `accept=".jpg,.jpeg,.png,.webp"`) y **Tomar foto** (`accept="image/*"` + `capture="environment"`).
+- Upload UX: ambos CTAs quedan con estilo activo consistente en morado fuerte (sin apariencia deshabilitada) y estado de presión visual (`:active`).
+- Compatibilidad: se mantiene convergencia de ambos pickers al mismo handler de preview/compresión/envío, sin cambios en el backend de `cat_image`.
+
 ## 0.26.11
 - Upload UX: reemplaza selector único por dos CTAs explícitos: **Subir archivo** y **Tomar foto** (con `capture="environment"` para cámara en móviles).
 - Upload UX: botón principal **Enviar** pasa a color morado para destacar el CTA de envío.

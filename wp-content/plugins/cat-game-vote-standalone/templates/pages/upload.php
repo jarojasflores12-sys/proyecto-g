@@ -54,13 +54,13 @@ $location_text = trim($location_text, ' ,');
                 <p class="cg-upload-picker__title">Selecciona tu foto</p>
                 <div class="cg-upload-picker__actions">
                     <button type="button" class="cg-upload-picker__btn" data-catgame-pick-file="1">Subir archivo</button>
-                    <button type="button" class="cg-upload-picker__btn cg-upload-picker__btn--camera" data-catgame-pick-camera="1">Tomar foto</button>
+                    <button type="button" class="cg-upload-picker__btn" data-catgame-pick-camera="1">Tomar foto</button>
                 </div>
                 <p class="cg-file-picker-text">JPG, PNG o WEBP</p>
             </div>
 
             <input type="file" name="cat_image" id="catgame-cat-image" class="cg-file-input" accept="image/*" required>
-            <input type="file" id="catgame-cat-image-file" class="cg-file-input" accept="image/*" tabindex="-1" aria-hidden="true">
+            <input type="file" id="catgame-cat-image-file" class="cg-file-input" accept=".jpg,.jpeg,.png,.webp" tabindex="-1" aria-hidden="true">
             <input type="file" id="catgame-cat-image-camera" class="cg-file-input" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
 
             <p id="catgame-compress-status" class="cg-file-size cg-visually-hidden" aria-live="polite">Estado: esperando archivo</p>
