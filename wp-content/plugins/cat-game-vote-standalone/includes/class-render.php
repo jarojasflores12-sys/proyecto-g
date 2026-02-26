@@ -118,6 +118,10 @@ class CatGame_Render {
 
                 $upload_error_key = sanitize_key(wp_unslash($_GET['catgame_error'] ?? ''));
                 $upload_error = $upload_error_key !== '' ? CatGame_Submissions::upload_error_message($upload_error_key) : '';
+                $upload_ban_until = sanitize_text_field(wp_unslash($_GET['upload_ban_until'] ?? ''));
+                if ($upload_error_key === 'upload_banned' && $upload_ban_until !== '') {
+                    $upload_error = 'Tienes restringida la subida de publicaciones hasta ' . $upload_ban_until . '. Puedes seguir reaccionando.';
+                }
 
                 return [
                     'page' => $page,

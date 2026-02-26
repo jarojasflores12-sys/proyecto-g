@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.0
+- Moderación/Strikes: `catgame_strikes` se endurece con `kind/severity` tipados, `reason_code` ampliado, `admin_user_id` e índice compuesto (`user_id`,`expires_at`).
+- Strikes y bans de upload: al resolver moderación se aplica strike a autor/reportante y bloqueo temporal de subida por 7 días al acumular 3 strikes activos; severidad grave aplica restricción de 365 días.
+- Enforce upload-only: el bloqueo se aplica solo al endpoint de subida; las reacciones permanecen permitidas.
+- Upload UX: al intentar subir con bloqueo activo se muestra mensaje claro con fecha límite y se evita procesar la carga.
+
 ## 0.26.19
 - Reportes UX (red/proxy): en el submit se valida `response.ok` antes de procesar éxito; si llega HTTP `403` se muestra mensaje explícito de bloqueo de red/proxy.
 - Reportes UX (conectividad): si el envío falla por `Failed to fetch` / `NetworkError`, se muestra mensaje claro de problema de conexión en la red actual.

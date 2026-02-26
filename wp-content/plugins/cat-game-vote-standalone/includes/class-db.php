@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_DB {
-    private const SCHEMA_VERSION = '6';
+    private const SCHEMA_VERSION = '7';
     private const SCHEMA_OPTION_KEY = 'catgame_schema_version';
 
     public static function init(): void {
@@ -128,14 +128,16 @@ class CatGame_DB {
         $sql[] = "CREATE TABLE {$strikes} (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             user_id BIGINT UNSIGNED NOT NULL,
-            kind VARCHAR(20) NOT NULL,
-            severity VARCHAR(20) NOT NULL,
-            reason_code VARCHAR(32) NOT NULL,
+            kind ENUM('author','reporter') NOT NULL,
+            severity ENUM('leve','moderado','grave') NOT NULL,
+            reason_code VARCHAR(64) NOT NULL,
             created_at DATETIME NOT NULL,
             expires_at DATETIME NOT NULL,
+            admin_user_id BIGINT UNSIGNED NULL,
             PRIMARY KEY (id),
             KEY user_id (user_id),
-            KEY expires_at (expires_at)
+            KEY expires_at (expires_at),
+            KEY user_expires (user_id, expires_at)
         ) {$charset};";
 
         $sql[] = "CREATE TABLE {$notifications} (

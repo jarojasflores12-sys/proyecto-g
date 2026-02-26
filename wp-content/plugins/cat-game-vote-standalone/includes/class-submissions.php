@@ -179,6 +179,7 @@ class CatGame_Submissions {
             'file_too_large' => 'La imagen supera el tamaño máximo permitido.',
             'invalid_type' => 'El archivo debe ser una imagen válida.',
             'upload_failed' => 'No se pudo subir la imagen. Intenta nuevamente.',
+            'upload_banned' => 'Tienes restringida la subida de publicaciones hasta la fecha indicada. Puedes seguir reaccionando.',
         ];
 
         return $map[$error] ?? 'No se pudo completar la publicación.';
@@ -199,6 +200,9 @@ class CatGame_Submissions {
         if (!empty($state['confirm_no_people'])) {
             $query['upload_confirm_no_people'] = '1';
         }
+        if (!empty($state['ban_until'])) {
+            $query['upload_ban_until'] = sanitize_text_field((string) $state['ban_until']);
+        }
 
         wp_safe_redirect(add_query_arg($query, home_url('/catgame/upload')));
         exit;
@@ -212,10 +216,12 @@ class CatGame_Submissions {
         check_admin_referer('catgame_upload');
 
         $user_id = get_current_user_id();
-        $block_message = '';
-        if (class_exists('CatGame_Reports') && !CatGame_Reports::can_user_participate($user_id, $block_message)) {
-            self::upload_redirect_with_state('upload_failed', $upload_state ?? []);
+        if (class_exists('CatGame_Reports') && CatGame_Reports::is_upload_banned($user_id)) {
+            $ban_until_ts = CatGame_Reports::get_upload_ban_until($user_id);
+            $ban_until = $ban_until_ts > 0 ? wp_date('d/m/Y H:i', $ban_until_ts) : '';
+            self::upload_redirect_with_state('upload_banned', ['ban_until' => $ban_until]);
         }
+
         $location = CatGame_Auth::get_user_default_location($user_id);
         $city = $location['city'];
         $country = $location['country'];
@@ -409,10 +415,6 @@ class CatGame_Submissions {
 
         if ($tag !== '' && !in_array($tag, self::predefined_tags(), true)) {
             $user_id = get_current_user_id();
-        $block_message = '';
-        if (class_exists('CatGame_Reports') && !CatGame_Reports::can_user_participate($user_id, $block_message)) {
-            self::upload_redirect_with_state('upload_failed', $upload_state ?? []);
-        }
             $custom_map = self::user_custom_tag_map($user_id);
             if (isset($custom_map[$tag])) {
                 unset($custom_map[$tag]);

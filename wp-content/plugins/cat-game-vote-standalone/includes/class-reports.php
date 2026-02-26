@@ -7,6 +7,7 @@ if (!defined('ABSPATH')) {
 class CatGame_Reports {
     private const REPORT_RATE_LIMIT_MAX = 10;
     private const REPORT_RATE_LIMIT_WINDOW = 60;
+    private const UPLOAD_BAN_META_KEY = 'catgame_upload_banned_until';
 
     public static function init(): void {
         add_action('admin_post_catgame_report_submission', [__CLASS__, 'handle_report_submission']);
@@ -24,18 +25,7 @@ class CatGame_Reports {
             return false;
         }
 
-        if (self::has_active_grave_strike($user_id)) {
-            $message = 'Tu cuenta del juego está bloqueada por una sanción grave activa.';
-            return false;
-        }
-
-        $active = self::active_strikes_count($user_id);
-        if ($active < 3) {
-            return true;
-        }
-
-        $message = 'Tu cuenta del juego está temporalmente bloqueada por sanciones activas.';
-        return false;
+        return true;
     }
 
     public static function active_strikes_count(int $user_id): int {
@@ -49,7 +39,7 @@ class CatGame_Reports {
         return (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND expires_at >= %s", $user_id, $now));
     }
 
-    public static function add_strike(int $user_id, string $kind, string $severity, string $reason_code): void {
+    public static function add_strike(int $user_id, string $kind, string $severity, string $reason_code, int $admin_user_id = 0): void {
         if ($user_id <= 0) {
             return;
         }
@@ -67,9 +57,41 @@ class CatGame_Reports {
                 'reason_code' => $reason_code,
                 'created_at' => $created_at,
                 'expires_at' => $expires_at,
+                'admin_user_id' => $admin_user_id > 0 ? $admin_user_id : null,
             ],
-            ['%d', '%s', '%s', '%s', '%s', '%s']
+            ['%d', '%s', '%s', '%s', '%s', '%s', '%d']
         );
+    }
+
+    public static function get_upload_ban_until(int $user_id): int {
+        if ($user_id <= 0) {
+            return 0;
+        }
+
+        $value = get_user_meta($user_id, self::UPLOAD_BAN_META_KEY, true);
+        if ($value === '' || $value === null) {
+            return 0;
+        }
+
+        return is_numeric($value) ? (int) $value : (int) strtotime((string) $value);
+    }
+
+    public static function is_upload_banned(int $user_id): bool {
+        $until = self::get_upload_ban_until($user_id);
+        return $until > time();
+    }
+
+    public static function set_upload_ban_until(int $user_id, int $until_ts): void {
+        if ($user_id <= 0) {
+            return;
+        }
+
+        if ($until_ts <= 0) {
+            delete_user_meta($user_id, self::UPLOAD_BAN_META_KEY);
+            return;
+        }
+
+        update_user_meta($user_id, self::UPLOAD_BAN_META_KEY, $until_ts);
     }
 
     public static function create_notification(int $user_id, string $message): void {
@@ -240,6 +262,7 @@ class CatGame_Reports {
         $submission = CatGame_Submissions::get_submission($submission_id);
         $author_id = (int) ($submission['user_id'] ?? 0);
         $reporter_id = (int) ($report['reported_user_id'] ?? 0);
+        $admin_user_id = get_current_user_id();
 
         if ($resolution === 'restored') {
             CatGame_Submissions::unhide_submission($submission_id);
@@ -249,13 +272,22 @@ class CatGame_Reports {
                 $severity = 'leve';
             }
             CatGame_Submissions::hide_submission($submission_id, 'removed');
-            self::add_strike($author_id, 'author', $severity, 'removed_' . $severity);
+            self::add_strike($author_id, 'author', $severity, 'submission_removed', $admin_user_id);
             self::create_notification($author_id, 'Tu publicación fue eliminada por moderación (' . $severity . ').');
             if ($severity === 'grave') {
                 CatGame_Submissions::hide_user_submissions($author_id, 'removed');
+                self::set_upload_ban_until($author_id, time() + YEAR_IN_SECONDS);
+                self::create_notification($author_id, 'Tu cuenta tiene restricción para subir publicaciones durante 365 días.');
+            } elseif (self::active_strikes_count($author_id) >= 3) {
+                self::set_upload_ban_until($author_id, time() + (7 * DAY_IN_SECONDS));
+                self::create_notification($author_id, 'Acumulaste 3 strikes activos. No podrás subir publicaciones por 7 días.');
             }
         } elseif ($resolution === 'false_report') {
-            self::add_strike($reporter_id, 'reporter', 'leve', 'false_report');
+            self::add_strike($reporter_id, 'reporter', 'leve', 'false_report', $admin_user_id);
+            if (self::active_strikes_count($reporter_id) >= 3) {
+                self::set_upload_ban_until($reporter_id, time() + (7 * DAY_IN_SECONDS));
+                self::create_notification($reporter_id, 'Acumulaste 3 strikes activos. No podrás subir publicaciones por 7 días.');
+            }
             if (!self::has_pending_reports($submission_id)) {
                 CatGame_Submissions::unhide_submission($submission_id);
             }
@@ -267,7 +299,7 @@ class CatGame_Reports {
                 'status' => 'resolved',
                 'resolved_at' => current_time('mysql'),
                 'resolution' => $resolution,
-                'admin_user_id' => get_current_user_id(),
+                'admin_user_id' => $admin_user_id,
                 'severity' => ($resolution === 'removed') ? $severity : null,
             ],
             ['id' => $report_id],

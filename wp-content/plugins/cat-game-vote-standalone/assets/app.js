@@ -97,7 +97,10 @@
 
   if (error) {
     console.warn('CatGame warning:', error);
-    window.catgameToast('Ocurrió un error. Intenta nuevamente.', 'error');
+    const errorMessages = {
+      upload_banned: 'Tienes restringida la subida de publicaciones temporalmente. Puedes seguir reaccionando.',
+    };
+    window.catgameToast(errorMessages[error] || 'Ocurrió un error. Intenta nuevamente.', 'error');
   }
 
   const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || profileSaved === '1' || completeProfile === '1' || !!error;
