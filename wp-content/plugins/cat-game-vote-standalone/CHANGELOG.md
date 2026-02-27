@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.2
+- Upload: se expone `upload_restriction` en payload (`upload_banned`, `upload_banned_until`) reutilizando helpers de bans existentes.
+- Upload UI: nueva tarjeta móvil-first "Subida restringida" con fecha límite y mensaje "Puedes seguir reaccionando" para evitar confusión cuando hay ban activo.
+- Upload no-regresión: si hay restricción activa, no se muestra el formulario de publicación en esa vista.
+
 ## 0.27.1
 - Perfil: nueva tarjeta "Estado de tu cuenta" con strikes activos de autor/reportante, umbral 3 y texto de expiración en 1 año.
 - Perfil: muestra estado de bloqueo de subida y fecha límite cuando aplica, manteniendo que durante la restricción se puede reaccionar.

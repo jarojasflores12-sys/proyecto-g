@@ -7,11 +7,13 @@ $upload_error = (string) ($data['upload_error'] ?? '');
 $requires_location = !empty($data['requires_location']);
 $location_text = trim((string) ($upload_defaults['default_city'] ?? '')) . ', ' . trim((string) ($upload_defaults['default_country'] ?? ''));
 $location_text = trim($location_text, ' ,');
-$upload_is_banned = is_user_logged_in() && class_exists('CatGame_Reports') && CatGame_Reports::is_upload_banned(get_current_user_id());
+$upload_restriction = (array) ($data['upload_restriction'] ?? []);
+$upload_is_banned = !empty($upload_restriction['upload_banned']);
+$upload_ban_until_iso = (string) ($upload_restriction['upload_banned_until'] ?? '');
 $upload_ban_until = '';
-if ($upload_is_banned) {
-    $upload_ban_until_ts = CatGame_Reports::get_upload_ban_until(get_current_user_id());
-    if ($upload_ban_until_ts > 0) {
+if ($upload_ban_until_iso !== '') {
+    $upload_ban_until_ts = strtotime($upload_ban_until_iso);
+    if ($upload_ban_until_ts) {
         $upload_ban_until = wp_date('d/m/Y H:i', $upload_ban_until_ts);
     }
 }
@@ -26,7 +28,11 @@ if ($upload_is_banned) {
         <p class="cg-alert cg-alert-error">Completa tu ciudad y país en tu perfil para poder subir fotos.</p>
         <a class="cg-cta" href="<?php echo esc_url(home_url('/catgame/profile?complete_profile=1')); ?>">Ir a mi perfil</a>
     <?php elseif ($upload_is_banned): ?>
-        <p class="cg-alert cg-alert-error">Tienes restringida la subida de publicaciones hasta <?php echo esc_html($upload_ban_until !== '' ? $upload_ban_until : 'la fecha indicada'); ?>. Puedes seguir reaccionando.</p>
+        <article class="cg-card cg-upload-ban-card" role="status" aria-live="polite">
+            <p class="cg-upload-ban-card__title">Subida restringida</p>
+            <p>No puedes subir publicaciones hasta: <?php echo esc_html($upload_ban_until !== '' ? $upload_ban_until : 'la fecha indicada'); ?>.</p>
+            <small>Puedes seguir reaccionando.</small>
+        </article>
     <?php else: ?>
         <?php if ($upload_error !== ''): ?><p class="cg-alert cg-alert-error"><?php echo esc_html($upload_error); ?></p><?php endif; ?>
         <p class="cg-upload-location"><strong>Ubicación:</strong> <?php echo esc_html($location_text); ?></p>

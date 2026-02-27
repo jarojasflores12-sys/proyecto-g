@@ -123,6 +123,18 @@ class CatGame_Render {
                     $upload_error = 'Tienes restringida la subida de publicaciones hasta ' . $upload_ban_until . '. Puedes seguir reaccionando.';
                 }
 
+                $upload_restriction = [
+                    'upload_banned' => false,
+                    'upload_banned_until' => null,
+                ];
+                if (is_user_logged_in() && class_exists('CatGame_Reports')) {
+                    $upload_ban_until_ts = CatGame_Reports::get_upload_ban_until(get_current_user_id());
+                    $upload_restriction['upload_banned'] = $upload_ban_until_ts > time();
+                    if ($upload_ban_until_ts > 0) {
+                        $upload_restriction['upload_banned_until'] = gmdate('c', $upload_ban_until_ts);
+                    }
+                }
+
                 return [
                     'page' => $page,
                     'event' => $event,
@@ -131,6 +143,7 @@ class CatGame_Render {
                     'upload_state' => $upload_state,
                     'upload_error' => $upload_error,
                     'requires_location' => $requires_location,
+                    'upload_restriction' => $upload_restriction,
                 ];
             case 'feed':
                 $feed_per_page = 20;
