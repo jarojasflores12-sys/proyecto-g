@@ -152,6 +152,23 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
 $default_city = trim((string) ($prefs['default_city'] ?? ''));
 $default_country = trim((string) ($prefs['default_country'] ?? ''));
 $location_missing = $default_city === '' || $default_country === '';
+
+$account_status = (array) ($data['account_status'] ?? []);
+$strikes_status = (array) ($account_status['strikes'] ?? []);
+$bans_status = (array) ($account_status['bans'] ?? []);
+$author_active = (int) ($strikes_status['author_active'] ?? 0);
+$reporter_active = (int) ($strikes_status['reporter_active'] ?? 0);
+$strikes_threshold = max(1, (int) ($strikes_status['threshold'] ?? 3));
+$strikes_resets = (string) ($strikes_status['resets'] ?? '1 año');
+$upload_banned = !empty($bans_status['upload_banned']);
+$upload_banned_until_iso = (string) ($bans_status['upload_banned_until'] ?? '');
+$upload_banned_until_label = '';
+if ($upload_banned_until_iso !== '') {
+    $upload_banned_until_ts = strtotime($upload_banned_until_iso);
+    if ($upload_banned_until_ts) {
+        $upload_banned_until_label = wp_date('d/m/Y H:i', $upload_banned_until_ts);
+    }
+}
 ?>
 <section>
     <div class="cg-profile-topbar">
@@ -217,6 +234,20 @@ $location_missing = $default_city === '' || $default_country === '';
             </label>
         </div>
     </form>
+
+
+    <article class="cg-card cg-account-status-card">
+        <h3>Estado de tu cuenta</h3>
+        <p><strong>Strikes:</strong> <?php echo (int) $author_active; ?>/<?php echo (int) $strikes_threshold; ?></p>
+        <p><strong>Reportes falsos:</strong> <?php echo (int) $reporter_active; ?>/<?php echo (int) $strikes_threshold; ?></p>
+        <?php if ($upload_banned): ?>
+            <p><strong>Subida restringida hasta:</strong> <?php echo esc_html($upload_banned_until_label !== '' ? $upload_banned_until_label : 'fecha por confirmar'); ?></p>
+            <small>Puedes seguir reaccionando.</small>
+        <?php else: ?>
+            <p>Puedes subir y reaccionar con normalidad.</p>
+        <?php endif; ?>
+        <small>Los strikes expiran en <?php echo esc_html($strikes_resets); ?>.</small>
+    </article>
 
     <?php if (!empty($top_position_for_user)): ?>
         <p class="cg-alert cg-alert-success">🏆 Estás en el Top 3 del evento: #<?php echo (int) $top_position_for_user; ?>. <a href="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>">Ver ranking</a></p>

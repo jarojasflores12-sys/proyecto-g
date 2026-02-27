@@ -284,8 +284,27 @@ class CatGame_Render {
                 }
 
                 $location = CatGame_Auth::get_user_default_location($user_id);
+                $account_status = [
+                    'strikes' => [
+                        'author_active' => 0,
+                        'reporter_active' => 0,
+                        'threshold' => 3,
+                        'resets' => '1 año',
+                    ],
+                    'bans' => [
+                        'upload_banned_until' => null,
+                        'upload_banned' => false,
+                    ],
+                ];
                 if (class_exists('CatGame_Reports')) {
                     CatGame_Reports::mark_notifications_read($user_id);
+                    $account_status['strikes']['author_active'] = CatGame_Reports::active_strikes_count_by_kind($user_id, 'author');
+                    $account_status['strikes']['reporter_active'] = CatGame_Reports::active_strikes_count_by_kind($user_id, 'reporter');
+                    $ban_until_ts = CatGame_Reports::get_upload_ban_until($user_id);
+                    $account_status['bans']['upload_banned'] = $ban_until_ts > time();
+                    if ($ban_until_ts > 0) {
+                        $account_status['bans']['upload_banned_until'] = gmdate('c', $ban_until_ts);
+                    }
                 }
                 $avatar_color_pref = (string) get_user_meta($user_id, 'catgame_avatar_color', true);
 
@@ -308,6 +327,7 @@ class CatGame_Render {
                     'top_position_for_user' => $top_position_for_user,
                     'best_photo' => $best_photo,
                     'notifications' => class_exists('CatGame_Reports') ? CatGame_Reports::list_notifications($user_id, 15) : [],
+                    'account_status' => $account_status,
                     'profile_prefs' => [
                         'display_name' => (string) get_user_meta($user_id, 'catgame_display_name', true),
                         'avatar_color' => $profile_error !== '' && $profile_avatar !== '' ? $profile_avatar : $avatar_color_pref,

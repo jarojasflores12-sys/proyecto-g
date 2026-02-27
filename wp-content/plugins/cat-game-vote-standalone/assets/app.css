@@ -1134,6 +1134,22 @@ body.cg-has-custom-bg .cg-main {
   border-color: #4a4a4a;
 }
 
+
+.cg-account-status-card {
+  display: grid;
+  gap: 6px;
+}
+
+.cg-account-status-card h3,
+.cg-account-status-card p,
+.cg-account-status-card small {
+  margin: 0;
+}
+
+.cg-account-status-card small {
+  color: #6a6a6a;
+}
+
 .cg-profile-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

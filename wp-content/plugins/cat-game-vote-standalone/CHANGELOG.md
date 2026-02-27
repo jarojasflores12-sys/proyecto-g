@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.1
+- Perfil: nueva tarjeta "Estado de tu cuenta" con strikes activos de autor/reportante, umbral 3 y texto de expiración en 1 año.
+- Perfil: muestra estado de bloqueo de subida y fecha límite cuando aplica, manteniendo que durante la restricción se puede reaccionar.
+- Backend perfil: se agrega payload de estado de cuenta (`strikes` y `bans`) sin exponer datos sensibles.
+
 ## 0.27.0
 - Moderación/Strikes: `catgame_strikes` se endurece con `kind/severity` tipados, `reason_code` ampliado, `admin_user_id` e índice compuesto (`user_id`,`expires_at`).
 - Strikes y bans de upload: al resolver moderación se aplica strike a autor/reportante y bloqueo temporal de subida por 7 días al acumular 3 strikes activos; severidad grave aplica restricción de 365 días.

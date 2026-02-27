@@ -39,6 +39,18 @@ class CatGame_Reports {
         return (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND expires_at >= %s", $user_id, $now));
     }
 
+
+    public static function active_strikes_count_by_kind(int $user_id, string $kind): int {
+        if ($user_id <= 0 || !in_array($kind, ['author', 'reporter'], true)) {
+            return 0;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('strikes');
+        $now = current_time('mysql');
+        return (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND kind = %s AND expires_at >= %s", $user_id, $kind, $now));
+    }
+
     public static function add_strike(int $user_id, string $kind, string $severity, string $reason_code, int $admin_user_id = 0): void {
         if ($user_id <= 0) {
             return;
