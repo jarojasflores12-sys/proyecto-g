@@ -1,0 +1,42 @@
+name: Build plugin zip for WordPress
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-zip:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set plugin folder name
+        run: |
+          # Usa el nombre del repo como carpeta del plugin
+          echo "PLUGIN_SLUG=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
+
+      - name: Create zip with correct WP structure
+        run: |
+          mkdir -p dist/${PLUGIN_SLUG}
+
+          rsync -a --delete ./ dist/${PLUGIN_SLUG}/ \
+            --exclude ".git" \
+            --exclude ".github" \
+            --exclude "node_modules" \
+            --exclude ".DS_Store" \
+            --exclude "*.log" \
+            --exclude "tests" \
+            --exclude "dist"
+
+          cd dist
+          zip -r ${PLUGIN_SLUG}.zip ${PLUGIN_SLUG}
+
+      - name: Upload zip to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
