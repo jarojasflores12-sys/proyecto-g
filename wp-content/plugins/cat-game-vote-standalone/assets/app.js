@@ -473,6 +473,144 @@
 })();
 
 
+
+(function () {
+  const trigger = document.getElementById('catgame-notifications-trigger');
+  const modal = document.getElementById('catgame-notifications-modal');
+  const list = document.getElementById('catgame-notifications-list');
+  const badge = document.getElementById('catgame-notifications-badge');
+  const config = window.CATGAME_NOTIFICATIONS;
+
+  if (!trigger || !modal || !list || !badge || !config) {
+    return;
+  }
+
+  const esc = (value) => {
+    const div = document.createElement('div');
+    div.textContent = value || '';
+    return div.innerHTML;
+  };
+
+  const updateBadge = (count) => {
+    const next = Number(count || 0);
+    if (next > 0) {
+      badge.hidden = false;
+      badge.textContent = String(next > 99 ? '99+' : next);
+      return;
+    }
+    badge.hidden = true;
+    badge.textContent = '0';
+  };
+
+  const formatDate = (value) => {
+    if (!value) {
+      return 'Fecha no disponible';
+    }
+
+    const normalized = value.replace(' ', 'T');
+    const d = new Date(normalized);
+    if (Number.isNaN(d.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat('es-CL', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(d);
+  };
+
+  const renderItems = (items) => {
+    if (!Array.isArray(items) || items.length === 0) {
+      list.innerHTML = '<p class="cg-notifications-empty">No tienes notificaciones</p>';
+      return;
+    }
+
+    const html = items
+      .map((item) => {
+        const title = esc(item.title || 'Notificación');
+        const message = esc(item.message || '');
+        const date = esc(formatDate(item.created_at || ''));
+        const unreadClass = !item.read_at ? ' is-unread' : '';
+        return `<article class="cg-notification-item${unreadClass}"><h3>${title}</h3><p>${message}</p><time>${date}</time></article>`;
+      })
+      .join('');
+
+    list.innerHTML = html;
+  };
+
+  const fetchNotifications = async () => {
+    const url = new URL(config.listUrl, window.location.origin);
+    url.searchParams.set('_wpnonce', config.nonce);
+    url.searchParams.set('limit', '50');
+
+    const response = await fetch(url.toString(), { credentials: 'same-origin' });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.data?.message || 'No se pudieron cargar las notificaciones.');
+    }
+
+    const items = Array.isArray(payload.data?.items) ? payload.data.items : [];
+    const unreadCount = Number(payload.data?.unread_count || 0);
+    renderItems(items);
+    updateBadge(unreadCount);
+  };
+
+  const markAllRead = async () => {
+    const body = new URLSearchParams();
+    body.set('_wpnonce', config.nonce);
+
+    const response = await fetch(config.markReadUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      },
+      body: body.toString(),
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.data?.message || 'No se pudieron actualizar las notificaciones.');
+    }
+
+    updateBadge(0);
+  };
+
+  const setModalOpen = (open) => {
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+    trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+
+  trigger.addEventListener('click', async () => {
+    setModalOpen(true);
+    try {
+      await markAllRead();
+      await fetchNotifications();
+    } catch (error) {
+      window.catgameToast?.(error?.message || 'No se pudieron cargar notificaciones.', 'error');
+    }
+  });
+
+  modal.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest('[data-notifications-close="1"]')) {
+      setModalOpen(false);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+      setModalOpen(false);
+    }
+  });
+
+  fetchNotifications().catch(() => {
+    updateBadge(0);
+  });
+})();
+
 (function () {
   const profileForm = document.querySelector('#catgame-profile-form');
   if (!profileForm) {

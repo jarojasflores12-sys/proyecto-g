@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.25.2
+- Perfil: se agrega botón de notificaciones tipo campana (🔔) en el header con badge de no leídas y accesibilidad básica (`aria-label`, `aria-controls`, `aria-expanded`).
+- Notificaciones: nuevo modal pastel en Perfil con listado (título, detalle, fecha/hora), resaltado de no leídas y estado vacío "No tienes notificaciones".
+- Backend: se incorpora sistema mínimo de notificaciones por usuario en `user_meta` (`catgame_notifications`) con helpers `add_notification`, `get_notifications` y `mark_all_read`.
+- API: nuevos endpoints JSON con nonce para listar y marcar leídas; usuarios no autenticados reciben `401`.
+- Integración: se añade hook `catgame_report_submitted` para crear notificación "Reporte recibido" cuando el flujo de reportes dispare ese evento.
+
 ## 0.25.1
 - Perfil: se mueve "Cerrar sesión" al extremo superior derecho (botón compacto con ícono+texto), se re-agregan Ciudad/País persistentes en user meta y se exige completar ubicación para poder subir.
 - Auth/flujo: login/registro exitoso redirigen a Perfil con aviso de completar ubicación cuando falta; Subir queda bloqueado con CTA a Perfil y el envío también valida ubicación desde Perfil.
