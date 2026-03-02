@@ -1464,6 +1464,75 @@ body.cg-has-custom-bg .cg-main {
 }
 
 
+
+.cg-profile-topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cg-notif-bell {
+  position: relative;
+  min-width: 38px;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.cg-notif-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 999px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cg-notifications-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.cg-notification-item {
+  border: 1px solid var(--cg-border);
+  border-radius: 12px;
+  padding: 10px;
+  background: #fff;
+}
+
+.cg-notification-item.is-unread {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+}
+
+.cg-notification-title,
+.cg-notification-message,
+.cg-notification-date,
+.cg-notifications-empty {
+  margin: 0;
+}
+
+.cg-notification-title {
+  font-weight: 700;
+}
+
+.cg-notification-date {
+  color: #6a6a6a;
+}
+
+
 .cg-profile-topbar {
   display: flex;
   align-items: center;

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.3
+- Perfil: se agrega campanita de notificaciones con badge de no leídas y modal con listado user-facing.
+- Notificaciones (MVP): se migran a `user_meta` (`catgame_notifications`) con helpers para agregar, listar y marcar todas como leídas.
+- AJAX: nuevos endpoints `catgame_get_notifications` y `catgame_mark_notifications_read` para UI de campana.
+- Flujo reportes: al enviar reporte se crea notificación "Reporte recibido" y al resolver moderación se notifica "Reporte resuelto".
+
 ## 0.27.2
 - Upload: se expone `upload_restriction` en payload (`upload_banned`, `upload_banned_until`) reutilizando helpers de bans existentes.
 - Upload UI: nueva tarjeta móvil-first "Subida restringida" con fecha límite y mensaje "Puedes seguir reaccionando" para evitar confusión cuando hay ban activo.

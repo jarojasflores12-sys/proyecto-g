@@ -124,6 +124,8 @@ if (!empty($data['requires_login'])): ?>
             <?php endif; ?>
         </section>
     <?php endif; ?>
+
+
 </section>
 <?php return; endif;
 
@@ -173,11 +175,17 @@ if ($upload_banned_until_iso !== '') {
 <section>
     <div class="cg-profile-topbar">
         <h2>Mi perfil</h2>
-        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-logout-form cg-logout-form-top">
-            <?php wp_nonce_field('catgame_logout'); ?>
-            <input type="hidden" name="action" value="catgame_logout">
-            <button type="submit" class="secondary cg-logout-btn" aria-label="Cerrar sesión">⎋ <span>Cerrar sesión</span></button>
-        </form>
+        <div class="cg-profile-topbar-actions">
+            <button type="button" class="secondary cg-notif-bell" id="catgame-notif-bell" aria-label="Notificaciones" aria-haspopup="dialog" aria-controls="catgame-notifications-modal">
+                🔔
+                <span class="cg-notif-badge" id="catgame-notif-badge" hidden>0</span>
+            </button>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-logout-form cg-logout-form-top">
+                <?php wp_nonce_field('catgame_logout'); ?>
+                <input type="hidden" name="action" value="catgame_logout">
+                <button type="submit" class="secondary cg-logout-btn" aria-label="Cerrar sesión">⎋ <span>Cerrar sesión</span></button>
+            </form>
+        </div>
     </div>
 
     <?php if ($registered): ?>
@@ -262,15 +270,6 @@ if ($upload_banned_until_iso !== '') {
         </label>
         <button type="submit">Aplicar</button>
     </form>
-
-    <?php if (!empty($notifications)): ?>
-        <h3>Notificaciones</h3>
-        <ul class="cg-list-notifications">
-            <?php foreach ($notifications as $n): ?>
-                <li class="cg-card"><?php echo esc_html((string) ($n['message'] ?? '')); ?> <small><?php echo esc_html((string) ($n['created_at'] ?? '')); ?></small></li>
-            <?php endforeach; ?>
-        </ul>
-    <?php endif; ?>
 
     <h3>Resumen</h3>
     <div class="cg-profile-stats-grid cg-profile-summary-grid">
@@ -384,4 +383,16 @@ if ($upload_banned_until_iso !== '') {
             </article>
         <?php endforeach; ?>
     </div>
+
+    <div class="cg-modal" id="catgame-notifications-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-notifications-title">
+        <div class="cg-modal__backdrop" data-notifications-close="1"></div>
+        <div class="cg-modal__content" role="document">
+            <button type="button" class="cg-modal__close" data-notifications-close="1" aria-label="Cerrar notificaciones">✕</button>
+            <h2 id="catgame-notifications-title">Notificaciones</h2>
+            <ul class="cg-notifications-list" id="catgame-notifications-list">
+                <li class="cg-notifications-empty">No tienes notificaciones</li>
+            </ul>
+        </div>
+    </div>
+
 </section>

@@ -310,7 +310,6 @@ class CatGame_Render {
                     ],
                 ];
                 if (class_exists('CatGame_Reports')) {
-                    CatGame_Reports::mark_notifications_read($user_id);
                     $account_status['strikes']['author_active'] = CatGame_Reports::active_strikes_count_by_kind($user_id, 'author');
                     $account_status['strikes']['reporter_active'] = CatGame_Reports::active_strikes_count_by_kind($user_id, 'reporter');
                     $ban_until_ts = CatGame_Reports::get_upload_ban_until($user_id);

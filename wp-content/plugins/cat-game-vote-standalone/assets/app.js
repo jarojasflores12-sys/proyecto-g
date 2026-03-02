@@ -1285,3 +1285,103 @@
     }
   });
 })();
+
+
+(function () {
+  const config = window.CATGAME || {};
+  const bell = document.getElementById('catgame-notif-bell');
+  const badge = document.getElementById('catgame-notif-badge');
+  const modal = document.getElementById('catgame-notifications-modal');
+  const list = document.getElementById('catgame-notifications-list');
+  if (!bell || !badge || !modal || !list || !config.ajaxUrl || !config.nonce) {
+    return;
+  }
+
+  const setOpen = (open) => {
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+  };
+
+  const setBadge = (count) => {
+    const total = Number(count || 0);
+    badge.textContent = String(total);
+    badge.hidden = total <= 0;
+  };
+
+  const formatDate = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleString('es-CL', {
+      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+  };
+
+  const renderItems = (items) => {
+    list.innerHTML = '';
+    if (!Array.isArray(items) || items.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'cg-notifications-empty';
+      li.textContent = 'No tienes notificaciones';
+      list.appendChild(li);
+      return;
+    }
+
+    items.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = `cg-notification-item ${item?.read_at ? '' : 'is-unread'}`.trim();
+      li.innerHTML = `<p class="cg-notification-title">${item?.title || 'Notificación'}</p>
+        <p class="cg-notification-message">${item?.message || ''}</p>
+        <small class="cg-notification-date">${formatDate(item?.created_at || '')}</small>`;
+      list.appendChild(li);
+    });
+  };
+
+  const post = async (action) => {
+    const params = new URLSearchParams();
+    params.set('action', action);
+    params.set('nonce', String(config.nonce));
+    const response = await fetch(config.ajaxUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+      body: params.toString(),
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.data?.message || 'No se pudo completar la acción.');
+    }
+    return payload.data || {};
+  };
+
+  const loadNotifications = async () => {
+    try {
+      const data = await post('catgame_get_notifications');
+      renderItems(data.items || []);
+      setBadge(Number(data.unread_count || 0));
+    } catch (_) {
+      setBadge(0);
+    }
+  };
+
+  bell.addEventListener('click', async () => {
+    setOpen(true);
+    try {
+      await post('catgame_mark_notifications_read');
+      setBadge(0);
+      list.querySelectorAll('.cg-notification-item').forEach((item) => item.classList.remove('is-unread'));
+    } catch (_) {
+      // noop
+    }
+  });
+
+  modal.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest('[data-notifications-close="1"]')) {
+      setOpen(false);
+    }
+  });
+
+  loadNotifications();
+})();

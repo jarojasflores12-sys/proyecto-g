@@ -8,11 +8,14 @@ class CatGame_Reports {
     private const REPORT_RATE_LIMIT_MAX = 10;
     private const REPORT_RATE_LIMIT_WINDOW = 60;
     private const UPLOAD_BAN_META_KEY = 'catgame_upload_banned_until';
+    private const NOTIFICATIONS_META_KEY = 'catgame_notifications';
 
     public static function init(): void {
         add_action('admin_post_catgame_report_submission', [__CLASS__, 'handle_report_submission']);
         add_action('wp_ajax_catgame_report_submission', [__CLASS__, 'handle_report_submission']);
         add_action('admin_post_catgame_moderate_report', [__CLASS__, 'handle_moderate_report']);
+        add_action('wp_ajax_catgame_get_notifications', [__CLASS__, 'handle_get_notifications']);
+        add_action('wp_ajax_catgame_mark_notifications_read', [__CLASS__, 'handle_mark_notifications_read']);
     }
 
     public static function endpoint_report_url(): string {
@@ -106,44 +109,118 @@ class CatGame_Reports {
         update_user_meta($user_id, self::UPLOAD_BAN_META_KEY, $until_ts);
     }
 
-    public static function create_notification(int $user_id, string $message): void {
-        if ($user_id <= 0 || trim($message) === '') {
+    public static function add_notification(int $user_id, string $type, string $title, string $message): void {
+        if ($user_id <= 0 || trim($title) === '' || trim($message) === '') {
             return;
         }
 
-        global $wpdb;
-        $table = CatGame_DB::table('notifications');
-        $wpdb->insert(
-            $table,
-            [
-                'user_id' => $user_id,
-                'message' => sanitize_text_field($message),
-                'created_at' => current_time('mysql'),
-                'read_at' => null,
-            ],
-            ['%d', '%s', '%s', '%s']
-        );
+        $items = self::get_notifications($user_id, 200, false);
+        array_unshift($items, [
+            'id' => wp_generate_uuid4(),
+            'type' => sanitize_key($type),
+            'title' => sanitize_text_field($title),
+            'message' => sanitize_textarea_field($message),
+            'created_at' => gmdate('c'),
+            'read_at' => null,
+        ]);
+
+        $items = array_slice($items, 0, 200);
+        update_user_meta($user_id, self::NOTIFICATIONS_META_KEY, $items);
     }
 
-    public static function list_notifications(int $user_id, int $limit = 20): array {
+    public static function create_notification(int $user_id, string $message): void {
+        self::add_notification($user_id, 'system', 'Actualización', $message);
+    }
+
+    public static function get_notifications(int $user_id, int $limit = 50, bool $sort = true): array {
         if ($user_id <= 0) {
             return [];
         }
 
-        global $wpdb;
-        $table = CatGame_DB::table('notifications');
+        $items = get_user_meta($user_id, self::NOTIFICATIONS_META_KEY, true);
+        if (!is_array($items)) {
+            return [];
+        }
+
+        if ($sort) {
+            usort($items, static function (array $a, array $b): int {
+                return strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? ''));
+            });
+        }
+
         $limit = max(1, (int) $limit);
-        return $wpdb->get_results($wpdb->prepare("SELECT * FROM {$table} WHERE user_id = %d ORDER BY created_at DESC LIMIT %d", $user_id, $limit), ARRAY_A);
+        return array_slice($items, 0, $limit);
     }
 
-    public static function mark_notifications_read(int $user_id): void {
+    public static function unread_notifications_count(int $user_id): int {
+        $items = self::get_notifications($user_id, 200);
+        $count = 0;
+        foreach ($items as $item) {
+            if (empty($item['read_at'])) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    public static function list_notifications(int $user_id, int $limit = 20): array {
+        return self::get_notifications($user_id, $limit);
+    }
+
+    public static function mark_all_read(int $user_id): void {
         if ($user_id <= 0) {
             return;
         }
 
-        global $wpdb;
-        $table = CatGame_DB::table('notifications');
-        $wpdb->query($wpdb->prepare("UPDATE {$table} SET read_at = %s WHERE user_id = %d AND read_at IS NULL", current_time('mysql'), $user_id));
+        $items = self::get_notifications($user_id, 200, false);
+        if (!$items) {
+            return;
+        }
+
+        $now = gmdate('c');
+        foreach ($items as &$item) {
+            if (empty($item['read_at'])) {
+                $item['read_at'] = $now;
+            }
+        }
+        unset($item);
+
+        update_user_meta($user_id, self::NOTIFICATIONS_META_KEY, $items);
+    }
+
+    public static function mark_notifications_read(int $user_id): void {
+        self::mark_all_read($user_id);
+    }
+
+    public static function handle_get_notifications(): void {
+        if (!is_user_logged_in()) {
+            wp_send_json_error(['message' => 'Debes iniciar sesión.'], 401);
+        }
+
+        if (!check_ajax_referer('catgame_nonce', 'nonce', false)) {
+            wp_send_json_error(['message' => 'Solicitud inválida.'], 403);
+        }
+
+        $user_id = get_current_user_id();
+        $items = self::get_notifications($user_id, 50);
+        wp_send_json_success([
+            'items' => $items,
+            'unread_count' => self::unread_notifications_count($user_id),
+        ]);
+    }
+
+    public static function handle_mark_notifications_read(): void {
+        if (!is_user_logged_in()) {
+            wp_send_json_error(['message' => 'Debes iniciar sesión.'], 401);
+        }
+
+        if (!check_ajax_referer('catgame_nonce', 'nonce', false)) {
+            wp_send_json_error(['message' => 'Solicitud inválida.'], 403);
+        }
+
+        $user_id = get_current_user_id();
+        self::mark_all_read($user_id);
+        wp_send_json_success(['unread_count' => 0]);
     }
 
     public static function has_pending_reports(int $submission_id): bool {
@@ -243,6 +320,7 @@ class CatGame_Reports {
         }
 
         CatGame_Submissions::hide_submission($submission_id, 'report_pending');
+        self::add_notification($user_id, 'report_received', 'Reporte recibido', 'Recibimos tu reporte y lo estamos revisando.');
 
         wp_send_json_success(['message' => 'Reporte enviado. Esta publicación quedó en revisión.', 'submission_id' => $submission_id]);
     }
@@ -325,6 +403,9 @@ class CatGame_Reports {
                 CatGame_Submissions::unhide_submission($submission_id);
             }
         }
+
+        $result_text = $resolution === 'removed' ? 'aprobado' : ($resolution === 'false_report' ? 'rechazado' : 'resuelto');
+        self::add_notification($reporter_id, 'report_resolved', 'Reporte resuelto', 'Tu reporte fue ' . $result_text . ' por moderación.');
 
         wp_safe_redirect(admin_url('admin.php?page=catgame-moderation'));
         exit;
