@@ -132,6 +132,68 @@ class CatGame_Reports {
         return 'Publicación #' . (int) $submission_id;
     }
 
+    private static function moderation_action_from_resolution(string $resolution): string {
+        if ($resolution === 'restored') {
+            return 'restore';
+        }
+
+        if ($resolution === 'removed') {
+            return 'delete';
+        }
+
+        return 'restore';
+    }
+
+    private static function moderation_severity_from_report(?string $severity): string {
+        $normalized = sanitize_key((string) $severity);
+        if ($normalized === 'moderado') {
+            return 'moderada';
+        }
+
+        if (!in_array($normalized, ['leve', 'moderada', 'grave'], true)) {
+            return 'leve';
+        }
+
+        return $normalized;
+    }
+
+    private static function save_moderation_action(int $submission_id, int $user_id, string $action, string $severity, string $reason, string $detail, int $admin_user_id): void {
+        if ($submission_id <= 0 || $user_id <= 0) {
+            return;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('moderation_actions');
+
+        $current = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$table} WHERE submission_id = %d AND is_current = 1 ORDER BY id DESC LIMIT 1", $submission_id), ARRAY_A);
+        if (is_array($current) && !empty($current['id'])) {
+            $wpdb->update(
+                $table,
+                ['is_current' => 0],
+                ['id' => (int) $current['id']],
+                ['%d'],
+                ['%d']
+            );
+        }
+
+        $wpdb->insert(
+            $table,
+            [
+                'submission_id' => $submission_id,
+                'user_id' => $user_id,
+                'action' => $action,
+                'severity' => $severity,
+                'reason' => $reason,
+                'detail' => $detail,
+                'decided_by' => $admin_user_id,
+                'decided_at' => current_time('mysql'),
+                'prev_action_id' => is_array($current) ? (int) ($current['id'] ?? 0) : null,
+                'is_current' => 1,
+            ],
+            ['%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%d']
+        );
+    }
+
     private static function debug_log(string $message): void {
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('catgame_notifications: ' . $message);
@@ -498,6 +560,16 @@ class CatGame_Reports {
             ['id' => $report_id],
             ['%s', '%s', '%s', '%d', '%s'],
             ['%d']
+        );
+
+        self::save_moderation_action(
+            $submission_id,
+            $author_id,
+            self::moderation_action_from_resolution($resolution),
+            self::moderation_severity_from_report($severity),
+            $report_reason,
+            sanitize_text_field((string) ($report['detail'] ?? '')),
+            $admin_user_id
         );
 
         if ($resolution === 'restored' || $resolution === 'false_report') {

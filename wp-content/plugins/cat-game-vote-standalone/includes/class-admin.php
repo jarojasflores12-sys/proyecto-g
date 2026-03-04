@@ -13,6 +13,7 @@ class CatGame_Admin {
         add_action('admin_post_catgame_duplicate_event', [__CLASS__, 'duplicate_event']);
         add_action('admin_post_catgame_toggle_submission', [__CLASS__, 'toggle_submission']);
         add_action('admin_post_catgame_moderate_report', ['CatGame_Reports', 'handle_moderate_report']);
+        add_action('admin_post_catgame_update_moderation_action', [__CLASS__, 'update_moderation_action']);
         add_action('admin_post_catgame_save_settings', [__CLASS__, 'save_settings']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_assets']);
         add_action('admin_notices', [__CLASS__, 'permalink_notice']);
@@ -456,6 +457,7 @@ class CatGame_Admin {
         global $wpdb;
         $reports_table = CatGame_DB::table('reports');
         $subs_table = CatGame_DB::table('submissions');
+        $actions_table = CatGame_DB::table('moderation_actions');
         $status_filter = isset($_GET['status']) ? sanitize_key(wp_unslash($_GET['status'])) : 'pending';
         if (!in_array($status_filter, ['pending', 'resolved'], true)) {
             $status_filter = 'pending';
@@ -463,9 +465,11 @@ class CatGame_Admin {
 
         $rows = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT r.*, s.title, s.attachment_id, s.user_id AS author_id, s.is_hidden
+                "SELECT r.*, s.title, s.attachment_id, s.user_id AS author_id, s.is_hidden,
+                    ma.id AS action_id, ma.action AS action_name, ma.severity AS action_severity, ma.reason AS action_reason, ma.detail AS action_detail
                 FROM {$reports_table} r
                 INNER JOIN {$subs_table} s ON s.id = r.submission_id
+                LEFT JOIN {$actions_table} ma ON ma.submission_id = r.submission_id AND ma.is_current = 1
                 WHERE r.status = %s
                 ORDER BY r.created_at DESC
                 LIMIT 200",
@@ -473,13 +477,34 @@ class CatGame_Admin {
             ),
             ARRAY_A
         );
+
+        $notice = sanitize_key((string) wp_unslash($_GET['mod_notice'] ?? ''));
         ?>
         <div class="wrap catgame-admin-page">
             <h1>Cat Game - Moderación</h1>
+            <?php if ($notice === 'updated'): ?>
+                <div class="notice notice-success is-dismissible"><p>Acción de moderación actualizada.</p></div>
+            <?php elseif ($notice === 'unchanged'): ?>
+                <div class="notice notice-info is-dismissible"><p>Sin cambios: la acción ya coincide con la configuración actual.</p></div>
+            <?php elseif ($notice === 'blocked_delete_account'): ?>
+                <div class="notice notice-warning is-dismissible"><p>No se puede editar: la acción previa fue eliminación de cuenta.</p></div>
+            <?php elseif ($notice === 'invalid'): ?>
+                <div class="notice notice-error is-dismissible"><p>No se pudo actualizar la acción (datos inválidos).</p></div>
+            <?php endif; ?>
             <p>
                 <a class="button <?php echo $status_filter === 'pending' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-moderation&status=pending')); ?>">Pendientes</a>
                 <a class="button <?php echo $status_filter === 'resolved' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-moderation&status=resolved')); ?>">Resueltos</a>
             </p>
+            <details id="catgame-moderation-guide" style="margin:12px 0;">
+                <summary><strong>Guía rápida: gravedad y acción</strong></summary>
+                <ul style="margin-left:18px;">
+                    <li><strong>restore</strong>: restaura visibilidad de la publicación.</li>
+                    <li><strong>delete</strong>: oculta publicación reportada.</li>
+                    <li><strong>strike</strong>: registra sanción sin borrar cuenta.</li>
+                    <li><strong>suspend_3d</strong>: restricción temporal de subida por 3 días.</li>
+                    <li><strong>delete_account</strong>: irreversible, bloquea edición posterior.</li>
+                </ul>
+            </details>
             <table class="widefat striped">
                 <thead><tr><th>Miniatura</th><th>Publicación</th><th>Autor</th><th>Reportado por</th><th>Motivo</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
                 <tbody>
@@ -542,6 +567,40 @@ class CatGame_Admin {
                                 </form>
                             <?php else: ?>
                                 <small><?php echo esc_html((string) ($row['resolution'] ?? '')); ?><?php if (!empty($row['severity'])): ?> (<?php echo esc_html((string) $row['severity']); ?>)<?php endif; ?></small>
+                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top:8px; padding:8px; border:1px solid #ccd0d4;">
+                                    <?php wp_nonce_field('catgame_update_moderation_action'); ?>
+                                    <input type="hidden" name="action" value="catgame_update_moderation_action" />
+                                    <input type="hidden" name="submission_id" value="<?php echo (int) ($row['submission_id'] ?? 0); ?>" />
+                                    <p style="margin:0 0 8px;"><strong>Editar acción</strong></p>
+                                    <p style="margin:0 0 6px;">
+                                        <select name="moderation_action" required>
+                                            <?php $selected_action = (string) ($row['action_name'] ?? 'delete'); ?>
+                                            <?php foreach (['restore', 'delete', 'strike', 'suspend_3d', 'delete_account'] as $opt): ?>
+                                                <option value="<?php echo esc_attr($opt); ?>" <?php selected($selected_action, $opt); ?>><?php echo esc_html($opt); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </p>
+                                    <p style="margin:0 0 6px;">
+                                        <select name="severity" required>
+                                            <?php $selected_severity = (string) ($row['action_severity'] ?? 'leve'); ?>
+                                            <?php foreach (['leve', 'moderada', 'grave'] as $opt): ?>
+                                                <option value="<?php echo esc_attr($opt); ?>" <?php selected($selected_severity, $opt); ?>><?php echo esc_html(ucfirst($opt)); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </p>
+                                    <p style="margin:0 0 6px;">
+                                        <select name="reason" required>
+                                            <?php $selected_reason = (string) ($row['action_reason'] ?? ($row['reason'] ?? 'other')); ?>
+                                            <?php foreach (['not_pet', 'human', 'inappropriate', 'other'] as $opt): ?>
+                                                <option value="<?php echo esc_attr($opt); ?>" <?php selected($selected_reason, $opt); ?>><?php echo esc_html($reason_label_map[$opt] ?? $opt); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </p>
+                                    <p style="margin:0 0 6px;">
+                                        <input type="text" name="detail" maxlength="250" value="<?php echo esc_attr((string) ($row['action_detail'] ?? '')); ?>" placeholder="Detalle (opcional)" style="width:100%;" />
+                                    </p>
+                                    <button type="submit" class="button button-small">Guardar edición</button>
+                                </form>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -549,7 +608,196 @@ class CatGame_Admin {
                 </tbody>
             </table>
         </div>
+        <script>
+            (function () {
+                var key = 'catgameModerationGuideOpen';
+                var guide = document.getElementById('catgame-moderation-guide');
+                if (!guide) {
+                    return;
+                }
+
+                try {
+                    if (window.localStorage.getItem(key) === '1') {
+                        guide.open = true;
+                    }
+                } catch (e) {
+                    // no-op
+                }
+
+                guide.addEventListener('toggle', function () {
+                    try {
+                        window.localStorage.setItem(key, guide.open ? '1' : '0');
+                    } catch (e) {
+                        // no-op
+                    }
+                });
+            })();
+        </script>
         <?php
+    }
+
+    public static function update_moderation_action(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        check_admin_referer('catgame_update_moderation_action');
+
+        $submission_id = (int) ($_POST['submission_id'] ?? 0);
+        $action = sanitize_key((string) wp_unslash($_POST['moderation_action'] ?? ''));
+        $severity = sanitize_key((string) wp_unslash($_POST['severity'] ?? ''));
+        $reason = sanitize_key((string) wp_unslash($_POST['reason'] ?? ''));
+        $detail = sanitize_textarea_field((string) wp_unslash($_POST['detail'] ?? ''));
+        if (function_exists('mb_substr')) {
+            $detail = mb_substr($detail, 0, 250);
+        } else {
+            $detail = substr($detail, 0, 250);
+        }
+
+        if ($submission_id <= 0 || !in_array($action, ['restore', 'delete', 'strike', 'suspend_3d', 'delete_account'], true) || !in_array($severity, ['leve', 'moderada', 'grave'], true) || !in_array($reason, ['not_pet', 'human', 'inappropriate', 'other'], true)) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-moderation&status=resolved&mod_notice=invalid'));
+            exit;
+        }
+
+        $submission = CatGame_Submissions::get_submission($submission_id);
+        $user_id = (int) ($submission['user_id'] ?? 0);
+        if (!$submission || $user_id <= 0) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-moderation&status=resolved&mod_notice=invalid'));
+            exit;
+        }
+
+        $current = self::get_current_moderation_action($submission_id);
+        if (is_array($current) && (($current['action'] ?? '') === 'delete_account')) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-moderation&status=resolved&mod_notice=blocked_delete_account'));
+            exit;
+        }
+
+        if (self::is_same_moderation_action($current, $action, $severity, $reason, $detail)) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-moderation&status=resolved&mod_notice=unchanged'));
+            exit;
+        }
+
+        if ($current) {
+            self::revert_moderation($submission_id, (string) ($current['action'] ?? ''));
+        }
+
+        $new_id = self::insert_moderation_action($submission_id, $user_id, $action, $severity, $reason, $detail, (int) ($current['id'] ?? 0));
+        self::apply_moderation($submission_id, $user_id, $action, $severity);
+
+        $old_label = $current ? (string) ($current['action'] ?? 'sin acción') : 'sin acción';
+        CatGame_Reports::add_notification(
+            $user_id,
+            'moderation',
+            'Acción de moderación actualizada',
+            'Antes: ' . $old_label . ' / Ahora: ' . $action . '.',
+            'moderation_update:' . $submission_id . ':' . $new_id
+        );
+
+        wp_safe_redirect(admin_url('admin.php?page=catgame-moderation&status=resolved&mod_notice=updated'));
+        exit;
+    }
+
+    private static function get_current_moderation_action(int $submission_id): ?array {
+        if ($submission_id <= 0) {
+            return null;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('moderation_actions');
+        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE submission_id = %d AND is_current = 1 ORDER BY id DESC LIMIT 1", $submission_id), ARRAY_A);
+        return is_array($row) ? $row : null;
+    }
+
+    private static function is_same_moderation_action(?array $current, string $action, string $severity, string $reason, string $detail): bool {
+        if (!$current) {
+            return false;
+        }
+
+        return (string) ($current['action'] ?? '') === $action
+            && (string) ($current['severity'] ?? '') === $severity
+            && (string) ($current['reason'] ?? '') === $reason
+            && trim((string) ($current['detail'] ?? '')) === trim($detail);
+    }
+
+    private static function insert_moderation_action(int $submission_id, int $user_id, string $action, string $severity, string $reason, string $detail, int $prev_action_id = 0): int {
+        global $wpdb;
+        $table = CatGame_DB::table('moderation_actions');
+
+        if ($prev_action_id > 0) {
+            $wpdb->update(
+                $table,
+                ['is_current' => 0],
+                ['id' => $prev_action_id],
+                ['%d'],
+                ['%d']
+            );
+        }
+
+        $wpdb->insert(
+            $table,
+            [
+                'submission_id' => $submission_id,
+                'user_id' => $user_id,
+                'action' => $action,
+                'severity' => $severity,
+                'reason' => $reason,
+                'detail' => $detail,
+                'decided_by' => get_current_user_id(),
+                'decided_at' => current_time('mysql'),
+                'prev_action_id' => $prev_action_id > 0 ? $prev_action_id : null,
+                'is_current' => 1,
+            ],
+            ['%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%d']
+        );
+
+        return (int) $wpdb->insert_id;
+    }
+
+    private static function revert_moderation(int $submission_id, string $action): void {
+        if ($submission_id <= 0) {
+            return;
+        }
+
+        if (in_array($action, ['delete', 'delete_account'], true)) {
+            CatGame_Submissions::unhide_submission($submission_id);
+        }
+
+        $submission = CatGame_Submissions::get_submission($submission_id);
+        $user_id = (int) ($submission['user_id'] ?? 0);
+        if ($user_id > 0 && in_array($action, ['suspend_3d', 'delete_account'], true)) {
+            CatGame_Reports::set_upload_ban_until($user_id, 0);
+        }
+    }
+
+    private static function apply_moderation(int $submission_id, int $user_id, string $action, string $severity): void {
+        if ($submission_id <= 0 || $user_id <= 0) {
+            return;
+        }
+
+        if ($action === 'restore') {
+            CatGame_Submissions::unhide_submission($submission_id);
+            return;
+        }
+
+        if ($action === 'delete') {
+            CatGame_Submissions::hide_submission($submission_id, 'removed');
+            return;
+        }
+
+        if ($action === 'strike') {
+            CatGame_Reports::add_strike($user_id, 'author', $severity === 'moderada' ? 'moderado' : $severity, 'moderation_action_update', get_current_user_id());
+            return;
+        }
+
+        if ($action === 'suspend_3d') {
+            CatGame_Reports::set_upload_ban_until($user_id, time() + (3 * DAY_IN_SECONDS));
+            return;
+        }
+
+        if ($action === 'delete_account') {
+            CatGame_Submissions::hide_user_submissions($user_id, 'removed');
+            CatGame_Reports::set_upload_ban_until($user_id, time() + YEAR_IN_SECONDS);
+        }
     }
 
     public static function toggle_submission(): void {

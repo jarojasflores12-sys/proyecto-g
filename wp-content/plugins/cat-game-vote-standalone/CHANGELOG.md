@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.27.5
+- Moderación Admin: se agrega historial de acciones en DB (`catgame_moderation_actions`) con encadenado por `prev_action_id` y marca `is_current` para soportar edición de la decisión actual.
+- Moderación Admin (resueltos): nuevo formulario **Editar acción** (acción, gravedad, motivo y detalle) con guardado idempotente; si no hay cambios se informa "Sin cambios".
+- Moderación Admin: se bloquea la edición cuando la acción previa es `delete_account` por tratarse de una decisión irreversible.
+- Moderación UX: nueva guía rápida colapsable de gravedad/acción en la pantalla de moderación y persistencia de estado expandido vía `localStorage`.
+- Notificaciones: al editar una acción se envía aviso al dueño de la publicación con resumen antes/ahora y `event_key` deduplicable `moderation_update:{submission_id}:{new_action_id}`.
+
 ## 0.27.4
 - Moderación: notificaciones automáticas al dueño de la publicación en revisión admin (reporte revisado/restaurado, publicación eliminada, sanción aplicada y suspensión de cuenta cuando corresponde).
 - Moderación: mensajes user-facing enriquecidos con título de publicación (fallback `Publicación #ID`), motivo y gravedad.
