@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.9
+- Moderación Admin: nuevo panel en `WP Admin > Moderation` para ejecutar manualmente el enforcement de casos graves y visualizar el último run (`ran_at`, `processed`).
+- Enforcement: `enforce_grave_case_deadlines` ahora devuelve cantidad procesada y persiste telemetry mínima en opción (`catgame_grave_enforcement_last_run`).
+- Cron/Operación: nuevo endpoint admin seguro `catgame_run_grave_enforcement` (nonce + capability) para forzar corrida manual cuando WP-Cron no corre por bajo tráfico.
+
 ## 0.27.8
 - Operación/Enforcement: se agenda cron hourly `catgame_enforce_grave_cases_event` para ejecutar automáticamente `enforce_grave_case_deadlines` sin depender de login/acciones de usuario.
 - Lifecycle plugin: al desactivar el plugin se desagenda el cron de casos graves para evitar eventos huérfanos.

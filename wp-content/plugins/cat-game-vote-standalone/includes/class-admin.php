@@ -480,7 +480,10 @@ class CatGame_Admin {
 
         $notice = sanitize_key((string) wp_unslash($_GET['mod_notice'] ?? ''));
         $appeal_notice = sanitize_key((string) wp_unslash($_GET['appeal_notice'] ?? ''));
+        $grave_enforced = isset($_GET['grave_enforced']) ? (int) $_GET['grave_enforced'] : 0;
+        $grave_enforced_count = isset($_GET['grave_enforced_count']) ? (int) $_GET['grave_enforced_count'] : 0;
         $appeals = class_exists('CatGame_Reports') ? CatGame_Reports::list_pending_appeals(200) : [];
+        $last_grave_run = class_exists('CatGame_Reports') ? CatGame_Reports::get_last_grave_enforcement_run() : [];
         ?>
         <div class="wrap catgame-admin-page">
             <h1>Cat Game - Moderación</h1>
@@ -491,6 +494,9 @@ class CatGame_Admin {
             <?php elseif ($appeal_notice === 'invalid'): ?>
                 <div class="notice notice-error is-dismissible"><p>No se pudo procesar la apelación.</p></div>
             <?php endif; ?>
+            <?php if ($grave_enforced === 1): ?>
+                <div class="notice notice-success is-dismissible"><p>Enforcement manual ejecutado. Casos graves procesados: <?php echo (int) $grave_enforced_count; ?>.</p></div>
+            <?php endif; ?>
             <?php if ($notice === 'updated'): ?>
                 <div class="notice notice-success is-dismissible"><p>Acción de moderación actualizada.</p></div>
             <?php elseif ($notice === 'unchanged'): ?>
@@ -500,6 +506,25 @@ class CatGame_Admin {
             <?php elseif ($notice === 'invalid'): ?>
                 <div class="notice notice-error is-dismissible"><p>No se pudo actualizar la acción (datos inválidos).</p></div>
             <?php endif; ?>
+            <section class="catgame-panel" style="margin-bottom:16px;">
+                <h2>Enforcement casos graves</h2>
+                <?php
+                $last_run_at = sanitize_text_field((string) ($last_grave_run['ran_at'] ?? ''));
+                $last_run_processed = (int) ($last_grave_run['processed'] ?? 0);
+                ?>
+                <p class="description">
+                    Última ejecución: <strong><?php echo $last_run_at !== '' ? esc_html($last_run_at) : 'sin registros'; ?></strong>
+                    <?php if ($last_run_at !== ''): ?>
+                        · Casos procesados: <strong><?php echo (int) $last_run_processed; ?></strong>
+                    <?php endif; ?>
+                </p>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <?php wp_nonce_field('catgame_run_grave_enforcement'); ?>
+                    <input type="hidden" name="action" value="catgame_run_grave_enforcement" />
+                    <button type="submit" class="button">Ejecutar enforcement ahora</button>
+                </form>
+            </section>
+
             <section class="catgame-panel" style="margin-bottom:16px;">
                 <h2>Apelaciones pendientes</h2>
                 <table class="widefat striped">

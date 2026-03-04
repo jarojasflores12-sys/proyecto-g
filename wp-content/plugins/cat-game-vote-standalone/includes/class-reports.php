@@ -12,6 +12,7 @@ class CatGame_Reports {
     private const APPEAL_WINDOW_HOURS = 72;
     private const APPEAL_RATE_LIMIT_MAX = 3;
     private const CRON_HOOK_ENFORCE_GRAVE = 'catgame_enforce_grave_cases_event';
+    private const GRAVE_ENFORCEMENT_LAST_RUN_OPTION = 'catgame_grave_enforcement_last_run';
 
     public static function init(): void {
         add_action('admin_post_catgame_report_submission', [__CLASS__, 'handle_report_submission']);
@@ -21,6 +22,7 @@ class CatGame_Reports {
         add_action('wp_ajax_catgame_mark_notifications_read', [__CLASS__, 'handle_mark_notifications_read']);
         add_action('wp_ajax_catgame_submit_appeal', [__CLASS__, 'handle_submit_appeal']);
         add_action('admin_post_catgame_decide_appeal', [__CLASS__, 'handle_decide_appeal']);
+        add_action('admin_post_catgame_run_grave_enforcement', [__CLASS__, 'handle_manual_grave_enforcement']);
         add_action(self::CRON_HOOK_ENFORCE_GRAVE, [__CLASS__, 'enforce_grave_case_deadlines']);
 
         self::maybe_schedule_grave_enforcement();
@@ -60,6 +62,24 @@ class CatGame_Reports {
             $processed = self::rebuild_bans_for_all_users();
             \WP_CLI::success('Bans recalculados para ' . $processed . ' usuarios.');
         });
+    }
+
+
+    public static function get_last_grave_enforcement_run(): array {
+        $value = get_option(self::GRAVE_ENFORCEMENT_LAST_RUN_OPTION, []);
+        return is_array($value) ? $value : [];
+    }
+
+    public static function handle_manual_grave_enforcement(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        check_admin_referer('catgame_run_grave_enforcement');
+
+        $processed = self::enforce_grave_case_deadlines();
+        wp_safe_redirect(admin_url('admin.php?page=catgame-moderation&grave_enforced=1&grave_enforced_count=' . (int) $processed));
+        exit;
     }
 
     public static function endpoint_report_url(): string {
@@ -1112,15 +1132,17 @@ class CatGame_Reports {
         return $count > 0;
     }
 
-    public static function enforce_grave_case_deadlines(): void {
+    public static function enforce_grave_case_deadlines(): int {
         global $wpdb;
         $table = CatGame_DB::table('grave_cases');
         $now = current_time('mysql');
         $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$table} WHERE case_status = 'open' AND appeal_status = 'none' AND expires_at <= %s LIMIT 50", $now), ARRAY_A);
         if (!is_array($rows) || empty($rows)) {
-            return;
+            self::track_grave_enforcement_run(0);
+            return 0;
         }
 
+        $processed = 0;
         foreach ($rows as $row) {
             $user_id = (int) ($row['user_id'] ?? 0);
             $submission_id = (int) ($row['submission_id'] ?? 0);
@@ -1130,7 +1152,11 @@ class CatGame_Reports {
 
             self::close_grave_case($submission_id, 'expired');
             self::execute_perma_ban($user_id, 'grave_expired_no_appeal');
+            $processed++;
         }
+
+        self::track_grave_enforcement_run($processed);
+        return $processed;
     }
 
     private static function mark_infraction_reversed_by_submission(int $submission_id, string $reason = 'appeal_accepted'): void {
@@ -1173,6 +1199,17 @@ class CatGame_Reports {
         self::apply_escalation_upload_ban($user_id);
     }
 
+
+    private static function track_grave_enforcement_run(int $processed): void {
+        update_option(
+            self::GRAVE_ENFORCEMENT_LAST_RUN_OPTION,
+            [
+                'ran_at' => current_time('mysql'),
+                'processed' => max(0, (int) $processed),
+            ],
+            false
+        );
+    }
 
     public static function rebuild_bans_for_user(int $user_id): void {
         if ($user_id <= 0) {
