@@ -1108,72 +1108,26 @@ class CatGame_Admin {
         }
 
         return wp_json_encode([
-            'mode' => empty($items) ? 'none' : 'rules',
+            'mode' => empty($items) ? 'none' : 'mixed',
             'items' => $items,
         ]);
     }
 
     private static function parse_rules_for_admin(?string $rules_json): array {
-        if (!is_string($rules_json) || trim($rules_json) === '') {
-            return [
-                'uses_rules' => false,
-                'items' => [
-                    ['title' => '', 'type' => 'tema', 'value' => '', 'desc' => ''],
-                ],
-            ];
-        }
-
-        $decoded = json_decode((string) $rules_json, true);
+        $normalized = CatGame_Events::normalize_rules_payload($rules_json);
         $items = [];
 
-        if (is_array($decoded) && isset($decoded['items']) && is_array($decoded['items'])) {
-            foreach ($decoded['items'] as $item) {
-                if (!is_array($item)) {
-                    continue;
-                }
-
-                $title = sanitize_text_field((string) ($item['title'] ?? ''));
-                $type = sanitize_key((string) ($item['type'] ?? 'tema'));
-                $desc = sanitize_text_field((string) ($item['desc'] ?? ''));
-                if ($title === '') {
-                    continue;
-                }
-                if (!in_array($type, ['tema', 'bonus', 'penalizacion'], true)) {
-                    $type = 'tema';
-                }
-
-                $value = '';
-                if ($type !== 'tema' && isset($item['value']) && is_numeric($item['value'])) {
-                    $value = (string) round((float) $item['value'], 2);
-                }
-
-                $items[] = [
-                    'title' => $title,
-                    'type' => $type,
-                    'value' => $value,
-                    'desc' => $desc,
-                ];
+        foreach ((array) ($normalized['items'] ?? []) as $item) {
+            if (!is_array($item)) {
+                continue;
             }
 
-            $mode = sanitize_key((string) ($decoded['mode'] ?? 'rules'));
-            $uses_rules = $mode !== 'none';
-            if (!$uses_rules) {
-                $items = [];
-            }
-        } else {
-            $legacy_rules = CatGame_Events::decode_rules($rules_json);
-            $legacy_labels = self::legacy_rule_labels();
-            foreach ($legacy_rules as $key => $value) {
-                if (!is_numeric($value)) {
-                    continue;
-                }
-                $items[] = [
-                    'title' => $legacy_labels[$key] ?? self::humanize_rule_key((string) $key),
-                    'type' => 'bonus',
-                    'value' => (string) round((float) $value, 2),
-                    'desc' => '',
-                ];
-            }
+            $items[] = [
+                'title' => sanitize_text_field((string) ($item['title'] ?? '')),
+                'type' => in_array(sanitize_key((string) ($item['type'] ?? 'tema')), ['tema', 'bonus', 'penalizacion'], true) ? sanitize_key((string) ($item['type'] ?? 'tema')) : 'tema',
+                'value' => is_numeric($item['value'] ?? null) ? (string) round((float) $item['value'], 2) : '',
+                'desc' => sanitize_text_field((string) ($item['desc'] ?? '')),
+            ];
         }
 
         if (empty($items)) {
@@ -1181,9 +1135,7 @@ class CatGame_Admin {
         }
 
         return [
-            'uses_rules' => !empty(array_filter($items, static function (array $item): bool {
-                return trim((string) ($item['title'] ?? '')) !== '';
-            })),
+            'uses_rules' => (($normalized['mode'] ?? 'none') !== 'none'),
             'items' => $items,
         ];
     }
@@ -1233,50 +1185,50 @@ class CatGame_Admin {
         $start_ts = strtotime((string) ($event['starts_at'] ?? ''));
         $end_ts = strtotime((string) ($event['ends_at'] ?? ''));
         $status_label = self::event_status_label($start_ts, $end_ts, (int) ($event['is_active'] ?? 0), $now_ts);
-        $rules = self::parse_rules_for_admin((string) ($event['rules_json'] ?? ''));
-        $rules_items = array_values(array_filter($rules['items'], static function (array $item): bool {
-            return trim((string) ($item['title'] ?? '')) !== '';
-        }));
 
-        $has_competitive = false;
-        foreach ($rules_items as $item) {
-            $type = sanitize_key((string) ($item['type'] ?? 'tema'));
-            if (in_array($type, ['bonus', 'penalizacion'], true)) {
-                $has_competitive = true;
-                break;
-            }
-        }
-
-        $mode_label = $has_competitive ? 'Competitivo' : 'Temático';
+        $popup_view = CatGame_Events::build_rules_popup_view($event);
+        $mode = sanitize_key((string) ($popup_view['mode'] ?? 'none'));
+        $items = isset($popup_view['items']) && is_array($popup_view['items']) ? $popup_view['items'] : [];
+        $general = isset($popup_view['general_summary']) && is_array($popup_view['general_summary']) ? $popup_view['general_summary'] : [];
         ?>
         <section class="catgame-event-preview">
-            <h3>Previsualización</h3>
-            <p><strong>Nombre:</strong> <?php echo esc_html((string) ($event['name'] ?? 'Sin nombre')); ?></p>
+            <h3>Previsualización (1:1 juego)</h3>
+            <p><strong>Nombre:</strong> <?php echo esc_html((string) ($popup_view['name'] ?? 'Evento vigente')); ?></p>
             <p><strong>Estado:</strong> <?php echo esc_html($status_label); ?></p>
-            <p><strong>Inicio:</strong> <?php echo esc_html(wp_date('d M Y H:i', $start_ts)); ?></p>
-            <p><strong>Fin:</strong> <?php echo esc_html(wp_date('d M Y H:i', $end_ts)); ?></p>
-            <p><strong>Modo del evento:</strong> <?php echo esc_html($mode_label); ?></p>
-            <ul class="catgame-preview-rules">
-                <?php if (empty($rules_items)): ?>
-                    <li>🎯 Sin reglas definidas.</li>
-                <?php else: ?>
-                    <?php foreach ($rules_items as $item): ?>
+            <p><strong>Vigencia:</strong> <?php echo esc_html((string) ($popup_view['date_range'] ?? '')); ?></p>
+
+            <?php if ($mode === 'none'): ?>
+                <p><strong>Reglas generales (resumen):</strong></p>
+                <ul class="catgame-preview-rules">
+                    <?php foreach ($general as $line): ?>
+                        <li>• <?php echo esc_html((string) $line); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php else: ?>
+                <p><strong>Reglas del evento:</strong></p>
+                <ul class="catgame-preview-rules">
+                    <?php foreach ($items as $item): ?>
                         <?php
                         $type = sanitize_key((string) ($item['type'] ?? 'tema'));
                         $title = (string) ($item['title'] ?? 'Regla');
                         $value = is_numeric($item['value'] ?? null) ? (float) $item['value'] : null;
                         $desc = trim((string) ($item['desc'] ?? ''));
                         ?>
-                        <?php if ($type === 'bonus'): ?>
-                            <li>✨ <?php echo esc_html($title); ?><?php if ($value !== null): ?> (+<?php echo esc_html((string) $value); ?>)<?php endif; ?><?php if ($desc !== ''): ?> — <?php echo esc_html($desc); ?><?php endif; ?></li>
-                        <?php elseif ($type === 'penalizacion'): ?>
-                            <li>⚠️ <?php echo esc_html($title); ?><?php if ($value !== null): ?> (-<?php echo esc_html((string) $value); ?>)<?php endif; ?><?php if ($desc !== ''): ?> — <?php echo esc_html($desc); ?><?php endif; ?></li>
-                        <?php else: ?>
-                            <li>🎯 <?php echo esc_html($title); ?><?php if ($desc !== ''): ?> — <?php echo esc_html($desc); ?><?php endif; ?></li>
-                        <?php endif; ?>
+                        <li>
+                            <span><?php echo esc_html($title); ?><?php if ($desc !== ''): ?> — <?php echo esc_html($desc); ?><?php endif; ?></span>
+                            <?php if ($type === 'bonus' && $value !== null): ?><strong>+<?php echo esc_html(number_format_i18n($value, 1)); ?></strong><?php endif; ?>
+                            <?php if ($type === 'penalizacion' && $value !== null): ?><strong>-<?php echo esc_html(number_format_i18n($value, 1)); ?></strong><?php endif; ?>
+                        </li>
                     <?php endforeach; ?>
-                <?php endif; ?>
-            </ul>
+                </ul>
+
+                <p><strong>Reglas generales (resumen):</strong></p>
+                <ul class="catgame-preview-rules">
+                    <?php foreach ($general as $line): ?>
+                        <li>• <?php echo esc_html((string) $line); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
         </section>
         <?php
     }

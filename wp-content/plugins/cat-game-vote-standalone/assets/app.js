@@ -6,7 +6,8 @@
   }
 
   const eventId = trigger.getAttribute('data-event-id') || '';
-  const storageKey = eventId ? `catgame_rules_seen_${eventId}` : '';
+  const eventRevision = trigger.getAttribute('data-event-revision') || '';
+  const storageKey = eventId ? `catgame_rules_seen_${eventId}_${eventRevision || 'v1'}` : '';
 
   const openModal = () => {
     modal.classList.add('is-open');

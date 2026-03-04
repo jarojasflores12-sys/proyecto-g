@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.27.19
+- Event rules popup/game: ahora refleja exactamente el evento activo normalizado (`rules.mode` + `items`), incluyendo prioridad absoluta de `mode: none` sobre reglas legacy.
+- Si el evento no usa reglas (`mode=none`): el popup muestra solo **Reglas generales (resumen)** y no renderiza items del evento.
+- Si el evento usa reglas: el popup muestra items del evento + bloque corto de reglas generales.
+- Admin Gestor (previsualización): se alinea 1:1 con el texto/estructura que ve el juego para `mode=none` y para eventos con reglas.
+- UX cache/session: el popup usa revisión del evento (`data-event-revision`) en la key de sessionStorage para invalidar estado visto cuando cambia el evento activo/rules_json.
+
 ## 0.27.18
 - Upload UX/accesibilidad: se agrega microcopy bajo “Acepto los términos” para reforzar que la aceptación confirma lectura de normas y sanciones.
 - Upload modal UX: al abrir “Normas y sanciones”, el foco se mueve al botón de acción “Entendido”.
