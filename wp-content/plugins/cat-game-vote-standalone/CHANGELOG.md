@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.20
+- Seguridad auth: se agrega rate limit en endpoints de login, registro, recuperación y reset de contraseña para mitigar abuso por intentos masivos.
+- UX auth: nuevos mensajes de error `rate_limited` en vistas de acceso para feedback consistente cuando se supera el límite temporal.
+
 ## 0.27.19
 - Event rules popup/game: ahora refleja exactamente el evento activo normalizado (`rules.mode` + `items`), incluyendo prioridad absoluta de `mode: none` sobre reglas legacy.
 - Si el evento no usa reglas (`mode=none`): el popup muestra solo **Reglas generales (resumen)** y no renderiza items del evento.
