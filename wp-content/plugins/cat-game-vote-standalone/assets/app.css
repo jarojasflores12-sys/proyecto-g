@@ -1740,3 +1740,12 @@ body.cg-has-custom-bg .cg-main {
   text-decoration: underline;
   cursor: pointer;
 }
+
+
+.cg-terms-help {
+  display: block;
+  margin-top: -2px;
+  margin-bottom: 6px;
+  color: var(--cg-muted);
+  font-size: 12px;
+}

@@ -81,6 +81,7 @@ if ($upload_ban_until_iso !== '') {
                 Acepto los términos
                 <button type="button" class="cg-terms-link" data-open-upload-rules="1">(ver normas)</button>
             </label>
+            <small class="cg-terms-help">Tu aceptación confirma que leíste y entendiste las normas y sanciones.</small>
             <button type="button" class="secondary" data-open-upload-rules="1">Ver normas</button>
             <button type="submit" class="cg-upload-submit">Enviar</button>
         </form>

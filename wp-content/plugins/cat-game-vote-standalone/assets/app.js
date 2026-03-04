@@ -390,9 +390,15 @@
   const openUploadRulesButtons = Array.from(document.querySelectorAll('[data-open-upload-rules="1"]'));
   const confirmTermsCheckbox = document.getElementById('catgame-confirm-terms');
   if (uploadRulesModal && openUploadRulesButtons.length) {
+    const acknowledgeButton = uploadRulesModal.querySelector('[data-upload-rules-close="1"]:not(.cg-modal__backdrop)');
+
     const setUploadRulesOpen = (open) => {
       uploadRulesModal.classList.toggle('is-open', open);
       uploadRulesModal.setAttribute('aria-hidden', open ? 'false' : 'true');
+
+      if (open && acknowledgeButton instanceof HTMLElement) {
+        window.setTimeout(() => acknowledgeButton.focus(), 0);
+      }
     };
 
     openUploadRulesButtons.forEach((btn) => {

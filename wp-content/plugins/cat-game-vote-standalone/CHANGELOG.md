@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.18
+- Upload UX/accesibilidad: se agrega microcopy bajo “Acepto los términos” para reforzar que la aceptación confirma lectura de normas y sanciones.
+- Upload modal UX: al abrir “Normas y sanciones”, el foco se mueve al botón de acción “Entendido”.
+
 ## 0.27.17
 - Upload UX/copy: el modal de términos pasa a **"Normas y sanciones"** con contenido más claro en bullets (prohibiciones, severidades y consecuencias).
 - Upload UX: el modal se abre desde **Ver normas**, desde el link junto a "Acepto los términos" y también al hacer click en el checkbox obligatorio.
