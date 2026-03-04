@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.22
+- Auth rate limit (DX/compat): se agregan filtros `catgame_auth_rate_limit_max_attempts` y `catgame_auth_rate_limit_window_seconds` para ajustar límites sin editar core del plugin.
+- Auth rate limit (infra): nuevo filtro `catgame_auth_rate_limit_ip` para resolver IP en entornos con proxy/CDN; por defecto se mantiene `REMOTE_ADDR` validada.
+
 ## 0.27.21
 - Auth rate limit hardening: se evita bypass por rotación de identificador aplicando bucket por IP+acción y bucket adicional por identificador+acción.
 - Seguridad de origen IP: el cálculo del rate limit usa `REMOTE_ADDR` validada para evitar depender de headers spoofeables (`X-Forwarded-For`/`Client-IP`).

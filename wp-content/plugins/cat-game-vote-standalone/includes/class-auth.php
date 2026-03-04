@@ -385,9 +385,20 @@ class CatGame_Auth {
         exit;
     }
 
+
+    private static function auth_rate_limit_max_attempts(): int {
+        $value = (int) apply_filters('catgame_auth_rate_limit_max_attempts', self::AUTH_RATE_LIMIT_MAX_ATTEMPTS);
+        return max(1, $value);
+    }
+
+    private static function auth_rate_limit_window_seconds(): int {
+        $value = (int) apply_filters('catgame_auth_rate_limit_window_seconds', self::AUTH_RATE_LIMIT_WINDOW_SECONDS);
+        return max(1, $value);
+    }
+
     private static function within_auth_rate_limit(string $action, string $identifier = ''): bool {
-        $window = self::AUTH_RATE_LIMIT_WINDOW_SECONDS;
-        $max_attempts = self::AUTH_RATE_LIMIT_MAX_ATTEMPTS;
+        $window = self::auth_rate_limit_window_seconds();
+        $max_attempts = self::auth_rate_limit_max_attempts();
 
         $action = sanitize_key($action);
         $ip = self::request_ip();
@@ -440,11 +451,18 @@ class CatGame_Auth {
 
     private static function request_ip(): string {
         $remote_addr = $_SERVER['REMOTE_ADDR'] ?? '';
-        if (is_string($remote_addr)) {
-            $remote_addr = trim($remote_addr);
-            if ($remote_addr !== '' && filter_var($remote_addr, FILTER_VALIDATE_IP)) {
-                return $remote_addr;
+        $remote_addr = is_string($remote_addr) ? trim($remote_addr) : '';
+
+        $filtered_ip = apply_filters('catgame_auth_rate_limit_ip', $remote_addr);
+        if (is_string($filtered_ip)) {
+            $filtered_ip = trim($filtered_ip);
+            if ($filtered_ip !== '' && filter_var($filtered_ip, FILTER_VALIDATE_IP)) {
+                return $filtered_ip;
             }
+        }
+
+        if ($remote_addr !== '' && filter_var($remote_addr, FILTER_VALIDATE_IP)) {
+            return $remote_addr;
         }
 
         return '0.0.0.0';
