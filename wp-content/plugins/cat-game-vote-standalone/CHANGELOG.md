@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.8
+- Operación/Enforcement: se agenda cron hourly `catgame_enforce_grave_cases_event` para ejecutar automáticamente `enforce_grave_case_deadlines` sin depender de login/acciones de usuario.
+- Lifecycle plugin: al desactivar el plugin se desagenda el cron de casos graves para evitar eventos huérfanos.
+- DX/Soporte: nuevo comando WP-CLI `wp catgame bans-rebuild [--user_id=<id>]` para recalcular bans desde `infractions` + `grave_cases` (auditoría/recovery operacional).
+
 ## 0.27.7
 - Moderación (nuevo motor): se agregan tablas `catgame_infractions`, `catgame_bans`, `catgame_perma_bans` y `catgame_grave_cases` para modelar puntos, bloqueos y casos graves con lifecycle.
 - Puntos y escalamiento: leve=+1, moderada=+3, grave=+9 (expiran a 1 año); umbrales automáticos de ban de subida (>=3 => 3 días, >=9 => 7 días, preservando el mayor).

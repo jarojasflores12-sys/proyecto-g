@@ -11,6 +11,7 @@ class CatGame_Reports {
     private const NOTIFICATIONS_META_KEY = 'catgame_notifications';
     private const APPEAL_WINDOW_HOURS = 72;
     private const APPEAL_RATE_LIMIT_MAX = 3;
+    private const CRON_HOOK_ENFORCE_GRAVE = 'catgame_enforce_grave_cases_event';
 
     public static function init(): void {
         add_action('admin_post_catgame_report_submission', [__CLASS__, 'handle_report_submission']);
@@ -20,6 +21,45 @@ class CatGame_Reports {
         add_action('wp_ajax_catgame_mark_notifications_read', [__CLASS__, 'handle_mark_notifications_read']);
         add_action('wp_ajax_catgame_submit_appeal', [__CLASS__, 'handle_submit_appeal']);
         add_action('admin_post_catgame_decide_appeal', [__CLASS__, 'handle_decide_appeal']);
+        add_action(self::CRON_HOOK_ENFORCE_GRAVE, [__CLASS__, 'enforce_grave_case_deadlines']);
+
+        self::maybe_schedule_grave_enforcement();
+        self::register_cli_commands();
+    }
+
+    public static function deactivate(): void {
+        $timestamp = wp_next_scheduled(self::CRON_HOOK_ENFORCE_GRAVE);
+        if ($timestamp !== false) {
+            wp_unschedule_event($timestamp, self::CRON_HOOK_ENFORCE_GRAVE);
+        }
+    }
+
+    private static function maybe_schedule_grave_enforcement(): void {
+        if (!wp_next_scheduled(self::CRON_HOOK_ENFORCE_GRAVE)) {
+            wp_schedule_event(time() + HOUR_IN_SECONDS, 'hourly', self::CRON_HOOK_ENFORCE_GRAVE);
+        }
+    }
+
+    private static function register_cli_commands(): void {
+        if (!(defined('WP_CLI') && WP_CLI)) {
+            return;
+        }
+
+        if (!class_exists('WP_CLI')) {
+            return;
+        }
+
+        \WP_CLI::add_command('catgame bans-rebuild', static function (array $args, array $assoc_args): void {
+            $user_id = isset($assoc_args['user_id']) ? (int) $assoc_args['user_id'] : 0;
+            if ($user_id > 0) {
+                self::rebuild_bans_for_user($user_id);
+                \WP_CLI::success('Bans recalculados para user_id=' . $user_id);
+                return;
+            }
+
+            $processed = self::rebuild_bans_for_all_users();
+            \WP_CLI::success('Bans recalculados para ' . $processed . ' usuarios.');
+        });
     }
 
     public static function endpoint_report_url(): string {
@@ -1131,6 +1171,53 @@ class CatGame_Reports {
             'upload_banned_until' => null,
         ]);
         self::apply_escalation_upload_ban($user_id);
+    }
+
+
+    public static function rebuild_bans_for_user(int $user_id): void {
+        if ($user_id <= 0) {
+            return;
+        }
+
+        self::enforce_grave_case_deadlines();
+        self::recalculate_user_bans($user_id);
+
+        global $wpdb;
+        $grave_cases_table = CatGame_DB::table('grave_cases');
+        $open_grave_case = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$grave_cases_table} WHERE user_id = %d AND case_status = 'open'",
+                $user_id
+            )
+        );
+
+        if ($open_grave_case > 0) {
+            $extended_until = gmdate('Y-m-d H:i:s', time() + (30 * DAY_IN_SECONDS));
+            self::upsert_ban_fields($user_id, [
+                'hard_hold_until' => $extended_until,
+                'upload_banned_until' => $extended_until,
+                'react_banned_until' => $extended_until,
+            ]);
+        }
+    }
+
+    public static function rebuild_bans_for_all_users(): int {
+        global $wpdb;
+        $infractions_table = CatGame_DB::table('infractions');
+        $grave_cases_table = CatGame_DB::table('grave_cases');
+
+        $user_ids = $wpdb->get_col("SELECT DISTINCT user_id FROM {$infractions_table}");
+        $grave_user_ids = $wpdb->get_col("SELECT DISTINCT user_id FROM {$grave_cases_table}");
+        $all_ids = array_unique(array_map('intval', array_merge(is_array($user_ids) ? $user_ids : [], is_array($grave_user_ids) ? $grave_user_ids : [])));
+        $all_ids = array_values(array_filter($all_ids, static function (int $id): bool {
+            return $id > 0;
+        }));
+
+        foreach ($all_ids as $user_id) {
+            self::rebuild_bans_for_user($user_id);
+        }
+
+        return count($all_ids);
     }
 
     private static function email_hash(string $email): string {

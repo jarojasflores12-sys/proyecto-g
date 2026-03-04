@@ -25,6 +25,10 @@ class CatGame_DB {
     }
 
     public static function deactivate(): void {
+        if (class_exists('CatGame_Reports')) {
+            CatGame_Reports::deactivate();
+        }
+
         flush_rewrite_rules();
     }
 
