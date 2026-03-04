@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.23
+- Auth rate limit UX/safety: las validaciones de campos obligatorios en login/registro/recuperación/reset se ejecutan antes de incrementar buckets para evitar bloqueos falsos por envíos vacíos.
+- Se mantiene sin cambios la protección de intentos reales (`rate_limited`) y la lógica de buckets por IP+acción e identificador+acción.
+
 ## 0.27.22
 - Auth rate limit (DX/compat): se agregan filtros `catgame_auth_rate_limit_max_attempts` y `catgame_auth_rate_limit_window_seconds` para ajustar límites sin editar core del plugin.
 - Auth rate limit (infra): nuevo filtro `catgame_auth_rate_limit_ip` para resolver IP en entornos con proxy/CDN; por defecto se mantiene `REMOTE_ADDR` validada.

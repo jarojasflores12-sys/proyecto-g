@@ -38,12 +38,12 @@ class CatGame_Auth {
         $identifier = sanitize_text_field(wp_unslash($_POST['login_identifier'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
 
-        if (!self::within_auth_rate_limit('login', $identifier)) {
-            self::redirect_auth(['auth' => 'login', 'login_error' => 'rate_limited', 'login_identifier' => $identifier]);
-        }
-
         if ($identifier === '' || $password === '') {
             self::redirect_auth(['auth' => 'login', 'login_error' => 'missing_fields', 'login_identifier' => $identifier]);
+        }
+
+        if (!self::within_auth_rate_limit('login', $identifier)) {
+            self::redirect_auth(['auth' => 'login', 'login_error' => 'rate_limited', 'login_identifier' => $identifier]);
         }
 
         $signon = wp_signon(
@@ -84,14 +84,14 @@ class CatGame_Auth {
         $password = (string) ($_POST['password'] ?? '');
         $password_confirm = (string) ($_POST['password_confirm'] ?? '');
 
-        if (!self::within_auth_rate_limit('register', $username . '|' . $email)) {
-            self::redirect_auth(['auth' => 'register', 'register_error' => 'rate_limited', 'reg_username' => $username, 'reg_email' => $email]);
-        }
-
         $base = ['auth' => 'register', 'reg_username' => $username, 'reg_email' => $email];
 
         if ($username === '' || $email === '' || $password === '' || $password_confirm === '') {
             self::redirect_auth($base + ['register_error' => 'missing_fields']);
+        }
+
+        if (!self::within_auth_rate_limit('register', $username . '|' . $email)) {
+            self::redirect_auth(['auth' => 'register', 'register_error' => 'rate_limited', 'reg_username' => $username, 'reg_email' => $email]);
         }
 
         if (!validate_username($username)) {
@@ -149,12 +149,12 @@ class CatGame_Auth {
 
         $identifier = sanitize_text_field(wp_unslash($_POST['lost_identifier'] ?? ''));
 
-        if (!self::within_auth_rate_limit('lost_password', $identifier)) {
-            self::redirect_auth(['auth' => 'forgot', 'lost_error' => 'rate_limited', 'lost_identifier' => $identifier]);
-        }
-
         if ($identifier === '') {
             self::redirect_auth(['auth' => 'forgot', 'lost_error' => 'missing_identifier', 'lost_identifier' => $identifier]);
+        }
+
+        if (!self::within_auth_rate_limit('lost_password', $identifier)) {
+            self::redirect_auth(['auth' => 'forgot', 'lost_error' => 'rate_limited', 'lost_identifier' => $identifier]);
         }
 
         self::$password_reset_from_plugin = true;
@@ -181,19 +181,19 @@ class CatGame_Auth {
         $password = (string) ($_POST['password'] ?? '');
         $password_confirm = (string) ($_POST['password_confirm'] ?? '');
 
+        $base = ['auth' => 'reset', 'rp_login' => $login, 'key' => $key];
+
+        if ($password === '' || $password_confirm === '') {
+            self::redirect_auth($base + ['reset_error' => 'missing_fields']);
+        }
+
         if (!self::within_auth_rate_limit('reset_password', $login . '|' . $key)) {
             self::redirect_auth(['auth' => 'reset', 'reset_error' => 'rate_limited', 'rp_login' => $login, 'key' => $key]);
         }
 
-        $base = ['auth' => 'reset', 'rp_login' => $login, 'key' => $key];
-
         $user = check_password_reset_key($key, $login);
         if (is_wp_error($user)) {
             self::redirect_auth(['auth' => 'forgot', 'lost_error' => 'invalid_reset_link']);
-        }
-
-        if ($password === '' || $password_confirm === '') {
-            self::redirect_auth($base + ['reset_error' => 'missing_fields']);
         }
 
         if (strlen($password) < 8) {
