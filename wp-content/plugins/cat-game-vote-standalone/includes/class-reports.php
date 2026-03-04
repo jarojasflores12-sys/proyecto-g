@@ -105,6 +105,7 @@ class CatGame_Reports {
 
         $source_filter = sanitize_key((string) wp_unslash($_POST['grave_history_source'] ?? 'all'));
         $status_filter = sanitize_key((string) wp_unslash($_POST['grave_history_status'] ?? 'all'));
+        $moderation_status_filter = sanitize_key((string) wp_unslash($_POST['status'] ?? 'pending'));
 
         if (!in_array($source_filter, ['all', 'runtime', 'manual', 'cli'], true)) {
             $source_filter = 'all';
@@ -112,10 +113,14 @@ class CatGame_Reports {
         if (!in_array($status_filter, ['all', 'ok', 'error'], true)) {
             $status_filter = 'all';
         }
+        if (!in_array($moderation_status_filter, ['pending', 'resolved'], true)) {
+            $moderation_status_filter = 'pending';
+        }
 
         $processed = self::enforce_grave_case_deadlines('manual');
         $redirect_url = add_query_arg([
             'page' => 'catgame-moderation',
+            'status' => $moderation_status_filter,
             'grave_enforced' => 1,
             'grave_enforced_count' => (int) $processed,
             'grave_history_source' => $source_filter,

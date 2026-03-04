@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.14
+- Moderation Admin UX: el botón **Ejecutar enforcement ahora** conserva también el filtro principal de reportes (`status=pending|resolved`) para no cambiar de pestaña tras la ejecución.
+- Redirect consistency: `catgame_run_grave_enforcement` valida/normaliza `status` y lo incluye en el redirect junto a los filtros de historial corto.
+
 ## 0.27.13
 - Moderation Admin hardening: se valida/normaliza también en UI admin los filtros `grave_history_source` y `grave_history_status` (whitelist) para evitar estados inválidos por querystring manual.
 - Consistencia de diagnóstico: ante valores no permitidos en URL, los filtros vuelven a `all` de forma predecible.

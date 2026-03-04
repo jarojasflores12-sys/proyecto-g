@@ -537,6 +537,7 @@ class CatGame_Admin {
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                     <?php wp_nonce_field('catgame_run_grave_enforcement'); ?>
                     <input type="hidden" name="action" value="catgame_run_grave_enforcement" />
+                    <input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>" />
                     <input type="hidden" name="grave_history_source" value="<?php echo esc_attr($grave_history_source_filter); ?>" />
                     <input type="hidden" name="grave_history_status" value="<?php echo esc_attr($grave_history_status_filter); ?>" />
                     <button type="submit" class="button">Ejecutar enforcement ahora</button>
