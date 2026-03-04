@@ -109,14 +109,54 @@ class CatGame_Reports {
         update_user_meta($user_id, self::UPLOAD_BAN_META_KEY, $until_ts);
     }
 
-    public static function add_notification(int $user_id, string $type, string $title, string $message): void {
+
+    private static function moderation_reason_label(string $reason_code): string {
+        $map = [
+            'not_pet' => 'No es una mascota',
+            'human' => 'Aparece una persona',
+            'inappropriate' => 'Contenido inapropiado',
+            'other' => 'Otro',
+        ];
+
+        return $map[$reason_code] ?? 'Revisión de moderación';
+    }
+
+    private static function submission_label(?array $submission, int $submission_id): string {
+        if (is_array($submission) && class_exists('CatGame_Submissions')) {
+            $title = trim((string) CatGame_Submissions::title_label($submission));
+            if ($title !== '') {
+                return $title;
+            }
+        }
+
+        return 'Publicación #' . (int) $submission_id;
+    }
+
+    private static function debug_log(string $message): void {
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('catgame_notifications: ' . $message);
+        }
+    }
+
+    public static function add_notification(int $user_id, string $type, string $title, string $message, string $event_key = ""): void {
         if ($user_id <= 0 || trim($title) === '' || trim($message) === '') {
             return;
         }
 
         $items = self::get_notifications($user_id, 200, false);
+        $event_key = sanitize_key($event_key);
+        if ($event_key !== '') {
+            foreach ($items as $item) {
+                if (sanitize_key((string) ($item['event_key'] ?? '')) === $event_key) {
+                    self::debug_log('skip duplicate event ' . $event_key);
+                    return;
+                }
+            }
+        }
+
         array_unshift($items, [
             'id' => wp_generate_uuid4(),
+            'event_key' => $event_key,
             'type' => sanitize_key($type),
             'title' => sanitize_text_field($title),
             'message' => sanitize_textarea_field($message),
@@ -320,7 +360,7 @@ class CatGame_Reports {
         }
 
         CatGame_Submissions::hide_submission($submission_id, 'report_pending');
-        self::add_notification($user_id, 'report_received', 'Reporte recibido', 'Recibimos tu reporte y lo estamos revisando.');
+        self::add_notification($user_id, 'moderation', 'Reporte recibido', 'Recibimos tu reporte y lo estamos revisando.', 'report_received_' . (int) $submission_id);
 
         wp_send_json_success(['message' => 'Reporte enviado. Esta publicación quedó en revisión.', 'submission_id' => $submission_id]);
     }
@@ -348,35 +388,98 @@ class CatGame_Reports {
             exit;
         }
 
+        if (($report['status'] ?? '') === 'resolved') {
+            self::debug_log('skip already resolved report ' . (string) $report_id);
+            wp_safe_redirect(admin_url('admin.php?page=catgame-moderation'));
+            exit;
+        }
+
         $submission_id = (int) ($report['submission_id'] ?? 0);
         $submission = CatGame_Submissions::get_submission($submission_id);
         $author_id = (int) ($submission['user_id'] ?? 0);
         $reporter_id = (int) ($report['reported_user_id'] ?? 0);
         $admin_user_id = get_current_user_id();
 
+        $report_reason = sanitize_key((string) ($report['reason'] ?? 'other'));
+        $reason_label = self::moderation_reason_label($report_reason);
+        $submission_label = self::submission_label($submission, $submission_id);
+
         if ($resolution === 'restored') {
             CatGame_Submissions::unhide_submission($submission_id);
-            self::create_notification($author_id, 'Tu publicación fue restaurada por moderación.');
+            self::add_notification(
+                $author_id,
+                'moderation',
+                'Reporte revisado',
+                'Revisamos el reporte sobre tu publicación “' . $submission_label . '”. No detectamos infracción. Tu publicación sigue visible.',
+                'moderation_' . (int) $report_id . '_restored'
+            );
         } elseif ($resolution === 'removed') {
             if (!in_array($severity, ['leve', 'moderado', 'grave'], true)) {
                 $severity = 'leve';
             }
+
             CatGame_Submissions::hide_submission($submission_id, 'removed');
             self::add_strike($author_id, 'author', $severity, 'submission_removed', $admin_user_id);
-            self::create_notification($author_id, 'Tu publicación fue eliminada por moderación (' . $severity . ').');
+
+            self::add_notification(
+                $author_id,
+                'moderation',
+                'Publicación eliminada',
+                'Tu publicación “' . $submission_label . '” fue eliminada por incumplir las reglas: ' . $reason_label . ' (gravedad: ' . $severity . ').',
+                'moderation_' . (int) $report_id . '_removed'
+            );
+
+            $author_strikes = self::active_strikes_count_by_kind($author_id, 'author');
+            self::add_notification(
+                $author_id,
+                'strike',
+                'Sanción aplicada',
+                'Recibiste un strike (' . (int) $author_strikes . '/3) por: ' . $reason_label . '.',
+                'moderation_' . (int) $report_id . '_strike'
+            );
+
+            if ($report_reason === 'human') {
+                self::set_upload_ban_until($author_id, time() + (3 * DAY_IN_SECONDS));
+                self::add_notification(
+                    $author_id,
+                    'suspension',
+                    'Cuenta suspendida',
+                    'Tu cuenta fue suspendida por 3 días por: ' . $reason_label . '. Durante la suspensión puedes reaccionar, pero no subir fotos.',
+                    'moderation_' . (int) $report_id . '_suspension'
+                );
+            }
+
             if ($severity === 'grave') {
                 CatGame_Submissions::hide_user_submissions($author_id, 'removed');
                 self::set_upload_ban_until($author_id, time() + YEAR_IN_SECONDS);
-                self::create_notification($author_id, 'Tu cuenta tiene restricción para subir publicaciones durante 365 días.');
-            } elseif (self::active_strikes_count($author_id) >= 3) {
+                self::add_notification(
+                    $author_id,
+                    'account',
+                    'Cuenta eliminada',
+                    'Tu cuenta fue eliminada por infracción grave: ' . $reason_label . '. Si crees que es un error, contacta al administrador.',
+                    'moderation_' . (int) $report_id . '_account'
+                );
+            } elseif ($author_strikes >= 3) {
                 self::set_upload_ban_until($author_id, time() + (7 * DAY_IN_SECONDS));
-                self::create_notification($author_id, 'Acumulaste 3 strikes activos. No podrás subir publicaciones por 7 días.');
+                self::add_notification(
+                    $author_id,
+                    'suspension',
+                    'Cuenta suspendida',
+                    'Tu cuenta fue suspendida por 7 días por acumulación de strikes. Durante la suspensión puedes reaccionar, pero no subir fotos.',
+                    'moderation_' . (int) $report_id . '_suspension7'
+                );
             }
         } elseif ($resolution === 'false_report') {
             self::add_strike($reporter_id, 'reporter', 'leve', 'false_report', $admin_user_id);
             if (self::active_strikes_count($reporter_id) >= 3) {
                 self::set_upload_ban_until($reporter_id, time() + (7 * DAY_IN_SECONDS));
-                self::create_notification($reporter_id, 'Acumulaste 3 strikes activos. No podrás subir publicaciones por 7 días.');
+                self::add_notification(
+                    $reporter_id,
+                    'suspension',
+                    'Cuenta suspendida',
+                    'Tu cuenta fue suspendida por 7 días por acumulación de strikes. Durante la suspensión puedes reaccionar, pero no subir fotos.',
+                    'moderation_' . (int) $report_id . '_reporter_suspension7'
+                );
             }
             if (!self::has_pending_reports($submission_id)) {
                 CatGame_Submissions::unhide_submission($submission_id);
@@ -403,9 +506,6 @@ class CatGame_Reports {
                 CatGame_Submissions::unhide_submission($submission_id);
             }
         }
-
-        $result_text = $resolution === 'removed' ? 'aprobado' : ($resolution === 'false_report' ? 'rechazado' : 'resuelto');
-        self::add_notification($reporter_id, 'report_resolved', 'Reporte resuelto', 'Tu reporte fue ' . $result_text . ' por moderación.');
 
         wp_safe_redirect(admin_url('admin.php?page=catgame-moderation'));
         exit;

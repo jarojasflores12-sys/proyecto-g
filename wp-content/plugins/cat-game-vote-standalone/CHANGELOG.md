@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.4
+- Moderación: notificaciones automáticas al dueño de la publicación en revisión admin (reporte revisado/restaurado, publicación eliminada, sanción aplicada y suspensión de cuenta cuando corresponde).
+- Moderación: mensajes user-facing enriquecidos con título de publicación (fallback `Publicación #ID`), motivo y gravedad.
+- Notificaciones: se agrega deduplicación por `event_key` para evitar duplicados por refresh/reintentos en acciones de moderación.
+- Moderación: log mínimo en modo debug para deduplicación y acciones ya resueltas.
+
 ## 0.27.3
 - Perfil: se agrega campanita de notificaciones con badge de no leídas y modal con listado user-facing.
 - Notificaciones (MVP): se migran a `user_meta` (`catgame_notifications`) con helpers para agregar, listar y marcar todas como leídas.
