@@ -1728,3 +1728,15 @@ body.cg-has-custom-bg .cg-main {
   font-size: 12px;
   cursor: pointer;
 }
+
+
+.cg-terms-link {
+  border: 0;
+  background: transparent;
+  color: var(--cg-primary-strong);
+  padding: 0;
+  margin-left: 4px;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}

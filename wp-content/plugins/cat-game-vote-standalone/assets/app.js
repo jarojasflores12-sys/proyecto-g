@@ -387,14 +387,22 @@
 
 
   const uploadRulesModal = document.getElementById('catgame-upload-rules-modal');
-  const openUploadRulesBtn = document.querySelector('[data-open-upload-rules="1"]');
-  if (uploadRulesModal && openUploadRulesBtn) {
+  const openUploadRulesButtons = Array.from(document.querySelectorAll('[data-open-upload-rules="1"]'));
+  const confirmTermsCheckbox = document.getElementById('catgame-confirm-terms');
+  if (uploadRulesModal && openUploadRulesButtons.length) {
     const setUploadRulesOpen = (open) => {
       uploadRulesModal.classList.toggle('is-open', open);
       uploadRulesModal.setAttribute('aria-hidden', open ? 'false' : 'true');
     };
 
-    openUploadRulesBtn.addEventListener('click', () => setUploadRulesOpen(true));
+    openUploadRulesButtons.forEach((btn) => {
+      btn.addEventListener('click', () => setUploadRulesOpen(true));
+    });
+
+    if (confirmTermsCheckbox) {
+      confirmTermsCheckbox.addEventListener('click', () => setUploadRulesOpen(true));
+    }
+
     uploadRulesModal.addEventListener('click', (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.17
+- Upload UX/copy: el modal de términos pasa a **"Normas y sanciones"** con contenido más claro en bullets (prohibiciones, severidades y consecuencias).
+- Upload UX: el modal se abre desde **Ver normas**, desde el link junto a "Acepto los términos" y también al hacer click en el checkbox obligatorio.
+- Copy enforcement: se explicitan puntos y bloqueos (>=3 => 3 días, >=9 => 7 días), hold grave 24h + apelación 24h y desenlace de perma-ban si no apela o se rechaza.
+
 ## 0.27.16
 - Tags UX: se eliminan sugerencias/globales predefinidas; Upload sugiere únicamente etiquetas propias del usuario logueado.
 - Tags backend: nuevo storage de sugerencias personales en `user_meta` `catgame_user_tags` (array normalizado), con merge automático al subir publicación.

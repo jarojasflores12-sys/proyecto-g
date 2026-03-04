@@ -76,23 +76,31 @@ if ($upload_ban_until_iso !== '') {
             <p id="catgame-compress-status" class="cg-file-size cg-visually-hidden" aria-live="polite">Estado: esperando archivo</p>
             <img id="catgame-image-preview" class="cg-image-preview" alt="Preview de imagen seleccionada" style="display:none;" />
 
-            <label><input type="checkbox" name="confirm_no_people" value="1" required <?php checked(!empty($upload_state['confirm_no_people'])); ?>> Acepto los términos</label>
-            <button type="button" class="secondary" data-open-upload-rules="1">Ver reglas del juego</button>
+            <label>
+                <input type="checkbox" name="confirm_no_people" id="catgame-confirm-terms" value="1" required <?php checked(!empty($upload_state['confirm_no_people'])); ?>>
+                Acepto los términos
+                <button type="button" class="cg-terms-link" data-open-upload-rules="1">(ver normas)</button>
+            </label>
+            <button type="button" class="secondary" data-open-upload-rules="1">Ver normas</button>
             <button type="submit" class="cg-upload-submit">Enviar</button>
         </form>
 
         <div class="cg-modal" id="catgame-upload-rules-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-upload-rules-title">
             <div class="cg-modal__backdrop" data-upload-rules-close="1"></div>
             <div class="cg-modal__content" role="document">
-                <button type="button" class="cg-modal__close" data-upload-rules-close="1" aria-label="Cerrar reglas">✕</button>
-                <h2 id="catgame-upload-rules-title">Reglas del juego</h2>
+                <button type="button" class="cg-modal__close" data-upload-rules-close="1" aria-label="Cerrar normas">✕</button>
+                <h2 id="catgame-upload-rules-title">Normas y sanciones</h2>
                 <ul class="cg-modal__rules">
-                    <li>Solo mascotas domésticas (incluye pez). No fauna salvaje.</li>
-                    <li>Prohibido incluir personas visibles.</li>
-                    <li>Contenido explícito/sexual/violento: expulsión inmediata.</li>
-                    <li>Reportes falsos generan sanción.</li>
-                    <li>Debes aceptar términos para publicar.</li>
+                    <li><strong>Prohibido:</strong> fotos con personas visibles, contenido explícito/sexual/violento, no mascotas domésticas y reportes falsos.</li>
+                    <li><strong>Gravedad leve:</strong> +1 punto y acción correctiva según el caso.</li>
+                    <li><strong>Gravedad moderada:</strong> +3 puntos y sanción de mayor impacto.</li>
+                    <li><strong>Gravedad grave:</strong> +9 puntos, bloqueo inmediato (hold) de 24h para subir y reaccionar, con ventana de apelación de 24h.</li>
+                    <li><strong>Puntos y bans:</strong> desde 3 puntos bloqueo de subida por 3 días; desde 9 puntos bloqueo de subida por 7 días.</li>
+                    <li><strong>Si no apela o se rechaza la apelación grave:</strong> eliminación de cuenta de juego y ban permanente.</li>
                 </ul>
+                <div class="cg-confirm-actions">
+                    <button type="button" data-upload-rules-close="1">Entendido</button>
+                </div>
             </div>
         </div>
     <?php endif; ?>
