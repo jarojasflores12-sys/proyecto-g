@@ -6,7 +6,8 @@
   }
 
   const eventId = trigger.getAttribute('data-event-id') || '';
-  const storageKey = eventId ? `catgame_rules_seen_${eventId}` : '';
+  const eventRevision = trigger.getAttribute('data-event-revision') || '';
+  const storageKey = eventId ? `catgame_rules_seen_${eventId}_${eventRevision || 'v1'}` : '';
 
   const openModal = () => {
     modal.classList.add('is-open');
@@ -88,7 +89,7 @@
   }
 
   if (profileSaved === '1') {
-    window.catgameToast('Perfil actualizado correctamente', 'success');
+    window.catgameToast('Ubicación guardada', 'success');
   }
 
   if (completeProfile === '1') {
@@ -97,7 +98,10 @@
 
   if (error) {
     console.warn('CatGame warning:', error);
-    window.catgameToast('Ocurrió un error. Intenta nuevamente.', 'error');
+    const errorMessages = {
+      upload_banned: 'Tienes restringida la subida de publicaciones temporalmente. Puedes seguir reaccionando.',
+    };
+    window.catgameToast(errorMessages[error] || 'Ocurrió un error. Intenta nuevamente.', 'error');
   }
 
   const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || profileSaved === '1' || completeProfile === '1' || !!error;
@@ -121,13 +125,16 @@
     return;
   }
 
-  const originalEl = document.getElementById('catgame-file-size-original');
-  const compressedEl = document.getElementById('catgame-file-size-compressed');
-  const reductionEl = document.getElementById('catgame-file-reduction');
-  const formatEl = document.getElementById('catgame-file-format');
   const stateEl = document.getElementById('catgame-compress-status');
   const previewEl = document.getElementById('catgame-image-preview');
   const filePickerText = document.querySelector('.cg-file-picker-text');
+  const universalPickerBtn = document.querySelector('[data-catgame-pick-universal="1"]');
+  const filePickerBtn = document.querySelector('[data-catgame-pick-file="1"]');
+  const cameraPickerBtn = document.querySelector('[data-catgame-pick-camera="1"]');
+  const universalProxyInput = document.getElementById('catgame-cat-image-universal');
+  const fileProxyInput = document.getElementById('catgame-cat-image-file');
+  const cameraProxyInput = document.getElementById('catgame-cat-image-camera');
+  const titleInput = form.querySelector('input[name="title"]');
   const submitButton = form.querySelector('button[type="submit"]');
 
   const TARGET_MAX_SIDE = 1280;
@@ -138,6 +145,23 @@
 
   let compressedFile = null;
   let compressing = false;
+  let previewObjectUrl = null;
+
+  const syncFileToMainInput = (sourceInput) => {
+    if (!sourceInput || typeof DataTransfer !== 'function') {
+      return;
+    }
+
+    const nextFile = sourceInput.files && sourceInput.files[0] ? sourceInput.files[0] : null;
+    if (!nextFile) {
+      return;
+    }
+
+    const dt = new DataTransfer();
+    dt.items.add(nextFile);
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  };
 
   const setState = (text, isBusy) => {
     if (stateEl) stateEl.textContent = text;
@@ -145,7 +169,67 @@
     compressing = !!isBusy;
   };
 
-  const setCompressionInfo = () => {};
+
+  const isIOS = () => {
+    const ua = window.navigator.userAgent || '';
+    const platform = window.navigator.platform || '';
+    const maxTouchPoints = Number(window.navigator.maxTouchPoints || 0);
+    const iOSUA = /iPad|iPhone|iPod/i.test(ua);
+    const iOSPlatform = /iPad|iPhone|iPod/i.test(platform);
+    const iPadOS = platform === 'MacIntel' && maxTouchPoints > 1;
+    const isAppleWebKit = /AppleWebKit/i.test(ua);
+    return (iOSUA || iOSPlatform || iPadOS) && isAppleWebKit;
+  };
+
+  const isiOSClient = isIOS();
+  if (universalPickerBtn) universalPickerBtn.classList.toggle('is-hidden', !isiOSClient);
+  if (filePickerBtn) filePickerBtn.classList.toggle('is-hidden', isiOSClient);
+  if (cameraPickerBtn) cameraPickerBtn.classList.toggle('is-hidden', isiOSClient);
+  if (filePickerText) {
+    filePickerText.textContent = isiOSClient ? 'Selecciona desde Fotos o Cámara de iOS' : 'JPG, PNG o WEBP';
+  }
+
+  if (titleInput) {
+    titleInput.addEventListener('invalid', () => {
+      const requiredMessage = titleInput.getAttribute('data-required-message') || 'Este campo es obligatorio.';
+      if (titleInput.validity.valueMissing) {
+        titleInput.setCustomValidity(requiredMessage);
+      } else {
+        titleInput.setCustomValidity('');
+      }
+    });
+
+    titleInput.addEventListener('input', () => {
+      titleInput.setCustomValidity('');
+    });
+  }
+
+  if (universalPickerBtn && universalProxyInput) {
+    universalPickerBtn.addEventListener('click', () => {
+      universalProxyInput.click();
+    });
+    universalProxyInput.addEventListener('change', () => syncFileToMainInput(universalProxyInput));
+  }
+
+
+  if (isiOSClient && cameraProxyInput) {
+    cameraProxyInput.disabled = true;
+  }
+
+  if (filePickerBtn && fileProxyInput) {
+    filePickerBtn.addEventListener('click', () => {
+      fileProxyInput.click();
+    });
+    fileProxyInput.addEventListener('change', () => syncFileToMainInput(fileProxyInput));
+  }
+
+  if (!isiOSClient && cameraPickerBtn && cameraProxyInput) {
+    cameraPickerBtn.addEventListener('click', () => {
+      cameraProxyInput.click();
+    });
+    cameraProxyInput.addEventListener('change', () => syncFileToMainInput(cameraProxyInput));
+  }
+
 
   const supportsWebP = () => {
     try {
@@ -240,21 +324,24 @@
     compressedFile = null;
 
     if (previewEl) {
+      if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+      }
       previewEl.src = '';
       previewEl.style.display = 'none';
     }
 
     if (!file) {
-      setCompressionInfo();
       if (filePickerText) filePickerText.textContent = 'JPG, PNG o WEBP';
       setState('Estado: esperando archivo', false);
       return;
     }
 
-    setCompressionInfo({ originalBytes: file.size });
 
     if (previewEl) {
-      previewEl.src = URL.createObjectURL(file);
+      previewObjectUrl = URL.createObjectURL(file);
+      previewEl.src = previewObjectUrl;
       previewEl.style.display = 'block';
     }
 
@@ -262,11 +349,9 @@
       setState('Estado: comprimiendo...', true);
       const nextFile = await buildCompressedFile(file);
       compressedFile = nextFile;
-      setCompressionInfo({ originalBytes: file.size, compressedBytes: nextFile.size, format: nextFile.type });
       setState('Estado: listo para enviar', false);
     } catch (err) {
       console.warn('CatGame compression fallback:', err);
-      setCompressionInfo({ originalBytes: file.size, compressedBytes: null, format: file.type || '-' });
       setState('Estado: error de compresión (se enviará original)', false);
     }
   });
@@ -303,14 +388,28 @@
 
 
   const uploadRulesModal = document.getElementById('catgame-upload-rules-modal');
-  const openUploadRulesBtn = document.querySelector('[data-open-upload-rules="1"]');
-  if (uploadRulesModal && openUploadRulesBtn) {
+  const openUploadRulesButtons = Array.from(document.querySelectorAll('[data-open-upload-rules="1"]'));
+  const confirmTermsCheckbox = document.getElementById('catgame-confirm-terms');
+  if (uploadRulesModal && openUploadRulesButtons.length) {
+    const acknowledgeButton = uploadRulesModal.querySelector('[data-upload-rules-close="1"]:not(.cg-modal__backdrop)');
+
     const setUploadRulesOpen = (open) => {
       uploadRulesModal.classList.toggle('is-open', open);
       uploadRulesModal.setAttribute('aria-hidden', open ? 'false' : 'true');
+
+      if (open && acknowledgeButton instanceof HTMLElement) {
+        window.setTimeout(() => acknowledgeButton.focus(), 0);
+      }
     };
 
-    openUploadRulesBtn.addEventListener('click', () => setUploadRulesOpen(true));
+    openUploadRulesButtons.forEach((btn) => {
+      btn.addEventListener('click', () => setUploadRulesOpen(true));
+    });
+
+    if (confirmTermsCheckbox) {
+      confirmTermsCheckbox.addEventListener('click', () => setUploadRulesOpen(true));
+    }
+
     uploadRulesModal.addEventListener('click', (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
@@ -319,6 +418,136 @@
       }
     });
   }
+})();
+
+(function () {
+  const input = document.getElementById('catgame-upload-tags-input');
+  const root = document.getElementById('catgame-tag-suggestions');
+  if (!input || !root) {
+    return;
+  }
+
+  const api = window.CATGAME || {};
+  const endpoint = api.ajaxUrl || '';
+  const nonce = api.nonce || '';
+
+  let userTags = [];
+
+  const escapeHtml = (value) => String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+  const splitTags = (value) => value.split(/[\n,]+/).map((item) => item.trim().toLowerCase()).filter(Boolean);
+
+  const normalizeTag = (value) => {
+    const stripped = String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return stripped
+      .toLowerCase()
+      .replace(/[^a-z0-9_\s-]/g, '')
+      .replace(/\s+/g, '_')
+      .replace(/-+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 20);
+  };
+
+  const activeToken = () => {
+    const value = input.value || '';
+    const parts = value.split(/[\n,]/);
+    return normalizeTag(parts[parts.length - 1] || '');
+  };
+
+  const renderSuggestions = () => {
+    const token = activeToken();
+    if (!token || !Array.isArray(userTags) || userTags.length === 0) {
+      root.innerHTML = '';
+      return;
+    }
+
+    const selected = new Set(splitTags(input.value || ''));
+    const items = userTags
+      .filter((tag) => tag.includes(token) && !selected.has(tag))
+      .slice(0, 8);
+
+    if (!items.length) {
+      root.innerHTML = '';
+      return;
+    }
+
+    root.innerHTML = `<p class="cg-tag-suggest__title">Mis etiquetas sugeridas</p><div class="cg-tag-suggest__list">${items.map((tag) => `<button type="button" class="cg-tag-suggest__btn" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`).join('')}</div>`;
+  };
+
+  const applySuggestion = (tag) => {
+    const parts = (input.value || '').split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+    parts.pop();
+    parts.push(tag);
+    input.value = `${parts.join(', ')}, `;
+    input.focus();
+    renderSuggestions();
+  };
+
+  root.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+    const btn = target.closest('[data-tag]');
+    if (!(btn instanceof HTMLElement)) {
+      return;
+    }
+    const tag = normalizeTag(btn.getAttribute('data-tag') || '');
+    if (tag) {
+      applySuggestion(tag);
+    }
+  });
+
+  input.addEventListener('input', renderSuggestions);
+  input.addEventListener('focus', renderSuggestions);
+
+  const bootstrapFromDataset = () => {
+    const raw = root.getAttribute('data-user-tags') || '[]';
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        userTags = parsed.map((tag) => normalizeTag(String(tag || ''))).filter(Boolean);
+      }
+    } catch (_) {
+      userTags = [];
+    }
+  };
+
+  const fetchSuggestions = async () => {
+    if (!endpoint || !nonce) {
+      bootstrapFromDataset();
+      renderSuggestions();
+      return;
+    }
+
+    try {
+      const body = new URLSearchParams();
+      body.set('action', 'catgame_tag_suggestions');
+      body.set('nonce', nonce);
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        credentials: 'same-origin',
+        body: body.toString(),
+      });
+
+      const payload = await response.json();
+      const tags = payload?.success && Array.isArray(payload?.data?.tags) ? payload.data.tags : [];
+      userTags = tags.map((tag) => normalizeTag(String(tag || ''))).filter(Boolean);
+      renderSuggestions();
+    } catch (_) {
+      bootstrapFromDataset();
+      renderSuggestions();
+    }
+  };
+
+  fetchSuggestions();
 })();
 
 (function () {
@@ -629,8 +858,7 @@
 
 (function () {
   const config = window.CATGAME_REACTIONS;
-  const widgets = Array.from(document.querySelectorAll('.cg-reactions'));
-  if (!config || !widgets.length) {
+  if (!config) {
     return;
   }
 
@@ -642,8 +870,15 @@
     epic: { emoji: '🔥', label: 'Épico' },
   };
 
-  const LONG_PRESS_MS = 450;
+  const LONG_PRESS_MS = 350;
   const CANCEL_MOVE_PX = 10;
+
+  const REACTION_MESSAGES = {
+    loginRequired: 'Inicia sesión para reaccionar',
+    readonly: 'No disponible',
+    saveError: 'No se pudo guardar la reacción',
+    rateLimited: (seconds) => `Has alcanzado el límite. Intenta nuevamente en ${seconds}s.`,
+  };
 
   const initReactionButton = (btn) => {
     const reaction = btn.dataset.reaction || '';
@@ -666,13 +901,8 @@
       count.className = 'count';
       count.textContent = '0';
 
-      const tooltip = document.createElement('span');
-      tooltip.className = 'catgv-tooltip';
-      tooltip.textContent = label;
-
       btn.appendChild(emoji);
       btn.appendChild(count);
-      btn.appendChild(tooltip);
     }
   };
 
@@ -740,20 +970,67 @@
       body: fd,
       credentials: 'same-origin',
     });
-    const payload = await response.json();
-    if (payload?.success && payload.data) {
-      return payload.data;
+
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch (_) {
+      payload = null;
     }
 
-    return null;
+    if (payload?.success && payload.data) {
+      return { ok: true, data: payload.data };
+    }
+
+    return {
+      ok: false,
+      message: payload?.data?.message || 'No se pudo guardar la reacción',
+      status: Number(response.status || 0),
+      code: payload?.data?.code || '',
+      retryAfter: Number(payload?.data?.retry_after || 0),
+    };
+  };
+
+  let globalTooltip = null;
+
+  const getGlobalTooltip = () => {
+    if (globalTooltip && document.body.contains(globalTooltip)) {
+      return globalTooltip;
+    }
+    globalTooltip = document.createElement('span');
+    globalTooltip.className = 'catgv-tooltip';
+    globalTooltip.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(globalTooltip);
+    return globalTooltip;
+  };
+
+  const hideLongPressTooltip = () => {
+    if (!globalTooltip) return;
+    globalTooltip.style.opacity = '0';
+    globalTooltip.style.transform = 'translate(-50%, -6px)';
+  };
+
+  const showLongPressTooltip = (btn) => {
+    const tooltip = getGlobalTooltip();
+    const label = btn.dataset.label || '';
+    if (!label) return;
+
+    const rect = btn.getBoundingClientRect();
+    tooltip.textContent = label;
+    tooltip.style.left = `${rect.left + (rect.width / 2)}px`;
+    tooltip.style.top = `${rect.top - 10}px`;
+    tooltip.style.opacity = '1';
+    tooltip.style.transform = 'translate(-50%, -100%)';
   };
 
   const clearLongPressUI = (btn) => {
-    btn.classList.remove('active-hold', 'show-tooltip');
+    btn.classList.remove('active-hold');
+    hideLongPressTooltip();
   };
 
   const showLongPressUI = (btn) => {
-    btn.classList.add('active-hold', 'show-tooltip');
+    btn.classList.add('active-hold');
+    showLongPressTooltip(btn);
   };
 
   const floatReaction = (widget, btn) => {
@@ -761,24 +1038,26 @@
     if (!emoji) return;
 
     const anchorRect = btn.getBoundingClientRect();
-    const host = widget.querySelector('.cg-reaction-buttons') || widget;
-    const hostRect = host.getBoundingClientRect();
-
     const floating = document.createElement('span');
     floating.className = 'catgv-float-emoji';
     floating.setAttribute('aria-hidden', 'true');
     floating.textContent = emoji;
-    floating.style.left = `${anchorRect.left - hostRect.left + (anchorRect.width / 2)}px`;
-    floating.style.top = `${anchorRect.top - hostRect.top + (anchorRect.height / 2)}px`;
+    floating.style.left = `${anchorRect.left + (anchorRect.width / 2)}px`;
+    floating.style.top = `${anchorRect.top + (anchorRect.height / 2)}px`;
 
-    host.appendChild(floating);
+    document.body.appendChild(floating);
     floating.addEventListener('animationend', () => floating.remove(), { once: true });
-    window.setTimeout(() => floating.remove(), 850);
+    window.setTimeout(() => floating.remove(), 700);
   };
 
-  widgets.forEach((widget) => {
+  const initReactionWidget = (widget) => {
+    if (!(widget instanceof HTMLElement)) return;
+    if (widget.dataset.reactionsReady === '1') return;
+    widget.dataset.reactionsReady = '1';
     const buttons = Array.from(widget.querySelectorAll('.cg-reaction-btn'));
     const isLoggedIn = widget.dataset.loggedIn === '1';
+    const isReadonly = widget.dataset.readonly === '1';
+    const readonlyMessage = widget.dataset.readonlyMessage || (isLoggedIn ? REACTION_MESSAGES.readonly : REACTION_MESSAGES.loginRequired);
     let currentState = (() => {
       const base = { adorable: 0, funny: 0, cute: 0, wow: 0, epic: 0, user_reaction: widget.dataset.myReaction || null };
       try {
@@ -791,7 +1070,7 @@
 
     buttons.forEach((btn) => initReactionButton(btn));
 
-    if (!isLoggedIn) {
+    if (!isLoggedIn || isReadonly) {
       widget.classList.add('is-readonly');
       paintWidget(widget, currentState);
 
@@ -800,7 +1079,7 @@
         if (!(target instanceof HTMLElement)) return;
         if (target.closest('.cg-reaction-btn')) {
           event.preventDefault();
-          window.catgameToast?.('Inicia sesión para reaccionar', 'info');
+          window.catgameToast?.(isReadonly ? readonlyMessage : REACTION_MESSAGES.loginRequired, 'info');
         }
       });
 
@@ -822,21 +1101,25 @@
 
       widget.classList.add('is-busy');
       sendReaction(widget, reactionType)
-        .then((serverState) => {
-          if (serverState) {
-            currentState = { ...currentState, ...serverState };
+        .then((result) => {
+          if (result?.ok && result.data) {
+            currentState = { ...currentState, ...result.data };
             paintWidget(widget, currentState);
             floatReaction(widget, btn);
           } else {
             currentState = previousState;
             paintWidget(widget, currentState);
-            window.catgameToast?.('No se pudo guardar la reacción', 'error');
+            const retryAfter = Number(result?.retryAfter || 0);
+            const retryMessage = retryAfter > 0
+              ? REACTION_MESSAGES.rateLimited(retryAfter)
+              : '';
+            window.catgameToast?.(retryMessage || result?.message || REACTION_MESSAGES.saveError, 'error');
           }
         })
         .catch(() => {
           currentState = previousState;
           paintWidget(widget, currentState);
-          window.catgameToast?.('No se pudo guardar la reacción', 'error');
+          window.catgameToast?.(REACTION_MESSAGES.saveError, 'error');
         })
         .finally(() => {
           widget.classList.remove('is-busy');
@@ -950,6 +1233,378 @@
         paintWidget(widget, currentState);
       }
     }).catch(() => null);
+  };
+
+  const bootstrapReactions = (root = document) => {
+    const scope = root instanceof HTMLElement || root instanceof Document ? root : document;
+    const widgets = Array.from(scope.querySelectorAll('.cg-reactions'));
+    widgets.forEach((widget) => initReactionWidget(widget));
+  };
+
+  window.catgameInitReactions = bootstrapReactions;
+  bootstrapReactions(document);
+})();
+
+(function () {
+  const config = window.CATGAME_FEED;
+  const container = document.querySelector('[data-feed-more="1"]');
+  const list = document.getElementById('catgame-feed-list');
+  const button = container ? container.querySelector('[data-feed-more-btn="1"]') : null;
+  const end = container ? container.querySelector('[data-feed-end="1"]') : null;
+  if (!config || !container || !list || !button || !end) {
+    return;
+  }
+
+  const perPage = Number(container.dataset.perPage || '20');
+  let nextOffset = Number(container.dataset.nextOffset || '0');
+  let hasMore = container.dataset.hasMore === '1';
+  let isLoading = false;
+
+  const syncUi = () => {
+    button.hidden = !hasMore;
+    button.disabled = isLoading;
+    button.textContent = isLoading ? 'Cargando…' : 'Cargar más';
+    end.hidden = hasMore;
+  };
+
+  const loadMore = async () => {
+    if (!hasMore || isLoading) return;
+    isLoading = true;
+    syncUi();
+
+    try {
+      const url = new URL(config.moreUrl, window.location.origin);
+      url.searchParams.set('_wpnonce', config.nonce || '');
+      url.searchParams.set('offset', String(nextOffset));
+      url.searchParams.set('per_page', String(perPage));
+      const response = await fetch(url.toString(), { credentials: 'same-origin' });
+      if (!response.ok) {
+        throw new Error('http_error');
+      }
+      const payload = await response.json();
+      if (!payload || payload.success !== true || !payload.data || typeof payload.data !== 'object') {
+        throw new Error('invalid_payload');
+      }
+
+      const html = String(payload.data.html || '');
+      if (html !== '') {
+        const fragment = document.createRange().createContextualFragment(html);
+        list.appendChild(fragment);
+        window.catgameInitReactions?.(list);
+      }
+
+      hasMore = !!payload.data.has_more;
+      nextOffset = Number(payload.data.next_offset || nextOffset);
+      container.dataset.nextOffset = String(nextOffset);
+      container.dataset.hasMore = hasMore ? '1' : '0';
+    } catch (_) {
+      window.catgameToast?.('No se pudo cargar más publicaciones', 'error');
+    } finally {
+      isLoading = false;
+      syncUi();
+    }
+  };
+
+  button.addEventListener('click', loadMore);
+  syncUi();
+})();
+
+(function () {
+  const config = window.CATGAME || {};
+  const modal = document.getElementById('catgame-report-modal');
+  const form = document.getElementById('catgame-report-form');
+  const idInput = document.getElementById('catgame-report-submission-id');
+  const nonceInput = document.getElementById('catgame-report-nonce');
+  if (!config || !config.ajaxUrl || !config.nonce || !modal || !form || !idInput || !nonceInput) {
+    return;
+  }
+
+  const setOpen = (open) => {
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+  };
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    if (target.closest('[data-report-close="1"]')) {
+      setOpen(false);
+      return;
+    }
+
+    const btn = target.closest('[data-report-btn="1"]');
+    if (!btn) return;
+
+    const submissionId = Number(btn.getAttribute('data-submission-id') || '0');
+    if (!submissionId) return;
+
+    idInput.value = String(submissionId);
+    nonceInput.value = String(config.nonce || '');
+    setOpen(true);
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const fd = new FormData(form);
+    const params = new URLSearchParams();
+    params.set('action', 'catgame_report_submission');
+    params.set('nonce', String(config.nonce || nonceInput.value || ''));
+    params.set('submission_id', String(fd.get('submission_id') || '0'));
+    params.set('reason', String(fd.get('reason') || ''));
+    params.set('detail', String(fd.get('detail') || ''));
+
+    console.debug('[catgame] report submit', {
+      action: params.get('action'),
+      submission_id: params.get('submission_id'),
+      reason: params.get('reason'),
+    });
+
+    try {
+      const response = await fetch(config.ajaxUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
+        body: params.toString(),
+      });
+
+      const rawResponse = await response.text();
+      let payload = null;
+      if (rawResponse) {
+        try {
+          payload = JSON.parse(rawResponse);
+        } catch (_) {
+          payload = null;
+        }
+      }
+
+      console.debug('[catgame] report response', {
+        status: response.status,
+        ok: response.ok,
+        raw: rawResponse,
+        payload,
+      });
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          window.catgameToast?.('Tu red está bloqueando la conexión al servidor (403). Prueba con datos móviles u otra Wi-Fi.', 'error');
+          return;
+        }
+
+        if (response.status === 0) {
+          window.catgameToast?.('No se pudo conectar al servidor desde esta red. Prueba otra conexión.', 'error');
+          return;
+        }
+
+        window.catgameToast?.(payload?.data?.message || 'No se pudo enviar el reporte.', 'error');
+        return;
+      }
+
+      if (!payload?.success) {
+        window.catgameToast?.(payload?.data?.message || 'No se pudo enviar el reporte.', 'error');
+        return;
+      }
+
+      const submissionId = Number(idInput.value || '0');
+      if (submissionId > 0) {
+        document.querySelectorAll(`[data-submission-id="${submissionId}"]`).forEach((widget) => {
+          const card = widget.closest('.cg-card');
+          if (card) card.remove();
+        });
+      }
+
+      window.catgameToast?.('Reporte enviado. Esta publicación quedó en revisión.', 'success');
+      setOpen(false);
+      form.reset();
+    } catch (error) {
+      const message = String(error?.message || '');
+      if (error instanceof TypeError || /Failed to fetch|NetworkError/i.test(message)) {
+        window.catgameToast?.('No se pudo conectar al servidor desde esta red. Prueba otra conexión.', 'error');
+        return;
+      }
+
+      window.catgameToast?.('No se pudo enviar el reporte.', 'error');
+    }
   });
 })();
-;
+
+(function () {
+  const config = window.CATGAME || {};
+  const modal = document.getElementById('catgame-appeal-modal');
+  const form = document.getElementById('catgame-appeal-form');
+  const idInput = document.getElementById('catgame-appeal-submission-id');
+  if (!config || !config.ajaxUrl || !config.nonce || !modal || !form || !idInput) {
+    return;
+  }
+
+  const setOpen = (open) => {
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+  };
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    if (target.closest('[data-appeal-close="1"]')) {
+      setOpen(false);
+      return;
+    }
+
+    const btn = target.closest('[data-appeal-btn="1"]');
+    if (!btn) return;
+
+    const submissionId = Number(btn.getAttribute('data-submission-id') || '0');
+    if (!submissionId) return;
+
+    idInput.value = String(submissionId);
+    setOpen(true);
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const fd = new FormData(form);
+    const params = new URLSearchParams();
+    params.set('action', 'catgame_submit_appeal');
+    params.set('nonce', String(config.nonce || ''));
+    params.set('submission_id', String(fd.get('submission_id') || '0'));
+    params.set('message', String(fd.get('message') || ''));
+
+    try {
+      const response = await fetch(config.ajaxUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
+        body: params.toString(),
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.success) {
+        window.catgameToast?.(payload?.data?.message || 'No se pudo enviar la apelación.', 'error');
+        return;
+      }
+
+      window.catgameToast?.('Apelación enviada (pendiente)', 'success');
+      setOpen(false);
+      form.reset();
+      const submissionId = Number(params.get('submission_id') || '0');
+      if (submissionId > 0) {
+        document.querySelectorAll(`[data-submission-id="${submissionId}"]`).forEach((btn) => {
+          if (btn instanceof HTMLElement && btn.matches('[data-appeal-btn="1"]')) {
+            const state = document.createElement('p');
+            state.className = 'cg-appeal-state';
+            state.textContent = 'Apelación pendiente';
+            btn.replaceWith(state);
+          }
+        });
+      }
+    } catch (_) {
+      window.catgameToast?.('No se pudo enviar la apelación.', 'error');
+    }
+  });
+})();
+
+(function () {
+  const config = window.CATGAME || {};
+  const bell = document.getElementById('catgame-notif-bell');
+  const badge = document.getElementById('catgame-notif-badge');
+  const modal = document.getElementById('catgame-notifications-modal');
+  const list = document.getElementById('catgame-notifications-list');
+  if (!bell || !badge || !modal || !list || !config.ajaxUrl || !config.nonce) {
+    return;
+  }
+
+  const setOpen = (open) => {
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+  };
+
+  const setBadge = (count) => {
+    const total = Number(count || 0);
+    badge.textContent = String(total);
+    badge.hidden = total <= 0;
+  };
+
+  const formatDate = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleString('es-CL', {
+      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+  };
+
+  const renderItems = (items) => {
+    list.innerHTML = '';
+    if (!Array.isArray(items) || items.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'cg-notifications-empty';
+      li.textContent = 'No tienes notificaciones';
+      list.appendChild(li);
+      return;
+    }
+
+    items.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = `cg-notification-item ${item?.read_at ? '' : 'is-unread'}`.trim();
+      li.innerHTML = `<p class="cg-notification-title">${item?.title || 'Notificación'}</p>
+        <p class="cg-notification-message">${item?.message || ''}</p>
+        <small class="cg-notification-date">${formatDate(item?.created_at || '')}</small>`;
+      list.appendChild(li);
+    });
+  };
+
+  const post = async (action) => {
+    const params = new URLSearchParams();
+    params.set('action', action);
+    params.set('nonce', String(config.nonce));
+    const response = await fetch(config.ajaxUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+      body: params.toString(),
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.data?.message || 'No se pudo completar la acción.');
+    }
+    return payload.data || {};
+  };
+
+  const loadNotifications = async () => {
+    try {
+      const data = await post('catgame_get_notifications');
+      renderItems(data.items || []);
+      setBadge(Number(data.unread_count || 0));
+    } catch (_) {
+      setBadge(0);
+    }
+  };
+
+  bell.addEventListener('click', async () => {
+    setOpen(true);
+    try {
+      await post('catgame_mark_notifications_read');
+      setBadge(0);
+      list.querySelectorAll('.cg-notification-item').forEach((item) => item.classList.remove('is-unread'));
+    } catch (_) {
+      // noop
+    }
+  });
+
+  modal.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest('[data-notifications-close="1"]')) {
+      setOpen(false);
+    }
+  });
+
+  loadNotifications();
+})();

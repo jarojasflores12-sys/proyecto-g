@@ -6,6 +6,8 @@ if (!defined('ABSPATH')) {
 
 class CatGame_Reactions {
     private const NONCE_ACTION = 'catgame_reactions';
+    private const RATE_LIMIT_MAX_REQUESTS = 20;
+    private const RATE_LIMIT_WINDOW_SECONDS = 60;
 
     public static function init(): void {
         add_action('admin_post_catgame_add_or_update_reaction', [__CLASS__, 'handle_add_or_update_reaction']);
@@ -36,6 +38,25 @@ class CatGame_Reactions {
             wp_send_json_error(['message' => 'Solicitud inválida (nonce).'], 403);
         }
 
+        $user_id = get_current_user_id();
+        $block_message = '';
+        if (class_exists('CatGame_Reports') && !CatGame_Reports::can_user_participate($user_id, $block_message)) {
+            wp_send_json_error(['message' => $block_message], 403);
+        }
+
+        if (class_exists('CatGame_Reports') && CatGame_Reports::is_react_blocked($user_id)) {
+            wp_send_json_error(['message' => 'No puedes reaccionar temporalmente por una sanción activa.'], 403);
+        }
+
+        $retry_after = 0;
+        if (!self::within_rate_limit($user_id, $retry_after)) {
+            wp_send_json_error([
+                'message' => 'Has alcanzado el límite de reacciones. Espera un minuto e intenta nuevamente.',
+                'code' => 'rate_limited',
+                'retry_after' => $retry_after,
+            ], 429);
+        }
+
         $submission_id = isset($_POST['submission_id']) ? (int) $_POST['submission_id'] : 0;
         $reaction_type = sanitize_key(wp_unslash($_POST['reaction_type'] ?? ''));
 
@@ -44,13 +65,12 @@ class CatGame_Reactions {
         }
 
         $submission = CatGame_Submissions::get_submission($submission_id);
-        if (!$submission) {
-            wp_send_json_error(['message' => 'La publicación no existe.'], 404);
+        if (!$submission || !empty($submission['is_hidden'])) {
+            wp_send_json_error(['message' => 'La publicación no está disponible.'], 404);
         }
 
         global $wpdb;
         $table = CatGame_DB::table('reactions');
-        $user_id = get_current_user_id();
 
         $existing = $wpdb->get_row(
             $wpdb->prepare(
@@ -247,7 +267,7 @@ class CatGame_Reactions {
         ];
     }
 
-    public static function render_widget(int $submission_id, bool $is_logged_in, array $reaction_payload = []): void {
+    public static function render_widget(int $submission_id, bool $is_logged_in, array $reaction_payload = [], array $options = []): void {
         if ($submission_id <= 0) {
             return;
         }
@@ -263,21 +283,64 @@ class CatGame_Reactions {
 
         $my_reaction_raw = $reaction_payload['my_reaction'] ?? null;
         $my_reaction = is_string($my_reaction_raw) && in_array($my_reaction_raw, self::allowed_reactions(), true) ? $my_reaction_raw : null;
+        $is_readonly = !empty($options['readonly']);
+        $readonly_reason = sanitize_text_field((string) ($options['readonly_reason'] ?? ''));
+        $readonly_message = $readonly_reason !== '' ? $readonly_reason : (!$is_logged_in ? 'Inicia sesión para reaccionar' : 'No disponible');
         ?>
-        <div class="cg-reactions" data-submission-id="<?php echo (int) $submission_id; ?>" data-logged-in="<?php echo $is_logged_in ? '1' : '0'; ?>" data-my-reaction="<?php echo esc_attr($my_reaction ?? ''); ?>" data-reaction-counts="<?php echo esc_attr(wp_json_encode($counts)); ?>">
+        <div class="cg-reactions" data-submission-id="<?php echo (int) $submission_id; ?>" data-logged-in="<?php echo $is_logged_in ? '1' : '0'; ?>" data-readonly="<?php echo $is_readonly ? '1' : '0'; ?>" data-readonly-message="<?php echo esc_attr($readonly_message); ?>" data-my-reaction="<?php echo esc_attr($my_reaction ?? ''); ?>" data-reaction-counts="<?php echo esc_attr(wp_json_encode($counts)); ?>">
             <div class="cg-reaction-buttons" role="group" aria-label="Reacciones de la publicación">
                 <?php foreach ($labels as $slug => $meta): ?>
                     <?php $is_selected = $my_reaction === $slug; ?>
-                    <button type="button" class="cg-reaction-btn <?php echo $is_selected ? 'is-active is-selected' : ''; ?>" data-reaction="<?php echo esc_attr($slug); ?>" data-label="<?php echo esc_attr($meta['label']); ?>">
+                    <button type="button" class="cg-reaction-btn <?php echo $is_selected ? 'is-active is-selected' : ''; ?>" data-reaction="<?php echo esc_attr($slug); ?>" data-label="<?php echo esc_attr($meta['label']); ?>" <?php echo $is_readonly ? 'disabled title="' . esc_attr($readonly_message) . '"' : ''; ?>>
                         <span class="emoji"><?php echo esc_html($meta['emoji']); ?></span>
                         <span class="count"><?php echo (int) ($counts[$slug] ?? 0); ?></span>
                         <span class="catgv-tooltip"><?php echo esc_html($meta['label']); ?></span>
                     </button>
                 <?php endforeach; ?>
             </div>
-            <?php if (!$is_logged_in): ?><small class="cg-reaction-help">Inicia sesión para reaccionar.</small><?php endif; ?>
+            <?php if ($is_readonly): ?><small class="cg-reaction-help"><?php echo esc_html($readonly_message); ?></small><?php elseif (!$is_logged_in): ?><small class="cg-reaction-help">Inicia sesión para reaccionar.</small><?php endif; ?>
         </div>
         <?php
+    }
+
+
+    private static function within_rate_limit(int $user_id, int &$retry_after = 0): bool {
+        if ($user_id <= 0) {
+            return false;
+        }
+
+        $key = 'catgame_reaction_rl_' . $user_id;
+        $now = time();
+        $window = self::RATE_LIMIT_WINDOW_SECONDS;
+        $max = self::RATE_LIMIT_MAX_REQUESTS;
+
+        $bucket = get_transient($key);
+        if (!is_array($bucket)) {
+            $bucket = [
+                'count' => 0,
+                'reset_at' => $now + $window,
+            ];
+        }
+
+        $count = isset($bucket['count']) ? (int) $bucket['count'] : 0;
+        $reset_at = isset($bucket['reset_at']) ? (int) $bucket['reset_at'] : ($now + $window);
+
+        if ($reset_at <= $now) {
+            $count = 0;
+            $reset_at = $now + $window;
+        }
+
+        if ($count >= $max) {
+            $retry_after = max(1, $reset_at - $now);
+            return false;
+        }
+
+        $count++;
+        $bucket['count'] = $count;
+        $bucket['reset_at'] = $reset_at;
+        set_transient($key, $bucket, max(1, $reset_at - $now));
+
+        return true;
     }
 
     private static function verify_nonce(): bool {

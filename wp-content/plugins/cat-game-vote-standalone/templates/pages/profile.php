@@ -7,6 +7,7 @@ $registered = !empty($data['registered']);
 $tag_deleted = !empty($data['tag_deleted']);
 $profile_saved = !empty($data['profile_saved']);
 $complete_profile = !empty($data['complete_profile']);
+$profile_error = sanitize_key((string) ($data['profile_error'] ?? ''));
 $lost_sent = !empty($data['lost_sent']);
 $password_reset = !empty($data['password_reset']);
 $auth_view = (string) ($data['auth_view'] ?? 'login');
@@ -123,11 +124,14 @@ if (!empty($data['requires_login'])): ?>
             <?php endif; ?>
         </section>
     <?php endif; ?>
+
+
 </section>
 <?php return; endif;
 
 $stats = $data['stats'] ?? ['total_submissions' => 0, 'total_reactions' => 0, 'most_voted' => null, 'best_ranked' => null];
 $items = $data['items'] ?? [];
+$notifications = $data['notifications'] ?? [];
 $custom_tags = $data['custom_tags'] ?? [];
 $top_position_for_user = $data['top_position_for_user'] ?? null;
 $scope = $data['scope'] ?? 'event';
@@ -150,15 +154,38 @@ $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
 $default_city = trim((string) ($prefs['default_city'] ?? ''));
 $default_country = trim((string) ($prefs['default_country'] ?? ''));
 $location_missing = $default_city === '' || $default_country === '';
+
+$account_status = (array) ($data['account_status'] ?? []);
+$strikes_status = (array) ($account_status['strikes'] ?? []);
+$bans_status = (array) ($account_status['bans'] ?? []);
+$author_active = (int) ($strikes_status['author_active'] ?? 0);
+$reporter_active = (int) ($strikes_status['reporter_active'] ?? 0);
+$strikes_threshold = max(1, (int) ($strikes_status['threshold'] ?? 3));
+$strikes_resets = (string) ($strikes_status['resets'] ?? '1 año');
+$upload_banned = !empty($bans_status['upload_banned']);
+$upload_banned_until_iso = (string) ($bans_status['upload_banned_until'] ?? '');
+$upload_banned_until_label = '';
+if ($upload_banned_until_iso !== '') {
+    $upload_banned_until_ts = strtotime($upload_banned_until_iso);
+    if ($upload_banned_until_ts) {
+        $upload_banned_until_label = wp_date('d/m/Y H:i', $upload_banned_until_ts);
+    }
+}
 ?>
 <section>
     <div class="cg-profile-topbar">
         <h2>Mi perfil</h2>
-        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-logout-form cg-logout-form-top">
-            <?php wp_nonce_field('catgame_logout'); ?>
-            <input type="hidden" name="action" value="catgame_logout">
-            <button type="submit" class="secondary cg-logout-btn" aria-label="Cerrar sesión">⎋ <span>Cerrar sesión</span></button>
-        </form>
+        <div class="cg-profile-topbar-actions">
+            <button type="button" class="secondary cg-notif-bell" id="catgame-notif-bell" aria-label="Notificaciones" aria-haspopup="dialog" aria-controls="catgame-notifications-modal">
+                🔔
+                <span class="cg-notif-badge" id="catgame-notif-badge" hidden>0</span>
+            </button>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-logout-form cg-logout-form-top">
+                <?php wp_nonce_field('catgame_logout'); ?>
+                <input type="hidden" name="action" value="catgame_logout">
+                <button type="submit" class="secondary cg-logout-btn" aria-label="Cerrar sesión">⎋ <span>Cerrar sesión</span></button>
+            </form>
+        </div>
     </div>
 
     <?php if ($registered): ?>
@@ -174,7 +201,10 @@ $location_missing = $default_city === '' || $default_country === '';
         <p class="cg-alert cg-alert-success">Etiqueta eliminada del catálogo personal.</p>
     <?php endif; ?>
     <?php if ($profile_saved): ?>
-        <p class="cg-alert cg-alert-success">Perfil actualizado correctamente.</p>
+        <p class="cg-alert cg-alert-success">Ubicación guardada.</p>
+    <?php endif; ?>
+    <?php if ($profile_error === 'missing_location'): ?>
+        <p class="cg-alert cg-alert-error">Debes completar ciudad y país para guardar.</p>
     <?php endif; ?>
 
     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form" id="catgame-profile-form">
@@ -212,6 +242,20 @@ $location_missing = $default_city === '' || $default_country === '';
             </label>
         </div>
     </form>
+
+
+    <article class="cg-card cg-account-status-card">
+        <h3>Estado de tu cuenta</h3>
+        <p><strong>Strikes:</strong> <?php echo (int) $author_active; ?>/<?php echo (int) $strikes_threshold; ?></p>
+        <p><strong>Reportes falsos:</strong> <?php echo (int) $reporter_active; ?>/<?php echo (int) $strikes_threshold; ?></p>
+        <?php if ($upload_banned): ?>
+            <p><strong>Subida restringida hasta:</strong> <?php echo esc_html($upload_banned_until_label !== '' ? $upload_banned_until_label : 'fecha por confirmar'); ?></p>
+            <small>Puedes seguir reaccionando.</small>
+        <?php else: ?>
+            <p>Puedes subir y reaccionar con normalidad.</p>
+        <?php endif; ?>
+        <small>Los strikes expiran en <?php echo esc_html($strikes_resets); ?>.</small>
+    </article>
 
     <?php if (!empty($top_position_for_user)): ?>
         <p class="cg-alert cg-alert-success">🏆 Estás en el Top 3 del evento: #<?php echo (int) $top_position_for_user; ?>. <a href="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>">Ver ranking</a></p>
@@ -291,9 +335,9 @@ $location_missing = $default_city === '' || $default_country === '';
         <a class="cg-cta" href="<?php echo esc_url(CATGAME_INSTAGRAM_URL); ?>" target="_blank" rel="noopener noreferrer">Ir a Instagram</a>
     </section>
 
-    <h3>Mis etiquetas personalizadas</h3>
+    <h3>Mis etiquetas</h3>
     <?php if (empty($custom_tags)): ?>
-        <p>No tienes etiquetas personalizadas.</p>
+        <p>No tienes etiquetas.</p>
     <?php else: ?>
         <ul>
             <?php foreach ($custom_tags as $tag => $label): ?>
@@ -303,7 +347,7 @@ $location_missing = $default_city === '' || $default_country === '';
                         <?php wp_nonce_field('catgame_delete_custom_tag'); ?>
                         <input type="hidden" name="action" value="catgame_delete_custom_tag">
                         <input type="hidden" name="tag" value="<?php echo esc_attr($tag); ?>">
-                        <button type="submit" class="cg-tag-delete cg-tag-remove" aria-label="Eliminar etiqueta <?php echo esc_attr(CatGame_Submissions::label_for_tag($tag, get_current_user_id())); ?>" title="Eliminar etiqueta">✕</button>
+                        <button type="submit" class="cg-tag-delete cg-tag-remove" aria-label="Eliminar etiqueta <?php echo esc_attr(CatGame_Submissions::label_for_tag($tag, get_current_user_id())); ?>" title="Eliminar etiqueta">Eliminar</button>
                     </form>
                 </li>
             <?php endforeach; ?>
@@ -335,8 +379,21 @@ $location_missing = $default_city === '' || $default_country === '';
                     <input type="hidden" name="submission_id" value="<?php echo (int) ($item['id'] ?? 0); ?>">
                     <button type="submit" class="cg-tag-delete">Eliminar mi publicación</button>
                 </form>
+                <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::appeal_button_html((array) $item, (int) get_current_user_id()) : ''; ?>
                 <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in(), (array) ($item['reaction_counts'] ?? []) ? ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)] : []); ?>
             </article>
         <?php endforeach; ?>
     </div>
+
+    <div class="cg-modal" id="catgame-notifications-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-notifications-title">
+        <div class="cg-modal__backdrop" data-notifications-close="1"></div>
+        <div class="cg-modal__content" role="document">
+            <button type="button" class="cg-modal__close" data-notifications-close="1" aria-label="Cerrar notificaciones">Eliminar</button>
+            <h2 id="catgame-notifications-title">Notificaciones</h2>
+            <ul class="cg-notifications-list" id="catgame-notifications-list">
+                <li class="cg-notifications-empty">No tienes notificaciones</li>
+            </ul>
+        </div>
+    </div>
+
 </section>

@@ -1,5 +1,239 @@
 # Changelog
 
+## 0.27.19
+- Event rules popup/game: ahora refleja exactamente el evento activo normalizado (`rules.mode` + `items`), incluyendo prioridad absoluta de `mode: none` sobre reglas legacy.
+- Si el evento no usa reglas (`mode=none`): el popup muestra solo **Reglas generales (resumen)** y no renderiza items del evento.
+- Si el evento usa reglas: el popup muestra items del evento + bloque corto de reglas generales.
+- Admin Gestor (previsualización): se alinea 1:1 con el texto/estructura que ve el juego para `mode=none` y para eventos con reglas.
+- UX cache/session: el popup usa revisión del evento (`data-event-revision`) en la key de sessionStorage para invalidar estado visto cuando cambia el evento activo/rules_json.
+
+## 0.27.18
+- Upload UX/accesibilidad: se agrega microcopy bajo “Acepto los términos” para reforzar que la aceptación confirma lectura de normas y sanciones.
+- Upload modal UX: al abrir “Normas y sanciones”, el foco se mueve al botón de acción “Entendido”.
+
+## 0.27.17
+- Upload UX/copy: el modal de términos pasa a **"Normas y sanciones"** con contenido más claro en bullets (prohibiciones, severidades y consecuencias).
+- Upload UX: el modal se abre desde **Ver normas**, desde el link junto a "Acepto los términos" y también al hacer click en el checkbox obligatorio.
+- Copy enforcement: se explicitan puntos y bloqueos (>=3 => 3 días, >=9 => 7 días), hold grave 24h + apelación 24h y desenlace de perma-ban si no apela o se rechaza.
+
+## 0.27.16
+- Tags UX: se eliminan sugerencias/globales predefinidas; Upload sugiere únicamente etiquetas propias del usuario logueado.
+- Tags backend: nuevo storage de sugerencias personales en `user_meta` `catgame_user_tags` (array normalizado), con merge automático al subir publicación.
+- Normalización tags en upload: trim/lower/slug, deduplicación, máximo 20 etiquetas por publicación y máximo 20 caracteres por etiqueta.
+- Perfil: sección **Mis etiquetas** y eliminación de etiqueta sólo afecta sugerencias personales (no borra etiquetas históricas en publicaciones existentes).
+
+## 0.27.15
+- Moderation Admin UX: al cambiar entre pestañas **Pendientes/Resueltos** se conservan los filtros de historial corto (`grave_history_source`, `grave_history_status`) para mantener el contexto de diagnóstico.
+- Consistencia de navegación: los enlaces de pestaña ahora usan `add_query_arg` con parámetros normalizados activos.
+
+## 0.27.14
+- Moderation Admin UX: el botón **Ejecutar enforcement ahora** conserva también el filtro principal de reportes (`status=pending|resolved`) para no cambiar de pestaña tras la ejecución.
+- Redirect consistency: `catgame_run_grave_enforcement` valida/normaliza `status` y lo incluye en el redirect junto a los filtros de historial corto.
+
+## 0.27.13
+- Moderation Admin hardening: se valida/normaliza también en UI admin los filtros `grave_history_source` y `grave_history_status` (whitelist) para evitar estados inválidos por querystring manual.
+- Consistencia de diagnóstico: ante valores no permitidos en URL, los filtros vuelven a `all` de forma predecible.
+
+## 0.27.12
+- Moderation Admin UX: al ejecutar enforcement manual se conservan los filtros activos del historial corto (`grave_history_source`, `grave_history_status`) para evitar perder el contexto de diagnóstico.
+- Seguridad/robustez: el endpoint `catgame_run_grave_enforcement` valida y normaliza ambos filtros antes de reutilizarlos en el redirect (`all/runtime/manual/cli` y `all/ok/error`).
+
+## 0.27.11
+- Moderation Admin (operación): se agrega filtro de historial corto de enforcement por `origen` (`runtime/manual/cli`) y `estado` (`ok/error`) para diagnóstico más rápido.
+- Moderation Admin (soporte): nuevo botón **Copiar diagnóstico (JSON)** que copia el historial filtrado para pegar en tickets/incidencias.
+- Telemetry UX: el historial muestra mensaje explícito cuando el filtro no devuelve resultados.
+
+## 0.27.10
+- Moderación/Operación: se agrega historial corto de corridas de enforcement de casos graves (ring buffer de 20 runs) con `ran_at`, `processed`, `source`, `duration_ms` y `status`.
+- Admin Moderation: el panel de enforcement ahora muestra tabla de historial corto para diagnóstico rápido sin revisar logs del servidor.
+- Enforcement internals: `enforce_grave_case_deadlines` acepta `source` (`runtime|manual|cli`) y registra métricas mínimas por corrida.
+
+## 0.27.9
+- Moderación Admin: nuevo panel en `WP Admin > Moderation` para ejecutar manualmente el enforcement de casos graves y visualizar el último run (`ran_at`, `processed`).
+- Enforcement: `enforce_grave_case_deadlines` ahora devuelve cantidad procesada y persiste telemetry mínima en opción (`catgame_grave_enforcement_last_run`).
+- Cron/Operación: nuevo endpoint admin seguro `catgame_run_grave_enforcement` (nonce + capability) para forzar corrida manual cuando WP-Cron no corre por bajo tráfico.
+
+## 0.27.8
+- Operación/Enforcement: se agenda cron hourly `catgame_enforce_grave_cases_event` para ejecutar automáticamente `enforce_grave_case_deadlines` sin depender de login/acciones de usuario.
+- Lifecycle plugin: al desactivar el plugin se desagenda el cron de casos graves para evitar eventos huérfanos.
+- DX/Soporte: nuevo comando WP-CLI `wp catgame bans-rebuild [--user_id=<id>]` para recalcular bans desde `infractions` + `grave_cases` (auditoría/recovery operacional).
+
+## 0.27.7
+- Moderación (nuevo motor): se agregan tablas `catgame_infractions`, `catgame_bans`, `catgame_perma_bans` y `catgame_grave_cases` para modelar puntos, bloqueos y casos graves con lifecycle.
+- Puntos y escalamiento: leve=+1, moderada=+3, grave=+9 (expiran a 1 año); umbrales automáticos de ban de subida (>=3 => 3 días, >=9 => 7 días, preservando el mayor).
+- Grave/hard hold: al sancionar grave se aplica bloqueo inmediato de subir/reaccionar por 24h y se abre caso grave; si vence sin apelación, se ejecuta perma-ban + borrado fuerte de datos del juego.
+- Apelaciones: ventana dinámica por severidad (72h leve/moderada, 24h grave); en grave pending se mantiene hard hold extendido hasta veredicto.
+- Veredicto apelaciones: aceptar revierte infracción por `submission_id`, restaura publicación y recalcula bans; rechazar grave dispara perma-ban.
+- Enforcement: login bloqueado para perma-ban, upload/reacciones bloqueadas por bans/hard hold, y bloqueo de re-registro por hash de email en `catgame_perma_bans`.
+
+## 0.27.6
+- Apelaciones: nueva tabla `catgame_appeals` (1 apelación por publicación) con estados `pending|accepted|rejected`, trazabilidad de decisión admin y nota opcional.
+- Regla 72h: una moderación es apelable solo si existe acción actual (`moderation_actions.is_current=1`), no venció la ventana de 72 horas y no hay apelación previa.
+- UX usuario: botón **Apelar** + modal en frontend (AJAX `catgame_submit_appeal`, nonce, mensaje máx 500, toast de éxito y estado "Apelación pendiente").
+- Anti-abuso: rate limit de apelaciones a 3 envíos por usuario cada 24h con respuesta `429` y mensaje explícito.
+- Admin Moderation: sección de **Apelaciones pendientes** con acciones Aceptar/Rechazar.
+- Al aceptar: se restaura publicación, se revierte suspensión/strike asociado al caso y se agrega acción `restore` en historial de moderación.
+- Notificaciones campana: decisión de apelación notifica al dueño con deduplicación por `event_key` (`appeal:{appeal_id}:{status}`).
+
+## 0.27.5
+- Moderación Admin: se agrega historial de acciones en DB (`catgame_moderation_actions`) con encadenado por `prev_action_id` y marca `is_current` para soportar edición de la decisión actual.
+- Moderación Admin (resueltos): nuevo formulario **Editar acción** (acción, gravedad, motivo y detalle) con guardado idempotente; si no hay cambios se informa "Sin cambios".
+- Moderación Admin: se bloquea la edición cuando la acción previa es `delete_account` por tratarse de una decisión irreversible.
+- Moderación UX: nueva guía rápida colapsable de gravedad/acción en la pantalla de moderación y persistencia de estado expandido vía `localStorage`.
+- Notificaciones: al editar una acción se envía aviso al dueño de la publicación con resumen antes/ahora y `event_key` deduplicable `moderation_update:{submission_id}:{new_action_id}`.
+
+## 0.27.4
+- Moderación: notificaciones automáticas al dueño de la publicación en revisión admin (reporte revisado/restaurado, publicación eliminada, sanción aplicada y suspensión de cuenta cuando corresponde).
+- Moderación: mensajes user-facing enriquecidos con título de publicación (fallback `Publicación #ID`), motivo y gravedad.
+- Notificaciones: se agrega deduplicación por `event_key` para evitar duplicados por refresh/reintentos en acciones de moderación.
+- Moderación: log mínimo en modo debug para deduplicación y acciones ya resueltas.
+
+## 0.27.3
+- Perfil: se agrega campanita de notificaciones con badge de no leídas y modal con listado user-facing.
+- Notificaciones (MVP): se migran a `user_meta` (`catgame_notifications`) con helpers para agregar, listar y marcar todas como leídas.
+- AJAX: nuevos endpoints `catgame_get_notifications` y `catgame_mark_notifications_read` para UI de campana.
+- Flujo reportes: al enviar reporte se crea notificación "Reporte recibido" y al resolver moderación se notifica "Reporte resuelto".
+
+## 0.27.2
+- Upload: se expone `upload_restriction` en payload (`upload_banned`, `upload_banned_until`) reutilizando helpers de bans existentes.
+- Upload UI: nueva tarjeta móvil-first "Subida restringida" con fecha límite y mensaje "Puedes seguir reaccionando" para evitar confusión cuando hay ban activo.
+- Upload no-regresión: si hay restricción activa, no se muestra el formulario de publicación en esa vista.
+
+## 0.27.1
+- Perfil: nueva tarjeta "Estado de tu cuenta" con strikes activos de autor/reportante, umbral 3 y texto de expiración en 1 año.
+- Perfil: muestra estado de bloqueo de subida y fecha límite cuando aplica, manteniendo que durante la restricción se puede reaccionar.
+- Backend perfil: se agrega payload de estado de cuenta (`strikes` y `bans`) sin exponer datos sensibles.
+
+## 0.27.0
+- Moderación/Strikes: `catgame_strikes` se endurece con `kind/severity` tipados, `reason_code` ampliado, `admin_user_id` e índice compuesto (`user_id`,`expires_at`).
+- Strikes y bans de upload: al resolver moderación se aplica strike a autor/reportante y bloqueo temporal de subida por 7 días al acumular 3 strikes activos; severidad grave aplica restricción de 365 días.
+- Enforce upload-only: el bloqueo se aplica solo al endpoint de subida; las reacciones permanecen permitidas.
+- Upload UX: al intentar subir con bloqueo activo se muestra mensaje claro con fecha límite y se evita procesar la carga.
+
+## 0.26.19
+- Reportes UX (red/proxy): en el submit se valida `response.ok` antes de procesar éxito; si llega HTTP `403` se muestra mensaje explícito de bloqueo de red/proxy.
+- Reportes UX (conectividad): si el envío falla por `Failed to fetch` / `NetworkError`, se muestra mensaje claro de problema de conexión en la red actual.
+- Seguridad UX de estado: la publicación solo se remueve y el modal solo se cierra en éxito real (`response.ok` + `payload.success`).
+
+## 0.26.18
+- Reportes AJAX: envío del modal mediante `admin-ajax.php` con `application/x-www-form-urlencoded`, `credentials: same-origin` y payload explícito (`action`, `nonce`, `submission_id`, `reason`, `detail`).
+- Backend reportes: nuevo hook `wp_ajax_catgame_report_submission` con validación `check_ajax_referer('catgame_nonce','nonce')` y respuestas JSON consistentes.
+- Cards de Publicaciones/Ranking: CTA contextual movido a cabecera superior derecha fuera de la foto con estilo mini (`Eliminar` para dueño, `Reportar` para terceros logueados).
+
+## 0.26.17
+- UI cards (Publicaciones/Ranking): acción pequeña en cabecera (arriba-derecha) fuera de la foto con lógica exclusiva por usuario: dueño => **Eliminar**, tercero logueado => **Reportar**.
+- Reportes UX: radios del modal de reporte en lista vertical para mejor legibilidad móvil.
+- Reportes fix: envío del formulario agrega `action=catgame_report_submission` y nonce en `FormData`, corrigiendo el fallo de envío.
+
+## 0.26.16
+- Moderación/Reportes: nuevo sistema de reportes con ocultamiento inmediato (`is_hidden=1`) al primer reporte y registro en tabla `catgame_reports`.
+- Moderación Admin: pantalla de reportes pendientes/resueltos con acciones Restaurar, Eliminar (leve/moderado/grave) y Reporte falso.
+- Sanciones: nueva tabla `catgame_strikes` (expiran en 1 año), bloqueo de participación por strike grave o por acumulación de strikes activos, y sanción por reporte falso.
+- Notificaciones: tabla `catgame_notifications` y visualización en Perfil para decisiones de moderación.
+- Frontend: botón/modal "Reportar" (solo logueados, no autor) en cards/detalle/perfil público/ranking; al reportar, se oculta la publicación en la vista actual.
+
+## 0.26.15
+- Perfil público: nueva ruta `/catgame/user/{username}` (read-only) con header de `@usuario` y ubicación (meta de perfil con fallback a última publicación).
+- Perfil público: secciones **Evento activo** (reacciones habilitadas solo para visitantes logueados) y **Recientes (30 días)** para eventos cerrados (solo lectura con mensaje "Evento finalizado").
+- Navegación: desde cards de Publicaciones y Ranking, el `@usuario` ahora enlaza al perfil público.
+- Reacciones: `render_widget` ahora soporta modo `readonly` con motivo configurable para deshabilitar interacción sin perder conteos/estado visual.
+
+## 0.26.14
+- Upload UX (iOS Safari): se simplifica a un solo CTA **Seleccionar foto** y se ocultan por completo **Subir archivo** y **Tomar foto** para evitar duplicación visual de opciones.
+- Upload UX (Android/desktop): se mantienen dos CTAs explícitos **Subir archivo** + **Tomar foto**.
+- Upload inputs: se usa `inputUniversal` en iOS (`accept="image/*"`, sin `capture`), `inputUpload` sin `capture` y `inputCamera` con `capture="environment"` fuera de iOS.
+- Flujo unificado: todos los inputs continúan en el mismo handler de selección/preview/compresión/envío.
+
+## 0.26.13
+- Upload UX (iOS): nueva detección robusta `isIOS()` (UA + platform + touch heuristic) para mostrar solo **Elegir de Fotos** + **Tomar foto** y ocultar **Subir archivo**.
+- Upload UX (Android/otros): se mantiene **Subir archivo** + **Tomar foto** como acciones separadas.
+- Upload inputs: se agrega `inputPhotos` (`accept="image/*"`, sin `capture`) para iOS, se mantiene `inputUpload` sin `capture` y `inputCamera` con `capture="environment"`.
+- Upload flujo: `inputPhotos`, `inputUpload` e `inputCamera` convergen al mismo handler de selección/preview/compresión/envío.
+
+## 0.26.12
+- Upload (iOS/Android): se ajustan inputs separados para acciones explícitas: **Subir archivo** (sin `capture`, `accept=".jpg,.jpeg,.png,.webp"`) y **Tomar foto** (`accept="image/*"` + `capture="environment"`).
+- Upload UX: ambos CTAs quedan con estilo activo consistente en morado fuerte (sin apariencia deshabilitada) y estado de presión visual (`:active`).
+- Compatibilidad: se mantiene convergencia de ambos pickers al mismo handler de preview/compresión/envío, sin cambios en el backend de `cat_image`.
+
+## 0.26.11
+- Upload UX: reemplaza selector único por dos CTAs explícitos: **Subir archivo** y **Tomar foto** (con `capture="environment"` para cámara en móviles).
+- Upload UX: botón principal **Enviar** pasa a color morado para destacar el CTA de envío.
+- Upload UX: se oculta el texto de estado/tamaño de compresión en pantalla de subida para una interfaz más limpia.
+- Validación título: mantiene campo obligatorio y agrega mensaje nativo personalizado "El título es obligatorio." cuando falta completar.
+
+## 0.26.10
+- Perfil/Ubicación: se centraliza lectura de ubicación por usuario en helpers (`get_user_default_location` / `has_user_default_location`) para evitar volver a exigir ciudad/país tras re-login cuando ya existe en `user_meta`.
+- Perfil: guardado valida ciudad/país obligatorios; ante error mantiene inputs ingresados y muestra mensaje claro sin sobrescribir metadatos con vacío.
+- Subir: mantiene uso de ubicación predeterminada desde `user_meta` y guarda snapshot en submissions con esos valores.
+
+## 0.26.9
+- Reacciones (UX visual): el indicador de selección vuelve a 2 huellitas azules rellenas, pequeñas y fuera del chip (arriba/derecha), eliminando la patita rosada grande sin cambiar tamaño/layout de la pill.
+
+## 0.26.8
+- Reacciones (UX visual): se corrige la "patita" del seleccionado para que aparezca como detalle externo pequeño (arriba-derecha) sin cubrir emoji/conteo ni deformar el chip.
+
+## 0.26.7
+- Reacciones (UX visual): se refuerza visibilidad del contorno "patita" seleccionado en móvil (outline SVG más grande/contrastado, trazo más grueso y sombra más notoria) sin cambiar tamaño de la pill.
+
+## 0.26.6
+- Reacciones (UX visual): se refuerza el resaltado "patita" del seleccionado con contorno de mayor contraste (2px), sombra suave y pseudo-elemento tipo outline para mejor visibilidad en móvil, manteniendo tamaño compacto.
+
+## 0.26.5
+- Reacciones (UX): long-press robusto en móvil con tooltip global fijo (siempre visible sobre la UI) y voto al soltar, manteniendo tap rápido para votar/cambiar.
+- Reacciones (UX): pills compactadas adicionalmente (gap y tamaño menores) para mejorar densidad visual en Ranking/Feed/Detalle sin scroll horizontal.
+
+## 0.26.4
+- Reacciones (UX): barra compacta sin scroll horizontal en cards (Ranking/Publicaciones/Detalle), con wrap en 2 filas cuando hace falta.
+- Reacciones (UX): se refuerza visibilidad de selección tipo patita y se mejora tooltip de long-press (>=350ms) manteniendo tap rápido para votar.
+- Reacciones (UX): emoji flotante al votar/cambiar ahora usa posicionamiento fijo para mantenerse visible incluso con scroll.
+
+## 0.26.3
+- Ranking (mobile-first): se reestructura cada card para mostrar arriba `#puesto + título + autor`, luego una imagen grande a ancho completo y debajo la metadata en líneas separadas (ubicación y reacciones).
+- Ranking: el botón "Eliminar" de publicación propia pasa a estilo compacto color sandía y se posiciona en la esquina superior derecha de la card.
+
+## 0.26.2
+- Feed (JS): se corrige el encadenado de IIFEs en `app.js` (faltaba `;` de separación), evitando error de ejecución que podía impedir inicializar el módulo de `Cargar más`.
+
+## 0.26.1
+- Feed: se corrige `Cargar más` para cargar bloques incrementales de publicaciones del evento activo y ocultar el botón al llegar al final real (`has_more=false`).
+- Feed: se elimina el filtro por etiqueta en la pantalla de Publicaciones para mostrar todas las publicaciones del evento activo en una sola lista paginada.
+- Ranking (mobile-first): se aumenta de forma perceptible el tamaño del contenedor de miniatura en cards para mejorar legibilidad visual en móviles.
+
+## 0.26.0
+- Ranking: miniaturas más grandes en cards (mobile-first) con contenedor dedicado y `object-fit: cover`, manteniendo layout de badge y metadatos.
+- Reacciones: resaltado tipo “patita” aplicado solo a la reacción seleccionada del usuario, persistente al cambiar; se refuerza anti-selección táctil iOS en contenedor/botones.
+- Publicaciones: nuevo flujo eficiente de “Cargar más” con `offset/per_page` (default 20, máximo 50), append incremental en frontend y mensaje final cuando no hay más items.
+
+## 0.25.9
+- Admin Eventos UX: orden vertical optimizado (Creación/edición → Detalle → Listado → Calendario) y mejoras visuales en CTA del panel.
+- Admin Eventos reglas: nuevo modo mixto con sección opcional de reglas repetibles (Título, Tipo, Valor condicional, Descripción), soporte para evento sin reglas y edición completa al reabrir.
+- Admin Eventos preview/acciones: nueva previsualización (estado, fechas, reglas formateadas, modo Competitivo/Temático) y botón Duplicar evento desde listado (copia reglas, deja inactivo y abre edición de la copia).
+
+## 0.25.8
+- Admin eventos: se corrige modo crear real en Gestor de eventos (`mode=create` / `event_id=0`) para evitar autoselección del primer evento y permitir INSERT correcto al crear.
+- Admin eventos: se mantiene modo editar desde listado con carga de datos y UPDATE del evento seleccionado.
+- UX admin: botones del formulario más claros ("Crear evento"/"Actualizar evento" + "Nuevo evento" siempre visible) y CTA de "Marcar como evento activo" más visible en detalle.
+
+## 0.25.7
+- Reacciones (DX/i18n-ready): se centralizan mensajes de toast del módulo de reacciones en un objeto único (`loginRequired`, `saveError`, `rateLimited`) manteniendo el comportamiento actual.
+
+## 0.25.6
+- Reacciones (UX): cuando el backend devuelve `retry_after` por rate limit, el toast ahora indica tiempo de espera explícito (ej: "Intenta nuevamente en Xs").
+
+## 0.25.5
+- Upload (performance): se revoca explícitamente el `ObjectURL` del preview al cambiar/limpiar archivo para evitar retención innecesaria de memoria en selecciones repetidas.
+
+## 0.25.4
+- Upload (DX/performance): limpieza de código JS sin uso en compresión de imagen (variables huérfanas y helper vacío), manteniendo intacto el comportamiento del flujo de subida.
+
+## 0.25.3
+- Seguridad reacciones: se agrega rate limit backend de 20 reacciones por usuario por minuto en `add_or_update_reaction`, con respuesta `429` y `retry_after` cuando se excede el límite.
+- UX reacciones: frontend ahora muestra el mensaje devuelto por backend (incluyendo límite alcanzado) en lugar de un error genérico.
+
+## 0.25.2
+- Documentación: `README.md` se alinea con el estado actual del plugin (reacciones comunitarias, ubicación obligatoria desde Perfil y flujo vigente de subida).
+- Documentación: se corrigen descripciones heredadas de estrellas/ciudad-país manual en upload para evitar confusión operativa.
+
 ## 0.25.1
 - Perfil: se mueve "Cerrar sesión" al extremo superior derecho (botón compacto con ícono+texto), se re-agregan Ciudad/País persistentes en user meta y se exige completar ubicación para poder subir.
 - Auth/flujo: login/registro exitoso redirigen a Perfil con aviso de completar ubicación cuando falta; Subir queda bloqueado con CTA a Perfil y el envío también valida ubicación desde Perfil.

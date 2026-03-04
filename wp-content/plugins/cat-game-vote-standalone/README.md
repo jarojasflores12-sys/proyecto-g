@@ -46,10 +46,10 @@ Solo un evento activo a la vez.
 ## Uso
 1. Crear y activar evento.
 2. Si no estás logueado, entra a `/catgame/profile` para crear cuenta y login automático.
-3. Usuarios suben fotos en `/catgame/upload` con ciudad/país manuales, tags y checkbox obligatorio de no personas.
-4. Comunidad vota 1-5 estrellas en detalle.
-5. En upload, se muestra el tamaño del archivo antes de enviar.
-6. El score se recalcula y se refleja en feed/leaderboard.
+3. Usuarios suben fotos en `/catgame/upload` usando la ubicación guardada en Perfil (ciudad/país), etiquetas y checkbox obligatorio de términos.
+4. La comunidad reacciona con 5 tipos de reacción (`😺 😂 🥰 🤩 🔥`) en Home/Feed/Ranking/Perfil.
+5. En upload se muestra estado de compresión y preview de imagen antes de enviar.
+6. El ranking refleja el total de reacciones recibidas.
 
 ## Registro en la misma ruta del perfil
 - La ruta `/catgame/profile` cumple doble función:
@@ -57,20 +57,20 @@ Solo un evento activo a la vez.
   - con sesión: muestra el panel de progreso (mis submissions y estadísticas)
 - Al registrar usuario, el plugin inicia sesión automáticamente y redirige al mismo `/catgame/profile`.
 
-## Scoring
-- `score_base = (votes_sum / votes_count) * 2`
-- `score_final = min(10, score_base) // sin bonos por etiquetas`
-- Sin votos: score `0` y texto `sin votos`.
+## Ranking (estado actual)
+- El orden principal de ranking usa reacciones totales recibidas por publicación.
+- En caso de empate, se prioriza la publicación que alcanzó primero esas reacciones.
+- Las etiquetas no otorgan puntaje adicional.
 
 ## Seguridad
 - Nonces en upload, vote y moderation.
-- Sanitización de city/country.
-- rating validado 1..5.
+- Sanitización de ciudad/país en perfil y datos de formularios.
+- Validación estricta de tipos de reacción permitidos en backend (`adorable`, `funny`, `cute`, `wow`, `epic`).
 - Archivo validado como `image/*` y máximo 3MB.
 - Tras subir, el plugin aplica compresión fuerte en servidor y actualiza metadata de adjunto.
 - Menús admin solo para `manage_options`.
-- Anti voto duplicado por lógica + índice único `(submission_id,user_id)`.
-- Rate limit: 50 votos/día por usuario.
+- Reacción única por usuario/publicación mediante índice único `(submission_id,user_id)` en tabla de reacciones.
+- Nonces verificados en endpoints de reacciones y acciones críticas de formularios.
 
 ## Moderación manual
 En admin: **Cat Game > Moderation**.

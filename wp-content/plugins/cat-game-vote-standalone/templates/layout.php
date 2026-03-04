@@ -4,19 +4,22 @@ if (!defined('ABSPATH')) {
 }
 $current_page = $data['page'] ?? 'home';
 $event = $data['event'] ?? null;
-$event_rules = [];
+$event_rules_view = [];
 $event_name = '';
 $event_date_range = '';
+$event_rules_mode = 'none';
+$event_rules_items = [];
+$event_general_rules = [];
+$event_revision = '';
 
 if (is_array($event) && !empty($event['id'])) {
-    $event_name = sanitize_text_field((string) ($event['name'] ?? 'Evento vigente'));
-    $event_rules = CatGame_Events::decode_rules(isset($event['rules_json']) ? (string) $event['rules_json'] : '');
-    $starts_at = isset($event['starts_at']) ? strtotime((string) $event['starts_at']) : false;
-    $ends_at = isset($event['ends_at']) ? strtotime((string) $event['ends_at']) : false;
-
-    if ($starts_at && $ends_at) {
-        $event_date_range = wp_date('d/m/Y H:i', $starts_at) . ' - ' . wp_date('d/m/Y H:i', $ends_at);
-    }
+    $event_rules_view = CatGame_Events::build_rules_popup_view($event);
+    $event_name = sanitize_text_field((string) ($event_rules_view['name'] ?? 'Evento vigente'));
+    $event_date_range = sanitize_text_field((string) ($event_rules_view['date_range'] ?? ''));
+    $event_rules_mode = sanitize_key((string) ($event_rules_view['mode'] ?? 'none'));
+    $event_rules_items = is_array($event_rules_view['items'] ?? null) ? $event_rules_view['items'] : [];
+    $event_general_rules = is_array($event_rules_view['general_summary'] ?? null) ? $event_rules_view['general_summary'] : [];
+    $event_revision = md5((string) ($event['id'] ?? 0) . '|' . (string) ($event['name'] ?? '') . '|' . (string) ($event['starts_at'] ?? '') . '|' . (string) ($event['ends_at'] ?? '') . '|' . (string) ($event['rules_json'] ?? '') . '|' . (string) ($event['is_active'] ?? 0));
 }
 $background_style = '';
 $has_background = !empty($background_url) && is_string($background_url);
@@ -55,12 +58,13 @@ if ($has_background) {
     </main>
 </div>
 
-<?php if (!empty($event_rules) && !empty($event['id'])): ?>
+<?php if (is_array($event) && !empty($event['id'])): ?>
     <button
         type="button"
         class="cg-event-rules-trigger"
         id="catgame-event-rules-trigger"
         data-event-id="<?php echo (int) $event['id']; ?>"
+        data-event-revision="<?php echo esc_attr($event_revision); ?>"
         aria-controls="catgame-event-rules-modal"
         aria-expanded="false"
     >
@@ -83,15 +87,37 @@ if ($has_background) {
             <?php if ($event_date_range !== ''): ?>
                 <p class="cg-modal__dates"><strong>Vigencia:</strong> <?php echo esc_html($event_date_range); ?></p>
             <?php endif; ?>
-            <p class="cg-modal__intro">Estas son las reglas y bonificaciones del evento activo:</p>
-            <ul class="cg-modal__rules">
-                <?php foreach ($event_rules as $rule_tag => $rule_points): ?>
-                    <li>
-                        <span><?php echo esc_html(CatGame_Submissions::label_for_tag((string) $rule_tag)); ?></span>
-                        <strong>+<?php echo esc_html(number_format_i18n((float) $rule_points, 1)); ?></strong>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
+            <?php if ($event_rules_mode === 'none'): ?>
+                <p class="cg-modal__intro">Reglas generales (resumen):</p>
+                <ul class="cg-modal__rules">
+                    <?php foreach ($event_general_rules as $line): ?>
+                        <li><?php echo esc_html((string) $line); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php else: ?>
+                <p class="cg-modal__intro">Estas son las reglas del evento activo:</p>
+                <ul class="cg-modal__rules">
+                    <?php foreach ($event_rules_items as $item): ?>
+                        <?php
+                        $rule_type = sanitize_key((string) ($item['type'] ?? 'tema'));
+                        $rule_title = sanitize_text_field((string) ($item['title'] ?? 'Regla'));
+                        $rule_desc = sanitize_text_field((string) ($item['desc'] ?? ''));
+                        $rule_value = is_numeric($item['value'] ?? null) ? (float) $item['value'] : null;
+                        ?>
+                        <li>
+                            <span><?php echo esc_html($rule_title); ?><?php if ($rule_desc !== ''): ?> — <?php echo esc_html($rule_desc); ?><?php endif; ?></span>
+                            <?php if ($rule_type === 'bonus' && $rule_value !== null): ?><strong>+<?php echo esc_html(number_format_i18n($rule_value, 1)); ?></strong><?php endif; ?>
+                            <?php if ($rule_type === 'penalizacion' && $rule_value !== null): ?><strong>-<?php echo esc_html(number_format_i18n($rule_value, 1)); ?></strong><?php endif; ?>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+                <p class="cg-modal__intro">Reglas generales (resumen):</p>
+                <ul class="cg-modal__rules">
+                    <?php foreach ($event_general_rules as $line): ?>
+                        <li><?php echo esc_html((string) $line); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
         </div>
     </div>
 <?php endif; ?>
@@ -119,12 +145,65 @@ if ($has_background) {
     </div>
 </div>
 
+
+<div class="cg-modal" id="catgame-report-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-report-title">
+    <div class="cg-modal__backdrop" data-report-close="1"></div>
+    <div class="cg-modal__content" role="document">
+        <button type="button" class="cg-modal__close" data-report-close="1" aria-label="Cerrar reporte">✕</button>
+        <h2 id="catgame-report-title">Reportar publicación</h2>
+        <form id="catgame-report-form">
+            <input type="hidden" name="submission_id" id="catgame-report-submission-id" value="0">
+            <input type="hidden" name="nonce" id="catgame-report-nonce" value="">
+            <div class="cg-report-reasons">
+                <label><input type="radio" name="reason" value="not_pet" checked> No es una mascota</label>
+                <label><input type="radio" name="reason" value="human"> Aparece una persona</label>
+                <label><input type="radio" name="reason" value="inappropriate"> Contenido inapropiado</label>
+                <label><input type="radio" name="reason" value="other"> Otro</label>
+            </div>
+            <label>Detalle (opcional, máx 250)
+                <textarea name="detail" maxlength="250" rows="3" placeholder="Describe brevemente el problema"></textarea>
+            </label>
+            <div class="cg-confirm-actions">
+                <button type="button" class="secondary" data-report-close="1">Cancelar</button>
+                <button type="submit">Enviar reporte</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="cg-modal" id="catgame-appeal-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-appeal-title">
+    <div class="cg-modal__backdrop" data-appeal-close="1"></div>
+    <div class="cg-modal__content" role="document">
+        <button type="button" class="cg-modal__close" data-appeal-close="1" aria-label="Cerrar apelación">✕</button>
+        <h2 id="catgame-appeal-title">Apelar moderación</h2>
+        <p>Explica brevemente por qué consideras que la moderación debe revisarse.</p>
+        <form id="catgame-appeal-form">
+            <input type="hidden" name="submission_id" id="catgame-appeal-submission-id" value="0">
+            <label>Mensaje (máx 500)
+                <textarea name="message" maxlength="500" rows="4" placeholder="Escribe tu apelación"></textarea>
+            </label>
+            <div class="cg-confirm-actions">
+                <button type="button" class="secondary" data-appeal-close="1">Cancelar</button>
+                <button type="submit">Enviar apelación</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="catgame-toast" class="catgame-toast" aria-live="polite" aria-atomic="true"></div>
 <script>
 window.CATGAME_REACTIONS = {
     nonce: <?php echo wp_json_encode(wp_create_nonce(CatGame_Reactions::nonce_action())); ?>,
     addOrUpdateUrl: <?php echo wp_json_encode(CatGame_Reactions::endpoint_add_or_update_url()); ?>,
     getCountsUrl: <?php echo wp_json_encode(CatGame_Reactions::endpoint_get_counts_url()); ?>,
+};
+window.CATGAME_FEED = {
+    nonce: <?php echo wp_json_encode(wp_create_nonce('catgame_feed_more')); ?>,
+    moreUrl: <?php echo wp_json_encode(admin_url('admin-post.php?action=catgame_feed_more')); ?>,
+};
+window.CATGAME = {
+    ajaxUrl: <?php echo wp_json_encode(admin_url('admin-ajax.php')); ?>,
+    nonce: <?php echo wp_json_encode(wp_create_nonce('catgame_nonce')); ?>,
 };
 </script>
 <script src="<?php echo esc_url(CATGAME_PLUGIN_URL . 'assets/app.js'); ?>?v=<?php echo esc_attr(CATGAME_VERSION); ?>"></script>
