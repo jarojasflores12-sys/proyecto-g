@@ -485,6 +485,14 @@ class CatGame_Admin {
         $appeals = class_exists('CatGame_Reports') ? CatGame_Reports::list_pending_appeals(200) : [];
         $last_grave_run = class_exists('CatGame_Reports') ? CatGame_Reports::get_last_grave_enforcement_run() : [];
         $grave_run_history = class_exists('CatGame_Reports') ? CatGame_Reports::get_grave_enforcement_history() : [];
+        $grave_history_source_filter = sanitize_key((string) wp_unslash($_GET['grave_history_source'] ?? 'all'));
+        $grave_history_status_filter = sanitize_key((string) wp_unslash($_GET['grave_history_status'] ?? 'all'));
+
+        $grave_run_history = array_values(array_filter($grave_run_history, static function (array $run) use ($grave_history_source_filter, $grave_history_status_filter): bool {
+            $source_ok = $grave_history_source_filter === 'all' || sanitize_key((string) ($run['source'] ?? '')) === $grave_history_source_filter;
+            $status_ok = $grave_history_status_filter === 'all' || sanitize_key((string) ($run['status'] ?? '')) === $grave_history_status_filter;
+            return $source_ok && $status_ok;
+        }));
         ?>
         <div class="wrap catgame-admin-page">
             <h1>Cat Game - Moderación</h1>
@@ -525,11 +533,36 @@ class CatGame_Admin {
                     <button type="submit" class="button">Ejecutar enforcement ahora</button>
                 </form>
                 <h3 style="margin-top:12px;">Historial corto</h3>
+                <form method="get" action="<?php echo esc_url(admin_url('admin.php')); ?>" style="margin:8px 0 10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <input type="hidden" name="page" value="catgame-moderation" />
+                    <input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>" />
+                    <label>Origen
+                        <select name="grave_history_source">
+                            <option value="all" <?php selected($grave_history_source_filter, 'all'); ?>>Todos</option>
+                            <option value="runtime" <?php selected($grave_history_source_filter, 'runtime'); ?>>runtime</option>
+                            <option value="manual" <?php selected($grave_history_source_filter, 'manual'); ?>>manual</option>
+                            <option value="cli" <?php selected($grave_history_source_filter, 'cli'); ?>>cli</option>
+                        </select>
+                    </label>
+                    <label>Estado
+                        <select name="grave_history_status">
+                            <option value="all" <?php selected($grave_history_status_filter, 'all'); ?>>Todos</option>
+                            <option value="ok" <?php selected($grave_history_status_filter, 'ok'); ?>>ok</option>
+                            <option value="error" <?php selected($grave_history_status_filter, 'error'); ?>>error</option>
+                        </select>
+                    </label>
+                    <button type="submit" class="button">Filtrar</button>
+                </form>
+                <p>
+                    <button type="button" class="button" id="catgame-copy-grave-history">Copiar diagnóstico (JSON)</button>
+                    <span id="catgame-copy-grave-history-status" style="margin-left:8px;"></span>
+                </p>
+                <textarea id="catgame-grave-history-json" readonly style="position:absolute; left:-9999px;"><?php echo esc_textarea(wp_json_encode($grave_run_history, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?></textarea>
                 <table class="widefat striped" style="max-width:780px;">
                     <thead><tr><th>Fecha</th><th>Procesados</th><th>Origen</th><th>Duración</th><th>Estado</th></tr></thead>
                     <tbody>
                     <?php if (empty($grave_run_history)): ?>
-                        <tr><td colspan="5">Sin historial.</td></tr>
+                        <tr><td colspan="5">Sin historial para el filtro actual.</td></tr>
                     <?php else: ?>
                         <?php foreach ($grave_run_history as $run): ?>
                             <tr>
@@ -726,6 +759,40 @@ class CatGame_Admin {
                         // no-op
                     }
                 });
+
+                var copyBtn = document.getElementById('catgame-copy-grave-history');
+                var copyStatus = document.getElementById('catgame-copy-grave-history-status');
+                var copyText = document.getElementById('catgame-grave-history-json');
+                if (copyBtn && copyText) {
+                    copyBtn.addEventListener('click', function () {
+                        var value = copyText.value || '[]';
+                        var onDone = function (ok) {
+                            if (!copyStatus) {
+                                return;
+                            }
+                            copyStatus.textContent = ok ? 'Copiado' : 'No se pudo copiar';
+                        };
+
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(value).then(function () { onDone(true); }).catch(function () { onDone(false); });
+                            return;
+                        }
+
+                        copyText.style.position = 'fixed';
+                        copyText.style.left = '0';
+                        copyText.style.top = '0';
+                        copyText.select();
+                        var ok = false;
+                        try {
+                            ok = document.execCommand('copy');
+                        } catch (e) {
+                            ok = false;
+                        }
+                        copyText.style.position = 'absolute';
+                        copyText.style.left = '-9999px';
+                        onDone(ok);
+                    });
+                }
             })();
         </script>
         <?php

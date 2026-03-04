@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.11
+- Moderation Admin (operación): se agrega filtro de historial corto de enforcement por `origen` (`runtime/manual/cli`) y `estado` (`ok/error`) para diagnóstico más rápido.
+- Moderation Admin (soporte): nuevo botón **Copiar diagnóstico (JSON)** que copia el historial filtrado para pegar en tickets/incidencias.
+- Telemetry UX: el historial muestra mensaje explícito cuando el filtro no devuelve resultados.
+
 ## 0.27.10
 - Moderación/Operación: se agrega historial corto de corridas de enforcement de casos graves (ring buffer de 20 runs) con `ran_at`, `processed`, `source`, `duration_ms` y `status`.
 - Admin Moderation: el panel de enforcement ahora muestra tabla de historial corto para diagnóstico rápido sin revisar logs del servidor.
