@@ -630,8 +630,8 @@ class CatGame_Admin {
             </section>
 
             <p>
-                <a class="button <?php echo $status_filter === 'pending' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-moderation&status=pending')); ?>">Pendientes</a>
-                <a class="button <?php echo $status_filter === 'resolved' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-moderation&status=resolved')); ?>">Resueltos</a>
+                <a class="button <?php echo $status_filter === 'pending' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(add_query_arg(['page' => 'catgame-moderation', 'status' => 'pending', 'grave_history_source' => $grave_history_source_filter, 'grave_history_status' => $grave_history_status_filter], admin_url('admin.php'))); ?>">Pendientes</a>
+                <a class="button <?php echo $status_filter === 'resolved' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(add_query_arg(['page' => 'catgame-moderation', 'status' => 'resolved', 'grave_history_source' => $grave_history_source_filter, 'grave_history_status' => $grave_history_status_filter], admin_url('admin.php'))); ?>">Resueltos</a>
             </p>
             <details id="catgame-moderation-guide" style="margin:12px 0;">
                 <summary><strong>Guía rápida: gravedad y acción</strong></summary>

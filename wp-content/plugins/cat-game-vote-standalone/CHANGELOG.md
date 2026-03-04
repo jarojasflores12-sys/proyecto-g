@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.15
+- Moderation Admin UX: al cambiar entre pestañas **Pendientes/Resueltos** se conservan los filtros de historial corto (`grave_history_source`, `grave_history_status`) para mantener el contexto de diagnóstico.
+- Consistencia de navegación: los enlaces de pestaña ahora usan `add_query_arg` con parámetros normalizados activos.
+
 ## 0.27.14
 - Moderation Admin UX: el botón **Ejecutar enforcement ahora** conserva también el filtro principal de reportes (`status=pending|resolved`) para no cambiar de pestaña tras la ejecución.
 - Redirect consistency: `catgame_run_grave_enforcement` valida/normaliza `status` y lo incluye en el redirect junto a los filtros de historial corto.
