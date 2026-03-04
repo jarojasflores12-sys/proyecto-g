@@ -1409,6 +1409,7 @@ class CatGame_Reports {
         delete_user_meta($user_id, 'catgame_city');
         delete_user_meta($user_id, 'catgame_country');
         delete_user_meta($user_id, 'catgame_custom_tags');
+        delete_user_meta($user_id, 'catgame_user_tags');
         delete_user_meta($user_id, 'catgame_avatar_color');
     }
 

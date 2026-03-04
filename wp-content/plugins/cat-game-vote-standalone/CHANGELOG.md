@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.16
+- Tags UX: se eliminan sugerencias/globales predefinidas; Upload sugiere únicamente etiquetas propias del usuario logueado.
+- Tags backend: nuevo storage de sugerencias personales en `user_meta` `catgame_user_tags` (array normalizado), con merge automático al subir publicación.
+- Normalización tags en upload: trim/lower/slug, deduplicación, máximo 20 etiquetas por publicación y máximo 20 caracteres por etiqueta.
+- Perfil: sección **Mis etiquetas** y eliminación de etiqueta sólo afecta sugerencias personales (no borra etiquetas históricas en publicaciones existentes).
+
 ## 0.27.15
 - Moderation Admin UX: al cambiar entre pestañas **Pendientes/Resueltos** se conservan los filtros de historial corto (`grave_history_source`, `grave_history_status`) para mantener el contexto de diagnóstico.
 - Consistencia de navegación: los enlaces de pestaña ahora usan `add_query_arg` con parámetros normalizados activos.

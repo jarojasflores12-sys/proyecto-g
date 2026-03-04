@@ -52,19 +52,11 @@ if ($upload_ban_until_iso !== '') {
                     data-required-message="El título es obligatorio."
                 >
             </label>
-            <fieldset>
-                <legend>Etiquetas</legend>
-                <?php foreach ($user_tags as $tag): ?>
-                    <label>
-                        <input type="checkbox" name="tags[]" value="<?php echo esc_attr($tag); ?>" <?php checked(in_array($tag, (array) ($upload_state['selected_tags'] ?? []), true)); ?>>
-                        <?php echo esc_html(CatGame_Submissions::label_for_tag($tag, get_current_user_id())); ?>
-                    </label>
-                <?php endforeach; ?>
-            </fieldset>
             <label>
-                Etiquetas personalizadas (separadas por coma o salto de línea)
-                <textarea name="custom_tags" rows="3" placeholder="ej: gato_travieso, siesta_eternal"><?php echo esc_textarea((string) ($upload_state['custom_tags'] ?? '')); ?></textarea>
+                Etiquetas (separadas por coma o salto de línea)
+                <textarea name="custom_tags" rows="3" id="catgame-upload-tags-input" placeholder="ej: pelusa, siesta, ventana"><?php echo esc_textarea((string) ($upload_state['custom_tags'] ?? '')); ?></textarea>
             </label>
+            <div class="cg-tag-suggest" id="catgame-tag-suggestions" data-user-tags="<?php echo esc_attr(wp_json_encode(array_values($user_tags))); ?>"></div>
 
             <div class="cg-upload-picker" data-catgame-upload-picker>
                 <p class="cg-upload-picker__title">Selecciona tu foto</p>

@@ -1044,14 +1044,13 @@ body.cg-has-custom-bg .cg-main {
 }
 
 .cg-tag-remove {
-  width: 24px;
-  height: 24px;
+  min-height: 24px;
   border-radius: 999px;
-  padding: 0;
+  padding: 2px 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1;
 }
 
@@ -1701,4 +1700,31 @@ body.cg-has-custom-bg .cg-main {
   .cg-rank-thumb img {
     aspect-ratio: 1 / 1;
   }
+}
+
+
+.cg-tag-suggest {
+  margin-top: -4px;
+  margin-bottom: 6px;
+}
+
+.cg-tag-suggest__title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--cg-muted);
+}
+
+.cg-tag-suggest__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cg-tag-suggest__btn {
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
 }

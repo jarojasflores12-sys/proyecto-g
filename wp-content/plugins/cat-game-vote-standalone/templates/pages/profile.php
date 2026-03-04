@@ -335,9 +335,9 @@ if ($upload_banned_until_iso !== '') {
         <a class="cg-cta" href="<?php echo esc_url(CATGAME_INSTAGRAM_URL); ?>" target="_blank" rel="noopener noreferrer">Ir a Instagram</a>
     </section>
 
-    <h3>Mis etiquetas personalizadas</h3>
+    <h3>Mis etiquetas</h3>
     <?php if (empty($custom_tags)): ?>
-        <p>No tienes etiquetas personalizadas.</p>
+        <p>No tienes etiquetas.</p>
     <?php else: ?>
         <ul>
             <?php foreach ($custom_tags as $tag => $label): ?>
@@ -347,7 +347,7 @@ if ($upload_banned_until_iso !== '') {
                         <?php wp_nonce_field('catgame_delete_custom_tag'); ?>
                         <input type="hidden" name="action" value="catgame_delete_custom_tag">
                         <input type="hidden" name="tag" value="<?php echo esc_attr($tag); ?>">
-                        <button type="submit" class="cg-tag-delete cg-tag-remove" aria-label="Eliminar etiqueta <?php echo esc_attr(CatGame_Submissions::label_for_tag($tag, get_current_user_id())); ?>" title="Eliminar etiqueta">✕</button>
+                        <button type="submit" class="cg-tag-delete cg-tag-remove" aria-label="Eliminar etiqueta <?php echo esc_attr(CatGame_Submissions::label_for_tag($tag, get_current_user_id())); ?>" title="Eliminar etiqueta">Eliminar</button>
                     </form>
                 </li>
             <?php endforeach; ?>
@@ -388,7 +388,7 @@ if ($upload_banned_until_iso !== '') {
     <div class="cg-modal" id="catgame-notifications-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-notifications-title">
         <div class="cg-modal__backdrop" data-notifications-close="1"></div>
         <div class="cg-modal__content" role="document">
-            <button type="button" class="cg-modal__close" data-notifications-close="1" aria-label="Cerrar notificaciones">✕</button>
+            <button type="button" class="cg-modal__close" data-notifications-close="1" aria-label="Cerrar notificaciones">Eliminar</button>
             <h2 id="catgame-notifications-title">Notificaciones</h2>
             <ul class="cg-notifications-list" id="catgame-notifications-list">
                 <li class="cg-notifications-empty">No tienes notificaciones</li>

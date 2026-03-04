@@ -84,7 +84,7 @@ class CatGame_Render {
 
         switch ($page) {
             case 'upload':
-                $user_tags = is_user_logged_in() ? CatGame_Submissions::available_tags_for_user(get_current_user_id()) : CatGame_Submissions::predefined_tags();
+                $user_tags = is_user_logged_in() ? CatGame_Submissions::available_tags_for_user(get_current_user_id()) : [];
                 $upload_defaults = [
                     'default_city' => '',
                     'default_country' => '',

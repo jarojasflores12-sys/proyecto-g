@@ -406,6 +406,136 @@
 })();
 
 (function () {
+  const input = document.getElementById('catgame-upload-tags-input');
+  const root = document.getElementById('catgame-tag-suggestions');
+  if (!input || !root) {
+    return;
+  }
+
+  const api = window.CATGAME || {};
+  const endpoint = api.ajaxUrl || '';
+  const nonce = api.nonce || '';
+
+  let userTags = [];
+
+  const escapeHtml = (value) => String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+  const splitTags = (value) => value.split(/[\n,]+/).map((item) => item.trim().toLowerCase()).filter(Boolean);
+
+  const normalizeTag = (value) => {
+    const stripped = String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return stripped
+      .toLowerCase()
+      .replace(/[^a-z0-9_\s-]/g, '')
+      .replace(/\s+/g, '_')
+      .replace(/-+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 20);
+  };
+
+  const activeToken = () => {
+    const value = input.value || '';
+    const parts = value.split(/[\n,]/);
+    return normalizeTag(parts[parts.length - 1] || '');
+  };
+
+  const renderSuggestions = () => {
+    const token = activeToken();
+    if (!token || !Array.isArray(userTags) || userTags.length === 0) {
+      root.innerHTML = '';
+      return;
+    }
+
+    const selected = new Set(splitTags(input.value || ''));
+    const items = userTags
+      .filter((tag) => tag.includes(token) && !selected.has(tag))
+      .slice(0, 8);
+
+    if (!items.length) {
+      root.innerHTML = '';
+      return;
+    }
+
+    root.innerHTML = `<p class="cg-tag-suggest__title">Mis etiquetas sugeridas</p><div class="cg-tag-suggest__list">${items.map((tag) => `<button type="button" class="cg-tag-suggest__btn" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`).join('')}</div>`;
+  };
+
+  const applySuggestion = (tag) => {
+    const parts = (input.value || '').split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+    parts.pop();
+    parts.push(tag);
+    input.value = `${parts.join(', ')}, `;
+    input.focus();
+    renderSuggestions();
+  };
+
+  root.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+    const btn = target.closest('[data-tag]');
+    if (!(btn instanceof HTMLElement)) {
+      return;
+    }
+    const tag = normalizeTag(btn.getAttribute('data-tag') || '');
+    if (tag) {
+      applySuggestion(tag);
+    }
+  });
+
+  input.addEventListener('input', renderSuggestions);
+  input.addEventListener('focus', renderSuggestions);
+
+  const bootstrapFromDataset = () => {
+    const raw = root.getAttribute('data-user-tags') || '[]';
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        userTags = parsed.map((tag) => normalizeTag(String(tag || ''))).filter(Boolean);
+      }
+    } catch (_) {
+      userTags = [];
+    }
+  };
+
+  const fetchSuggestions = async () => {
+    if (!endpoint || !nonce) {
+      bootstrapFromDataset();
+      renderSuggestions();
+      return;
+    }
+
+    try {
+      const body = new URLSearchParams();
+      body.set('action', 'catgame_tag_suggestions');
+      body.set('nonce', nonce);
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        credentials: 'same-origin',
+        body: body.toString(),
+      });
+
+      const payload = await response.json();
+      const tags = payload?.success && Array.isArray(payload?.data?.tags) ? payload.data.tags : [];
+      userTags = tags.map((tag) => normalizeTag(String(tag || ''))).filter(Boolean);
+      renderSuggestions();
+    } catch (_) {
+      bootstrapFromDataset();
+      renderSuggestions();
+    }
+  };
+
+  fetchSuggestions();
+})();
+
+(function () {
   const voteForm = document.getElementById('catgame-vote-form');
   if (!voteForm) {
     return;
