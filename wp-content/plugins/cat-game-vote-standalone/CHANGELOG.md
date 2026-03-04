@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.13
+- Moderation Admin hardening: se valida/normaliza también en UI admin los filtros `grave_history_source` y `grave_history_status` (whitelist) para evitar estados inválidos por querystring manual.
+- Consistencia de diagnóstico: ante valores no permitidos en URL, los filtros vuelven a `all` de forma predecible.
+
 ## 0.27.12
 - Moderation Admin UX: al ejecutar enforcement manual se conservan los filtros activos del historial corto (`grave_history_source`, `grave_history_status`) para evitar perder el contexto de diagnóstico.
 - Seguridad/robustez: el endpoint `catgame_run_grave_enforcement` valida y normaliza ambos filtros antes de reutilizarlos en el redirect (`all/runtime/manual/cli` y `all/ok/error`).

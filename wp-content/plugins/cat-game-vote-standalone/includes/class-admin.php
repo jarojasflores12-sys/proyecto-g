@@ -488,6 +488,13 @@ class CatGame_Admin {
         $grave_history_source_filter = sanitize_key((string) wp_unslash($_GET['grave_history_source'] ?? 'all'));
         $grave_history_status_filter = sanitize_key((string) wp_unslash($_GET['grave_history_status'] ?? 'all'));
 
+        if (!in_array($grave_history_source_filter, ['all', 'runtime', 'manual', 'cli'], true)) {
+            $grave_history_source_filter = 'all';
+        }
+        if (!in_array($grave_history_status_filter, ['all', 'ok', 'error'], true)) {
+            $grave_history_status_filter = 'all';
+        }
+
         $grave_run_history = array_values(array_filter($grave_run_history, static function (array $run) use ($grave_history_source_filter, $grave_history_status_filter): bool {
             $source_ok = $grave_history_source_filter === 'all' || sanitize_key((string) ($run['source'] ?? '')) === $grave_history_source_filter;
             $status_ok = $grave_history_status_filter === 'all' || sanitize_key((string) ($run['status'] ?? '')) === $grave_history_status_filter;
