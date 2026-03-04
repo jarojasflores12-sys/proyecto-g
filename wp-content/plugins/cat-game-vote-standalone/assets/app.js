@@ -1286,6 +1286,84 @@
   });
 })();
 
+(function () {
+  const config = window.CATGAME || {};
+  const modal = document.getElementById('catgame-appeal-modal');
+  const form = document.getElementById('catgame-appeal-form');
+  const idInput = document.getElementById('catgame-appeal-submission-id');
+  if (!config || !config.ajaxUrl || !config.nonce || !modal || !form || !idInput) {
+    return;
+  }
+
+  const setOpen = (open) => {
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+  };
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    if (target.closest('[data-appeal-close="1"]')) {
+      setOpen(false);
+      return;
+    }
+
+    const btn = target.closest('[data-appeal-btn="1"]');
+    if (!btn) return;
+
+    const submissionId = Number(btn.getAttribute('data-submission-id') || '0');
+    if (!submissionId) return;
+
+    idInput.value = String(submissionId);
+    setOpen(true);
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const fd = new FormData(form);
+    const params = new URLSearchParams();
+    params.set('action', 'catgame_submit_appeal');
+    params.set('nonce', String(config.nonce || ''));
+    params.set('submission_id', String(fd.get('submission_id') || '0'));
+    params.set('message', String(fd.get('message') || ''));
+
+    try {
+      const response = await fetch(config.ajaxUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
+        body: params.toString(),
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.success) {
+        window.catgameToast?.(payload?.data?.message || 'No se pudo enviar la apelación.', 'error');
+        return;
+      }
+
+      window.catgameToast?.('Apelación enviada (pendiente)', 'success');
+      setOpen(false);
+      form.reset();
+      const submissionId = Number(params.get('submission_id') || '0');
+      if (submissionId > 0) {
+        document.querySelectorAll(`[data-submission-id="${submissionId}"]`).forEach((btn) => {
+          if (btn instanceof HTMLElement && btn.matches('[data-appeal-btn="1"]')) {
+            const state = document.createElement('p');
+            state.className = 'cg-appeal-state';
+            state.textContent = 'Apelación pendiente';
+            btn.replaceWith(state);
+          }
+        });
+      }
+    } catch (_) {
+      window.catgameToast?.('No se pudo enviar la apelación.', 'error');
+    }
+  });
+})();
 
 (function () {
   const config = window.CATGAME || {};

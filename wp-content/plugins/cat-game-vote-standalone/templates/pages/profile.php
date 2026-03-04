@@ -379,6 +379,7 @@ if ($upload_banned_until_iso !== '') {
                     <input type="hidden" name="submission_id" value="<?php echo (int) ($item['id'] ?? 0); ?>">
                     <button type="submit" class="cg-tag-delete">Eliminar mi publicación</button>
                 </form>
+                <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::appeal_button_html((array) $item, (int) get_current_user_id()) : ''; ?>
                 <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in(), (array) ($item['reaction_counts'] ?? []) ? ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)] : []); ?>
             </article>
         <?php endforeach; ?>

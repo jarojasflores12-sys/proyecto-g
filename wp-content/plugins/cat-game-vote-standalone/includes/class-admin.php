@@ -479,9 +479,18 @@ class CatGame_Admin {
         );
 
         $notice = sanitize_key((string) wp_unslash($_GET['mod_notice'] ?? ''));
+        $appeal_notice = sanitize_key((string) wp_unslash($_GET['appeal_notice'] ?? ''));
+        $appeals = class_exists('CatGame_Reports') ? CatGame_Reports::list_pending_appeals(200) : [];
         ?>
         <div class="wrap catgame-admin-page">
             <h1>Cat Game - Moderación</h1>
+            <?php if ($appeal_notice === 'accepted'): ?>
+                <div class="notice notice-success is-dismissible"><p>Apelación aceptada y publicación restaurada.</p></div>
+            <?php elseif ($appeal_notice === 'rejected'): ?>
+                <div class="notice notice-warning is-dismissible"><p>Apelación rechazada.</p></div>
+            <?php elseif ($appeal_notice === 'invalid'): ?>
+                <div class="notice notice-error is-dismissible"><p>No se pudo procesar la apelación.</p></div>
+            <?php endif; ?>
             <?php if ($notice === 'updated'): ?>
                 <div class="notice notice-success is-dismissible"><p>Acción de moderación actualizada.</p></div>
             <?php elseif ($notice === 'unchanged'): ?>
@@ -491,6 +500,47 @@ class CatGame_Admin {
             <?php elseif ($notice === 'invalid'): ?>
                 <div class="notice notice-error is-dismissible"><p>No se pudo actualizar la acción (datos inválidos).</p></div>
             <?php endif; ?>
+            <section class="catgame-panel" style="margin-bottom:16px;">
+                <h2>Apelaciones pendientes</h2>
+                <table class="widefat striped">
+                    <thead><tr><th>Miniatura</th><th>Publicación</th><th>Usuario</th><th>Moderación actual</th><th>Fecha</th><th>Mensaje</th><th>Decisión</th></tr></thead>
+                    <tbody>
+                    <?php if (empty($appeals)): ?>
+                        <tr><td colspan="7">No hay apelaciones pendientes.</td></tr>
+                    <?php else: ?>
+                        <?php foreach ($appeals as $appeal): ?>
+                            <?php $appeal_user = get_userdata((int) ($appeal['user_id'] ?? 0)); ?>
+                            <tr>
+                                <td><?php echo wp_get_attachment_image((int) ($appeal['attachment_id'] ?? 0), [70, 70]); ?></td>
+                                <td><strong><?php echo esc_html(CatGame_Submissions::title_label((array) $appeal)); ?></strong><br><small>#<?php echo (int) ($appeal['submission_id'] ?? 0); ?></small></td>
+                                <td>@<?php echo esc_html($appeal_user ? (string) $appeal_user->user_login : 'usuario'); ?></td>
+                                <td><small><?php echo esc_html((string) ($appeal['current_action'] ?? 'n/d')); ?><?php if (!empty($appeal['current_severity'])): ?> (<?php echo esc_html((string) $appeal['current_severity']); ?>)<?php endif; ?></small></td>
+                                <td><?php echo esc_html((string) ($appeal['created_at'] ?? '')); ?></td>
+                                <td><?php echo esc_html((string) ($appeal['message'] ?? '')); ?></td>
+                                <td>
+                                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-bottom:6px;">
+                                        <?php wp_nonce_field('catgame_decide_appeal'); ?>
+                                        <input type="hidden" name="action" value="catgame_decide_appeal" />
+                                        <input type="hidden" name="appeal_id" value="<?php echo (int) ($appeal['id'] ?? 0); ?>" />
+                                        <input type="hidden" name="decision" value="accepted" />
+                                        <button type="submit" class="button button-small button-primary">Aceptar</button>
+                                    </form>
+                                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                        <?php wp_nonce_field('catgame_decide_appeal'); ?>
+                                        <input type="hidden" name="action" value="catgame_decide_appeal" />
+                                        <input type="hidden" name="appeal_id" value="<?php echo (int) ($appeal['id'] ?? 0); ?>" />
+                                        <input type="hidden" name="decision" value="rejected" />
+                                        <input type="text" name="admin_note" maxlength="500" placeholder="Nota admin (opcional)" style="width:100%; margin-bottom:4px;" />
+                                        <button type="submit" class="button button-small">Rechazar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </section>
+
             <p>
                 <a class="button <?php echo $status_filter === 'pending' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-moderation&status=pending')); ?>">Pendientes</a>
                 <a class="button <?php echo $status_filter === 'resolved' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-moderation&status=resolved')); ?>">Resueltos</a>

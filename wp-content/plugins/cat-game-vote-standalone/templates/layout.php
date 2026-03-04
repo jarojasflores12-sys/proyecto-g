@@ -145,6 +145,25 @@ if ($has_background) {
     </div>
 </div>
 
+<div class="cg-modal" id="catgame-appeal-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-appeal-title">
+    <div class="cg-modal__backdrop" data-appeal-close="1"></div>
+    <div class="cg-modal__content" role="document">
+        <button type="button" class="cg-modal__close" data-appeal-close="1" aria-label="Cerrar apelación">✕</button>
+        <h2 id="catgame-appeal-title">Apelar moderación</h2>
+        <p>Explica brevemente por qué consideras que la moderación debe revisarse.</p>
+        <form id="catgame-appeal-form">
+            <input type="hidden" name="submission_id" id="catgame-appeal-submission-id" value="0">
+            <label>Mensaje (máx 500)
+                <textarea name="message" maxlength="500" rows="4" placeholder="Escribe tu apelación"></textarea>
+            </label>
+            <div class="cg-confirm-actions">
+                <button type="button" class="secondary" data-appeal-close="1">Cancelar</button>
+                <button type="submit">Enviar apelación</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="catgame-toast" class="catgame-toast" aria-live="polite" aria-atomic="true"></div>
 <script>
 window.CATGAME_REACTIONS = {

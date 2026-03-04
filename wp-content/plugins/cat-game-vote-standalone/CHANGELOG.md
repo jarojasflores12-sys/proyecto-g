@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.27.6
+- Apelaciones: nueva tabla `catgame_appeals` (1 apelación por publicación) con estados `pending|accepted|rejected`, trazabilidad de decisión admin y nota opcional.
+- Regla 72h: una moderación es apelable solo si existe acción actual (`moderation_actions.is_current=1`), no venció la ventana de 72 horas y no hay apelación previa.
+- UX usuario: botón **Apelar** + modal en frontend (AJAX `catgame_submit_appeal`, nonce, mensaje máx 500, toast de éxito y estado "Apelación pendiente").
+- Anti-abuso: rate limit de apelaciones a 3 envíos por usuario cada 24h con respuesta `429` y mensaje explícito.
+- Admin Moderation: sección de **Apelaciones pendientes** con acciones Aceptar/Rechazar.
+- Al aceptar: se restaura publicación, se revierte suspensión/strike asociado al caso y se agrega acción `restore` en historial de moderación.
+- Notificaciones campana: decisión de apelación notifica al dueño con deduplicación por `event_key` (`appeal:{appeal_id}:{status}`).
+
 ## 0.27.5
 - Moderación Admin: se agrega historial de acciones en DB (`catgame_moderation_actions`) con encadenado por `prev_action_id` y marca `is_current` para soportar edición de la decisión actual.
 - Moderación Admin (resueltos): nuevo formulario **Editar acción** (acción, gravedad, motivo y detalle) con guardado idempotente; si no hay cambios se informa "Sin cambios".

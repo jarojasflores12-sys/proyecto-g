@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_DB {
-    private const SCHEMA_VERSION = '8';
+    private const SCHEMA_VERSION = '9';
     private const SCHEMA_OPTION_KEY = 'catgame_schema_version';
 
     public static function init(): void {
@@ -41,6 +41,7 @@ class CatGame_DB {
         $strikes = self::table('strikes');
         $notifications = self::table('notifications');
         $moderation_actions = self::table('moderation_actions');
+        $appeals = self::table('appeals');
 
         $sql = [];
         $sql[] = "CREATE TABLE {$events} (
@@ -168,6 +169,22 @@ class CatGame_DB {
             KEY submission_id (submission_id),
             KEY user_id (user_id),
             KEY is_current (is_current)
+        ) {$charset};";
+
+        $sql[] = "CREATE TABLE {$appeals} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            submission_id BIGINT UNSIGNED NOT NULL,
+            user_id BIGINT UNSIGNED NOT NULL,
+            message TEXT NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'pending',
+            created_at DATETIME NOT NULL,
+            decided_at DATETIME NULL,
+            decided_by BIGINT UNSIGNED NULL,
+            admin_note TEXT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY uniq_submission (submission_id),
+            KEY submission_id (submission_id),
+            KEY user_id (user_id)
         ) {$charset};";
 
         foreach ($sql as $statement) {
