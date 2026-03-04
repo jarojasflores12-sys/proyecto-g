@@ -103,8 +103,25 @@ class CatGame_Reports {
 
         check_admin_referer('catgame_run_grave_enforcement');
 
+        $source_filter = sanitize_key((string) wp_unslash($_POST['grave_history_source'] ?? 'all'));
+        $status_filter = sanitize_key((string) wp_unslash($_POST['grave_history_status'] ?? 'all'));
+
+        if (!in_array($source_filter, ['all', 'runtime', 'manual', 'cli'], true)) {
+            $source_filter = 'all';
+        }
+        if (!in_array($status_filter, ['all', 'ok', 'error'], true)) {
+            $status_filter = 'all';
+        }
+
         $processed = self::enforce_grave_case_deadlines('manual');
-        wp_safe_redirect(admin_url('admin.php?page=catgame-moderation&grave_enforced=1&grave_enforced_count=' . (int) $processed));
+        $redirect_url = add_query_arg([
+            'page' => 'catgame-moderation',
+            'grave_enforced' => 1,
+            'grave_enforced_count' => (int) $processed,
+            'grave_history_source' => $source_filter,
+            'grave_history_status' => $status_filter,
+        ], admin_url('admin.php'));
+        wp_safe_redirect($redirect_url);
         exit;
     }
 

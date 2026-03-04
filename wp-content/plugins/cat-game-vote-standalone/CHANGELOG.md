@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.12
+- Moderation Admin UX: al ejecutar enforcement manual se conservan los filtros activos del historial corto (`grave_history_source`, `grave_history_status`) para evitar perder el contexto de diagnóstico.
+- Seguridad/robustez: el endpoint `catgame_run_grave_enforcement` valida y normaliza ambos filtros antes de reutilizarlos en el redirect (`all/runtime/manual/cli` y `all/ok/error`).
+
 ## 0.27.11
 - Moderation Admin (operación): se agrega filtro de historial corto de enforcement por `origen` (`runtime/manual/cli`) y `estado` (`ok/error`) para diagnóstico más rápido.
 - Moderation Admin (soporte): nuevo botón **Copiar diagnóstico (JSON)** que copia el historial filtrado para pegar en tickets/incidencias.
