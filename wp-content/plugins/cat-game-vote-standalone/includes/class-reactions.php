@@ -43,6 +43,11 @@ class CatGame_Reactions {
         if (class_exists('CatGame_Reports') && !CatGame_Reports::can_user_participate($user_id, $block_message)) {
             wp_send_json_error(['message' => $block_message], 403);
         }
+
+        if (class_exists('CatGame_Reports') && CatGame_Reports::is_react_blocked($user_id)) {
+            wp_send_json_error(['message' => 'No puedes reaccionar temporalmente por una sanción activa.'], 403);
+        }
+
         $retry_after = 0;
         if (!self::within_rate_limit($user_id, $retry_after)) {
             wp_send_json_error([

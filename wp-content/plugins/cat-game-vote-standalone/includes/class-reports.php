@@ -27,8 +27,15 @@ class CatGame_Reports {
     }
 
     public static function can_user_participate(int $user_id, string &$message = ''): bool {
+        self::enforce_grave_case_deadlines();
+
         if ($user_id <= 0) {
             $message = 'Debes iniciar sesión para continuar.';
+            return false;
+        }
+
+        if (self::is_login_blocked($user_id)) {
+            $message = 'Cuenta eliminada por infracción grave.';
             return false;
         }
 
@@ -83,21 +90,16 @@ class CatGame_Reports {
     }
 
     public static function get_upload_ban_until(int $user_id): int {
-        if ($user_id <= 0) {
+        $ban = self::get_ban_row($user_id);
+        if (!$ban || empty($ban['upload_banned_until'])) {
             return 0;
         }
 
-        $value = get_user_meta($user_id, self::UPLOAD_BAN_META_KEY, true);
-        if ($value === '' || $value === null) {
-            return 0;
-        }
-
-        return is_numeric($value) ? (int) $value : (int) strtotime((string) $value);
+        return (int) strtotime((string) $ban['upload_banned_until']);
     }
 
     public static function is_upload_banned(int $user_id): bool {
-        $until = self::get_upload_ban_until($user_id);
-        return $until > time();
+        return self::is_upload_blocked($user_id);
     }
 
     public static function set_upload_ban_until(int $user_id, int $until_ts): void {
@@ -105,12 +107,8 @@ class CatGame_Reports {
             return;
         }
 
-        if ($until_ts <= 0) {
-            delete_user_meta($user_id, self::UPLOAD_BAN_META_KEY);
-            return;
-        }
-
-        update_user_meta($user_id, self::UPLOAD_BAN_META_KEY, $until_ts);
+        $until = $until_ts > 0 ? gmdate('Y-m-d H:i:s', $until_ts) : null;
+        self::upsert_ban_fields($user_id, ['upload_banned_until' => $until]);
     }
 
 
@@ -432,6 +430,7 @@ class CatGame_Reports {
     }
 
     public static function handle_moderate_report(): void {
+        self::enforce_grave_case_deadlines();
         if (!current_user_can('manage_options')) {
             wp_die('No autorizado');
         }
@@ -480,12 +479,15 @@ class CatGame_Reports {
                 'moderation_' . (int) $report_id . '_restored'
             );
         } elseif ($resolution === 'removed') {
-            if (!in_array($severity, ['leve', 'moderado', 'grave'], true)) {
+            if ($severity === 'moderado') {
+                $severity = 'moderada';
+            }
+            if (!in_array($severity, ['leve', 'moderada', 'grave'], true)) {
                 $severity = 'leve';
             }
 
             CatGame_Submissions::hide_submission($submission_id, 'removed');
-            self::add_strike($author_id, 'author', $severity, 'submission_removed', $admin_user_id);
+            self::apply_moderation_penalty($author_id, $submission_id, $severity, $report_reason, $admin_user_id);
 
             self::add_notification(
                 $author_id,
@@ -495,58 +497,7 @@ class CatGame_Reports {
                 'moderation_' . (int) $report_id . '_removed'
             );
 
-            $author_strikes = self::active_strikes_count_by_kind($author_id, 'author');
-            self::add_notification(
-                $author_id,
-                'strike',
-                'Sanción aplicada',
-                'Recibiste un strike (' . (int) $author_strikes . '/3) por: ' . $reason_label . '.',
-                'moderation_' . (int) $report_id . '_strike'
-            );
-
-            if ($report_reason === 'human') {
-                self::set_upload_ban_until($author_id, time() + (3 * DAY_IN_SECONDS));
-                self::add_notification(
-                    $author_id,
-                    'suspension',
-                    'Cuenta suspendida',
-                    'Tu cuenta fue suspendida por 3 días por: ' . $reason_label . '. Durante la suspensión puedes reaccionar, pero no subir fotos.',
-                    'moderation_' . (int) $report_id . '_suspension'
-                );
-            }
-
-            if ($severity === 'grave') {
-                CatGame_Submissions::hide_user_submissions($author_id, 'removed');
-                self::set_upload_ban_until($author_id, time() + YEAR_IN_SECONDS);
-                self::add_notification(
-                    $author_id,
-                    'account',
-                    'Cuenta eliminada',
-                    'Tu cuenta fue eliminada por infracción grave: ' . $reason_label . '. Si crees que es un error, contacta al administrador.',
-                    'moderation_' . (int) $report_id . '_account'
-                );
-            } elseif ($author_strikes >= 3) {
-                self::set_upload_ban_until($author_id, time() + (7 * DAY_IN_SECONDS));
-                self::add_notification(
-                    $author_id,
-                    'suspension',
-                    'Cuenta suspendida',
-                    'Tu cuenta fue suspendida por 7 días por acumulación de strikes. Durante la suspensión puedes reaccionar, pero no subir fotos.',
-                    'moderation_' . (int) $report_id . '_suspension7'
-                );
-            }
         } elseif ($resolution === 'false_report') {
-            self::add_strike($reporter_id, 'reporter', 'leve', 'false_report', $admin_user_id);
-            if (self::active_strikes_count($reporter_id) >= 3) {
-                self::set_upload_ban_until($reporter_id, time() + (7 * DAY_IN_SECONDS));
-                self::add_notification(
-                    $reporter_id,
-                    'suspension',
-                    'Cuenta suspendida',
-                    'Tu cuenta fue suspendida por 7 días por acumulación de strikes. Durante la suspensión puedes reaccionar, pero no subir fotos.',
-                    'moderation_' . (int) $report_id . '_reporter_suspension7'
-                );
-            }
             if (!self::has_pending_reports($submission_id)) {
                 CatGame_Submissions::unhide_submission($submission_id);
             }
@@ -638,6 +589,7 @@ class CatGame_Reports {
     }
 
     public static function handle_submit_appeal(): void {
+        self::enforce_grave_case_deadlines();
         if (!is_user_logged_in()) {
             wp_send_json_error(['message' => 'Debes iniciar sesión para apelar.'], 401);
         }
@@ -688,6 +640,8 @@ class CatGame_Reports {
             wp_send_json_error(['message' => 'No se pudo enviar la apelación.'], 500);
         }
 
+        self::mark_grave_case_pending_if_needed($submission_id, $user_id);
+
         wp_send_json_success(['message' => 'Apelación enviada (pendiente)']);
     }
 
@@ -720,6 +674,9 @@ class CatGame_Reports {
 
         if ($decision === 'accepted') {
             self::accept_appeal($submission_id, $user_id, $admin_user_id);
+        } elseif (self::is_grave_case_submission($submission_id)) {
+            self::close_grave_case($submission_id, 'rejected');
+            self::execute_perma_ban($user_id, 'grave_rejected');
         }
 
         $wpdb->update(
@@ -798,8 +755,9 @@ class CatGame_Reports {
             return false;
         }
 
-        if ((time() - $decided_at) > (self::APPEAL_WINDOW_HOURS * HOUR_IN_SECONDS)) {
-            $message = 'La ventana de apelación expiró (72h).';
+        $window_hours = ((string) ($current_action['severity'] ?? '') === 'grave') ? 24 : self::APPEAL_WINDOW_HOURS;
+        if ((time() - $decided_at) > ($window_hours * HOUR_IN_SECONDS)) {
+            $message = $window_hours === 24 ? 'La ventana de apelación expiró (24h).' : 'La ventana de apelación expiró (72h).';
             return false;
         }
 
@@ -851,15 +809,9 @@ class CatGame_Reports {
         $decided_at = (string) ($current_action['decided_at'] ?? '');
 
         CatGame_Submissions::unhide_submission($submission_id);
-
-        if (in_array($action_name, ['suspend_3d', 'delete'], true)) {
-            self::set_upload_ban_until($user_id, 0);
-            self::remove_last_author_strike($user_id, $decided_at);
-        }
-
-        if ($action_name === 'strike') {
-            self::remove_last_author_strike($user_id, $decided_at);
-        }
+        self::mark_infraction_reversed_by_submission($submission_id, 'appeal_accepted');
+        self::close_grave_case($submission_id, 'accepted');
+        self::recalculate_user_bans($user_id);
 
         global $wpdb;
         $table = CatGame_DB::table('moderation_actions');
@@ -903,6 +855,381 @@ class CatGame_Reports {
         if ($strike_id > 0) {
             $wpdb->delete($table, ['id' => $strike_id], ['%d']);
         }
+    }
+
+    private static function apply_moderation_penalty(int $user_id, int $submission_id, string $severity, string $reason_code, int $admin_user_id): void {
+        if ($user_id <= 0 || $submission_id <= 0) {
+            return;
+        }
+
+        $points_map = [
+            'leve' => 1,
+            'moderada' => 3,
+            'grave' => 9,
+        ];
+        $points = $points_map[$severity] ?? 1;
+
+        self::insert_infraction($user_id, $submission_id, $severity, $points, $reason_code, $admin_user_id);
+
+        if ($severity === 'moderada') {
+            self::extend_upload_ban($user_id, time() + (3 * DAY_IN_SECONDS));
+        } elseif ($severity === 'grave') {
+            self::set_hard_hold_grave($user_id);
+            self::open_grave_case($user_id, $submission_id);
+        }
+
+        self::apply_escalation_upload_ban($user_id);
+    }
+
+    private static function insert_infraction(int $user_id, int $submission_id, string $severity, int $points, string $reason_code, int $admin_user_id): void {
+        global $wpdb;
+        $table = CatGame_DB::table('infractions');
+        $created_at = current_time('mysql');
+        $expires_at = gmdate('Y-m-d H:i:s', strtotime($created_at . ' +1 year'));
+        $wpdb->insert(
+            $table,
+            [
+                'user_id' => $user_id,
+                'submission_id' => $submission_id > 0 ? $submission_id : null,
+                'severity' => $severity,
+                'points' => $points,
+                'reason_code' => sanitize_key($reason_code),
+                'created_at' => $created_at,
+                'expires_at' => $expires_at,
+                'decided_by' => $admin_user_id > 0 ? $admin_user_id : null,
+            ],
+            ['%d', '%d', '%s', '%d', '%s', '%s', '%s', '%d']
+        );
+    }
+
+    public static function points_total(int $user_id): int {
+        if ($user_id <= 0) {
+            return 0;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('infractions');
+        $now = current_time('mysql');
+        return (int) $wpdb->get_var($wpdb->prepare("SELECT COALESCE(SUM(points),0) FROM {$table} WHERE user_id = %d AND expires_at > %s AND reversed_at IS NULL", $user_id, $now));
+    }
+
+    private static function apply_escalation_upload_ban(int $user_id): void {
+        $total = self::points_total($user_id);
+        if ($total >= 9) {
+            self::extend_upload_ban($user_id, time() + (7 * DAY_IN_SECONDS));
+            return;
+        }
+
+        if ($total >= 3) {
+            self::extend_upload_ban($user_id, time() + (3 * DAY_IN_SECONDS));
+        }
+    }
+
+    private static function set_hard_hold_grave(int $user_id): void {
+        if ($user_id <= 0) {
+            return;
+        }
+
+        $until = gmdate('Y-m-d H:i:s', time() + DAY_IN_SECONDS);
+        self::upsert_ban_fields($user_id, [
+            'hard_hold_until' => $until,
+            'react_banned_until' => $until,
+            'upload_banned_until' => $until,
+        ]);
+    }
+
+    private static function extend_upload_ban(int $user_id, int $until_ts): void {
+        if ($user_id <= 0 || $until_ts <= 0) {
+            return;
+        }
+
+        $ban = self::get_ban_row($user_id);
+        $current_ts = !empty($ban['upload_banned_until']) ? strtotime((string) $ban['upload_banned_until']) : 0;
+        if ($current_ts >= $until_ts) {
+            return;
+        }
+
+        self::upsert_ban_fields($user_id, ['upload_banned_until' => gmdate('Y-m-d H:i:s', $until_ts)]);
+    }
+
+    private static function get_ban_row(int $user_id): ?array {
+        if ($user_id <= 0) {
+            return null;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('bans');
+        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE user_id = %d", $user_id), ARRAY_A);
+        return is_array($row) ? $row : null;
+    }
+
+    private static function upsert_ban_fields(int $user_id, array $fields): void {
+        if ($user_id <= 0 || empty($fields)) {
+            return;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('bans');
+        $existing = self::get_ban_row($user_id);
+        $formats = [];
+        foreach ($fields as $k => $_v) {
+            $formats[] = $k === 'perma_banned' ? '%d' : '%s';
+        }
+
+        if ($existing) {
+            $wpdb->update($table, $fields, ['user_id' => $user_id], $formats, ['%d']);
+            return;
+        }
+
+        $data = array_merge(['user_id' => $user_id], $fields);
+        $insert_formats = array_merge(['%d'], $formats);
+        $wpdb->insert($table, $data, $insert_formats);
+    }
+
+    public static function is_login_blocked(int $user_id): bool {
+        $ban = self::get_ban_row($user_id);
+        return is_array($ban) && (int) ($ban['perma_banned'] ?? 0) === 1;
+    }
+
+    public static function is_upload_blocked(int $user_id): bool {
+        $ban = self::get_ban_row($user_id);
+        if (!$ban) {
+            return false;
+        }
+
+        $now = time();
+        $upload_until = !empty($ban['upload_banned_until']) ? strtotime((string) $ban['upload_banned_until']) : 0;
+        $hold_until = !empty($ban['hard_hold_until']) ? strtotime((string) $ban['hard_hold_until']) : 0;
+        return $upload_until > $now || $hold_until > $now;
+    }
+
+    public static function is_react_blocked(int $user_id): bool {
+        $ban = self::get_ban_row($user_id);
+        if (!$ban) {
+            return false;
+        }
+
+        $now = time();
+        $react_until = !empty($ban['react_banned_until']) ? strtotime((string) $ban['react_banned_until']) : 0;
+        $hold_until = !empty($ban['hard_hold_until']) ? strtotime((string) $ban['hard_hold_until']) : 0;
+        return $react_until > $now || $hold_until > $now;
+    }
+
+    private static function open_grave_case(int $user_id, int $submission_id): void {
+        global $wpdb;
+        $table = CatGame_DB::table('grave_cases');
+        $existing_id = (int) $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE submission_id = %d AND case_status = 'open' LIMIT 1", $submission_id));
+        $decided_at = current_time('mysql');
+        $expires_at = gmdate('Y-m-d H:i:s', strtotime($decided_at . ' +24 hours'));
+        if ($existing_id > 0) {
+            $wpdb->update($table, [
+                'user_id' => $user_id,
+                'decided_at' => $decided_at,
+                'expires_at' => $expires_at,
+                'appeal_status' => 'none',
+                'case_status' => 'open',
+                'closed_at' => null,
+            ], ['id' => $existing_id], ['%d', '%s', '%s', '%s', '%s', '%s'], ['%d']);
+            return;
+        }
+
+        $wpdb->insert($table, [
+            'user_id' => $user_id,
+            'submission_id' => $submission_id,
+            'decided_at' => $decided_at,
+            'expires_at' => $expires_at,
+            'appeal_status' => 'none',
+            'case_status' => 'open',
+        ], ['%d', '%d', '%s', '%s', '%s', '%s']);
+    }
+
+    private static function mark_grave_case_pending_if_needed(int $submission_id, int $user_id): void {
+        if (!self::is_grave_case_submission($submission_id)) {
+            return;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('grave_cases');
+        $extended_until = gmdate('Y-m-d H:i:s', time() + (30 * DAY_IN_SECONDS));
+        $wpdb->query($wpdb->prepare("UPDATE {$table} SET appeal_status = 'pending' WHERE submission_id = %d AND case_status = 'open'", $submission_id));
+        self::upsert_ban_fields($user_id, ['hard_hold_until' => $extended_until, 'upload_banned_until' => $extended_until, 'react_banned_until' => $extended_until]);
+    }
+
+    private static function close_grave_case(int $submission_id, string $status): void {
+        global $wpdb;
+        $table = CatGame_DB::table('grave_cases');
+        $wpdb->query($wpdb->prepare("UPDATE {$table} SET case_status = %s, appeal_status = %s, closed_at = %s WHERE submission_id = %d AND case_status = 'open'", $status, $status, current_time('mysql'), $submission_id));
+    }
+
+    private static function is_grave_case_submission(int $submission_id): bool {
+        if ($submission_id <= 0) {
+            return false;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('grave_cases');
+        $count = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE submission_id = %d AND case_status = 'open'", $submission_id));
+        return $count > 0;
+    }
+
+    public static function enforce_grave_case_deadlines(): void {
+        global $wpdb;
+        $table = CatGame_DB::table('grave_cases');
+        $now = current_time('mysql');
+        $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$table} WHERE case_status = 'open' AND appeal_status = 'none' AND expires_at <= %s LIMIT 50", $now), ARRAY_A);
+        if (!is_array($rows) || empty($rows)) {
+            return;
+        }
+
+        foreach ($rows as $row) {
+            $user_id = (int) ($row['user_id'] ?? 0);
+            $submission_id = (int) ($row['submission_id'] ?? 0);
+            if ($user_id <= 0 || $submission_id <= 0) {
+                continue;
+            }
+
+            self::close_grave_case($submission_id, 'expired');
+            self::execute_perma_ban($user_id, 'grave_expired_no_appeal');
+        }
+    }
+
+    private static function mark_infraction_reversed_by_submission(int $submission_id, string $reason = 'appeal_accepted'): void {
+        if ($submission_id <= 0) {
+            return;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('infractions');
+        $wpdb->query(
+            $wpdb->prepare(
+                "UPDATE {$table} SET reversed_at = %s, reverse_reason = %s WHERE submission_id = %d AND reversed_at IS NULL",
+                current_time('mysql'),
+                sanitize_key($reason),
+                $submission_id
+            )
+        );
+    }
+
+    private static function recalculate_user_bans(int $user_id): void {
+        if ($user_id <= 0) {
+            return;
+        }
+
+        $ban = self::get_ban_row($user_id);
+        if (!$ban) {
+            self::apply_escalation_upload_ban($user_id);
+            return;
+        }
+
+        if ((int) ($ban['perma_banned'] ?? 0) === 1) {
+            return;
+        }
+
+        self::upsert_ban_fields($user_id, [
+            'hard_hold_until' => null,
+            'react_banned_until' => null,
+            'upload_banned_until' => null,
+        ]);
+        self::apply_escalation_upload_ban($user_id);
+    }
+
+    private static function email_hash(string $email): string {
+        $email = strtolower(trim($email));
+        return hash('sha256', $email . '|' . wp_salt('auth'));
+    }
+
+    public static function is_email_perma_banned(string $email): bool {
+        $hash = self::email_hash($email);
+        global $wpdb;
+        $table = CatGame_DB::table('perma_bans');
+        $count = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE email_hash = %s", $hash));
+        return $count > 0;
+    }
+
+    public static function execute_perma_ban(int $user_id, string $reason_code): void {
+        if ($user_id <= 0) {
+            return;
+        }
+
+        $user = get_userdata($user_id);
+        if (!$user) {
+            return;
+        }
+
+        global $wpdb;
+        $perma_table = CatGame_DB::table('perma_bans');
+        $bans_table = CatGame_DB::table('bans');
+        $hash = self::email_hash((string) $user->user_email);
+        $exists = (int) $wpdb->get_var($wpdb->prepare("SELECT id FROM {$perma_table} WHERE email_hash = %s LIMIT 1", $hash));
+        if ($exists <= 0) {
+            $wpdb->insert($perma_table, [
+                'email_hash' => $hash,
+                'created_at' => current_time('mysql'),
+                'reason_code' => sanitize_key($reason_code),
+                'note' => 'auto',
+            ], ['%s', '%s', '%s', '%s']);
+        }
+
+        self::upsert_ban_fields($user_id, [
+            'perma_banned' => 1,
+            'perma_banned_at' => current_time('mysql'),
+            'upload_banned_until' => null,
+            'react_banned_until' => null,
+            'hard_hold_until' => null,
+        ]);
+
+        self::purge_user_game_data($user_id);
+        wp_destroy_current_session();
+        wp_clear_auth_cookie();
+    }
+
+    private static function purge_user_game_data(int $user_id): void {
+        global $wpdb;
+
+        $submissions_table = CatGame_DB::table('submissions');
+        $votes_table = CatGame_DB::table('votes');
+        $reactions_table = CatGame_DB::table('reactions');
+        $reports_table = CatGame_DB::table('reports');
+        $appeals_table = CatGame_DB::table('appeals');
+        $moderation_actions_table = CatGame_DB::table('moderation_actions');
+        $infractions_table = CatGame_DB::table('infractions');
+        $grave_cases_table = CatGame_DB::table('grave_cases');
+
+        $submission_rows = $wpdb->get_results($wpdb->prepare("SELECT id, attachment_id FROM {$submissions_table} WHERE user_id = %d", $user_id), ARRAY_A);
+        if (is_array($submission_rows)) {
+            foreach ($submission_rows as $row) {
+                $submission_id = (int) ($row['id'] ?? 0);
+                $attachment_id = (int) ($row['attachment_id'] ?? 0);
+                if ($submission_id > 0) {
+                    $wpdb->delete($votes_table, ['submission_id' => $submission_id], ['%d']);
+                    $wpdb->delete($reactions_table, ['submission_id' => $submission_id], ['%d']);
+                    $wpdb->delete($reports_table, ['submission_id' => $submission_id], ['%d']);
+                    $wpdb->delete($appeals_table, ['submission_id' => $submission_id], ['%d']);
+                    $wpdb->delete($moderation_actions_table, ['submission_id' => $submission_id], ['%d']);
+                    $wpdb->delete($infractions_table, ['submission_id' => $submission_id], ['%d']);
+                    $wpdb->delete($grave_cases_table, ['submission_id' => $submission_id], ['%d']);
+                }
+                if ($attachment_id > 0) {
+                    wp_delete_attachment($attachment_id, true);
+                }
+            }
+        }
+
+        $wpdb->delete($submissions_table, ['user_id' => $user_id], ['%d']);
+        $wpdb->delete($reactions_table, ['user_id' => $user_id], ['%d']);
+        $wpdb->delete($votes_table, ['user_id' => $user_id], ['%d']);
+        $wpdb->delete($reports_table, ['reported_user_id' => $user_id], ['%d']);
+        $wpdb->delete($appeals_table, ['user_id' => $user_id], ['%d']);
+        $wpdb->delete($moderation_actions_table, ['user_id' => $user_id], ['%d']);
+        $wpdb->delete($infractions_table, ['user_id' => $user_id], ['%d']);
+        $wpdb->delete($grave_cases_table, ['user_id' => $user_id], ['%d']);
+
+        delete_user_meta($user_id, self::NOTIFICATIONS_META_KEY);
+        delete_user_meta($user_id, self::UPLOAD_BAN_META_KEY);
+        delete_user_meta($user_id, 'catgame_city');
+        delete_user_meta($user_id, 'catgame_country');
+        delete_user_meta($user_id, 'catgame_custom_tags');
+        delete_user_meta($user_id, 'catgame_avatar_color');
     }
 
     private static function within_report_rate_limit(int $user_id): bool {

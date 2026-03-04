@@ -29,6 +29,10 @@ class CatGame_Auth {
 
         check_admin_referer('catgame_login');
 
+        if (class_exists('CatGame_Reports')) {
+            CatGame_Reports::enforce_grave_case_deadlines();
+        }
+
         $identifier = sanitize_text_field(wp_unslash($_POST['login_identifier'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
 
@@ -49,6 +53,11 @@ class CatGame_Auth {
             self::redirect_auth(['auth' => 'login', 'login_error' => 'invalid_credentials', 'login_identifier' => $identifier]);
         }
 
+        if (class_exists('CatGame_Reports') && CatGame_Reports::is_login_blocked((int) $signon->ID)) {
+            wp_logout();
+            self::redirect_auth(['auth' => 'login', 'login_error' => 'account_removed', 'login_identifier' => $identifier]);
+        }
+
         self::redirect_after_auth((int) $signon->ID);
     }
 
@@ -59,6 +68,10 @@ class CatGame_Auth {
         }
 
         check_admin_referer('catgame_register');
+
+        if (class_exists('CatGame_Reports')) {
+            CatGame_Reports::enforce_grave_case_deadlines();
+        }
 
         $username = sanitize_user(wp_unslash($_POST['username'] ?? ''), true);
         $email = sanitize_email(wp_unslash($_POST['email'] ?? ''));
@@ -93,6 +106,10 @@ class CatGame_Auth {
 
         if (email_exists($email)) {
             self::redirect_auth($base + ['register_error' => 'email_exists']);
+        }
+
+        if (class_exists('CatGame_Reports') && CatGame_Reports::is_email_perma_banned($email)) {
+            self::redirect_auth($base + ['register_error' => 'account_removed']);
         }
 
         $user_id = wp_insert_user([
@@ -305,6 +322,7 @@ class CatGame_Auth {
             'username_exists' => 'Ese nombre de usuario ya existe.',
             'email_exists' => 'Ese email ya está registrado.',
             'registration_failed' => 'No se pudo crear la cuenta. Intenta de nuevo.',
+            'account_removed' => 'No puedes registrarte: cuenta eliminada por infracción grave.',
         ];
 
         return $messages[$code] ?? 'Error de registro.';
@@ -314,6 +332,7 @@ class CatGame_Auth {
         $messages = [
             'missing_fields' => 'Completa usuario/correo y contraseña.',
             'invalid_credentials' => 'Usuario/correo o contraseña incorrectos.',
+            'account_removed' => 'Cuenta eliminada por infracción grave.',
         ];
 
         return $messages[$code] ?? 'No se pudo iniciar sesión.';

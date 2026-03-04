@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.27.7
+- Moderación (nuevo motor): se agregan tablas `catgame_infractions`, `catgame_bans`, `catgame_perma_bans` y `catgame_grave_cases` para modelar puntos, bloqueos y casos graves con lifecycle.
+- Puntos y escalamiento: leve=+1, moderada=+3, grave=+9 (expiran a 1 año); umbrales automáticos de ban de subida (>=3 => 3 días, >=9 => 7 días, preservando el mayor).
+- Grave/hard hold: al sancionar grave se aplica bloqueo inmediato de subir/reaccionar por 24h y se abre caso grave; si vence sin apelación, se ejecuta perma-ban + borrado fuerte de datos del juego.
+- Apelaciones: ventana dinámica por severidad (72h leve/moderada, 24h grave); en grave pending se mantiene hard hold extendido hasta veredicto.
+- Veredicto apelaciones: aceptar revierte infracción por `submission_id`, restaura publicación y recalcula bans; rechazar grave dispara perma-ban.
+- Enforcement: login bloqueado para perma-ban, upload/reacciones bloqueadas por bans/hard hold, y bloqueo de re-registro por hash de email en `catgame_perma_bans`.
+
 ## 0.27.6
 - Apelaciones: nueva tabla `catgame_appeals` (1 apelación por publicación) con estados `pending|accepted|rejected`, trazabilidad de decisión admin y nota opcional.
 - Regla 72h: una moderación es apelable solo si existe acción actual (`moderation_actions.is_current=1`), no venció la ventana de 72 horas y no hay apelación previa.

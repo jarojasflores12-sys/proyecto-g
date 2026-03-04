@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_DB {
-    private const SCHEMA_VERSION = '9';
+    private const SCHEMA_VERSION = '10';
     private const SCHEMA_OPTION_KEY = 'catgame_schema_version';
 
     public static function init(): void {
@@ -42,6 +42,10 @@ class CatGame_DB {
         $notifications = self::table('notifications');
         $moderation_actions = self::table('moderation_actions');
         $appeals = self::table('appeals');
+        $grave_cases = self::table('grave_cases');
+        $perma_bans = self::table('perma_bans');
+        $bans = self::table('bans');
+        $infractions = self::table('infractions');
 
         $sql = [];
         $sql[] = "CREATE TABLE {$events} (
@@ -185,6 +189,59 @@ class CatGame_DB {
             UNIQUE KEY uniq_submission (submission_id),
             KEY submission_id (submission_id),
             KEY user_id (user_id)
+        ) {$charset};";
+
+        $sql[] = "CREATE TABLE {$infractions} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            user_id BIGINT UNSIGNED NOT NULL,
+            submission_id BIGINT UNSIGNED NULL,
+            severity VARCHAR(20) NOT NULL,
+            points INT NOT NULL,
+            reason_code VARCHAR(64) NOT NULL,
+            created_at DATETIME NOT NULL,
+            expires_at DATETIME NOT NULL,
+            decided_by BIGINT UNSIGNED NULL,
+            reversed_at DATETIME NULL,
+            reverse_reason VARCHAR(64) NULL,
+            PRIMARY KEY (id),
+            KEY user_id (user_id),
+            KEY submission_id (submission_id),
+            KEY expires_at (expires_at)
+        ) {$charset};";
+
+        $sql[] = "CREATE TABLE {$bans} (
+            user_id BIGINT UNSIGNED NOT NULL,
+            upload_banned_until DATETIME NULL,
+            react_banned_until DATETIME NULL,
+            hard_hold_until DATETIME NULL,
+            perma_banned TINYINT(1) NOT NULL DEFAULT 0,
+            perma_banned_at DATETIME NULL,
+            PRIMARY KEY (user_id)
+        ) {$charset};";
+
+        $sql[] = "CREATE TABLE {$perma_bans} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            email_hash CHAR(64) NOT NULL,
+            created_at DATETIME NOT NULL,
+            reason_code VARCHAR(64) NOT NULL,
+            note VARCHAR(255) NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY email_hash (email_hash)
+        ) {$charset};";
+
+        $sql[] = "CREATE TABLE {$grave_cases} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            user_id BIGINT UNSIGNED NOT NULL,
+            submission_id BIGINT UNSIGNED NOT NULL,
+            decided_at DATETIME NOT NULL,
+            expires_at DATETIME NOT NULL,
+            appeal_status VARCHAR(20) NOT NULL DEFAULT 'none',
+            case_status VARCHAR(20) NOT NULL DEFAULT 'open',
+            closed_at DATETIME NULL,
+            PRIMARY KEY (id),
+            KEY user_id (user_id),
+            KEY submission_id (submission_id),
+            KEY case_status (case_status)
         ) {$charset};";
 
         foreach ($sql as $statement) {
