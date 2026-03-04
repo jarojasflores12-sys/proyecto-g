@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.10
+- Moderación/Operación: se agrega historial corto de corridas de enforcement de casos graves (ring buffer de 20 runs) con `ran_at`, `processed`, `source`, `duration_ms` y `status`.
+- Admin Moderation: el panel de enforcement ahora muestra tabla de historial corto para diagnóstico rápido sin revisar logs del servidor.
+- Enforcement internals: `enforce_grave_case_deadlines` acepta `source` (`runtime|manual|cli`) y registra métricas mínimas por corrida.
+
 ## 0.27.9
 - Moderación Admin: nuevo panel en `WP Admin > Moderation` para ejecutar manualmente el enforcement de casos graves y visualizar el último run (`ran_at`, `processed`).
 - Enforcement: `enforce_grave_case_deadlines` ahora devuelve cantidad procesada y persiste telemetry mínima en opción (`catgame_grave_enforcement_last_run`).

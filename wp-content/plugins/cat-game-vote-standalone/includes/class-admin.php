@@ -484,6 +484,7 @@ class CatGame_Admin {
         $grave_enforced_count = isset($_GET['grave_enforced_count']) ? (int) $_GET['grave_enforced_count'] : 0;
         $appeals = class_exists('CatGame_Reports') ? CatGame_Reports::list_pending_appeals(200) : [];
         $last_grave_run = class_exists('CatGame_Reports') ? CatGame_Reports::get_last_grave_enforcement_run() : [];
+        $grave_run_history = class_exists('CatGame_Reports') ? CatGame_Reports::get_grave_enforcement_history() : [];
         ?>
         <div class="wrap catgame-admin-page">
             <h1>Cat Game - Moderación</h1>
@@ -523,6 +524,25 @@ class CatGame_Admin {
                     <input type="hidden" name="action" value="catgame_run_grave_enforcement" />
                     <button type="submit" class="button">Ejecutar enforcement ahora</button>
                 </form>
+                <h3 style="margin-top:12px;">Historial corto</h3>
+                <table class="widefat striped" style="max-width:780px;">
+                    <thead><tr><th>Fecha</th><th>Procesados</th><th>Origen</th><th>Duración</th><th>Estado</th></tr></thead>
+                    <tbody>
+                    <?php if (empty($grave_run_history)): ?>
+                        <tr><td colspan="5">Sin historial.</td></tr>
+                    <?php else: ?>
+                        <?php foreach ($grave_run_history as $run): ?>
+                            <tr>
+                                <td><?php echo esc_html((string) ($run['ran_at'] ?? '')); ?></td>
+                                <td><?php echo (int) ($run['processed'] ?? 0); ?></td>
+                                <td><?php echo esc_html((string) ($run['source'] ?? 'runtime')); ?></td>
+                                <td><?php echo (int) ($run['duration_ms'] ?? 0); ?> ms</td>
+                                <td><?php echo esc_html((string) ($run['status'] ?? 'ok')); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
             </section>
 
             <section class="catgame-panel" style="margin-bottom:16px;">

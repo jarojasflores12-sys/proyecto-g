@@ -13,6 +13,8 @@ class CatGame_Reports {
     private const APPEAL_RATE_LIMIT_MAX = 3;
     private const CRON_HOOK_ENFORCE_GRAVE = 'catgame_enforce_grave_cases_event';
     private const GRAVE_ENFORCEMENT_LAST_RUN_OPTION = 'catgame_grave_enforcement_last_run';
+    private const GRAVE_ENFORCEMENT_HISTORY_OPTION = 'catgame_grave_enforcement_history';
+    private const GRAVE_ENFORCEMENT_HISTORY_LIMIT = 20;
 
     public static function init(): void {
         add_action('admin_post_catgame_report_submission', [__CLASS__, 'handle_report_submission']);
@@ -70,6 +72,30 @@ class CatGame_Reports {
         return is_array($value) ? $value : [];
     }
 
+    public static function get_grave_enforcement_history(): array {
+        $items = get_option(self::GRAVE_ENFORCEMENT_HISTORY_OPTION, []);
+        if (!is_array($items)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $normalized[] = [
+                'ran_at' => sanitize_text_field((string) ($item['ran_at'] ?? '')),
+                'processed' => max(0, (int) ($item['processed'] ?? 0)),
+                'source' => sanitize_key((string) ($item['source'] ?? 'runtime')),
+                'duration_ms' => max(0, (int) ($item['duration_ms'] ?? 0)),
+                'status' => sanitize_key((string) ($item['status'] ?? 'ok')),
+            ];
+        }
+
+        return array_slice($normalized, 0, self::GRAVE_ENFORCEMENT_HISTORY_LIMIT);
+    }
+
     public static function handle_manual_grave_enforcement(): void {
         if (!current_user_can('manage_options')) {
             wp_die('No autorizado');
@@ -77,7 +103,7 @@ class CatGame_Reports {
 
         check_admin_referer('catgame_run_grave_enforcement');
 
-        $processed = self::enforce_grave_case_deadlines();
+        $processed = self::enforce_grave_case_deadlines('manual');
         wp_safe_redirect(admin_url('admin.php?page=catgame-moderation&grave_enforced=1&grave_enforced_count=' . (int) $processed));
         exit;
     }
@@ -1132,13 +1158,14 @@ class CatGame_Reports {
         return $count > 0;
     }
 
-    public static function enforce_grave_case_deadlines(): int {
+    public static function enforce_grave_case_deadlines(string $source = 'runtime'): int {
         global $wpdb;
         $table = CatGame_DB::table('grave_cases');
         $now = current_time('mysql');
+        $started_at = microtime(true);
         $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$table} WHERE case_status = 'open' AND appeal_status = 'none' AND expires_at <= %s LIMIT 50", $now), ARRAY_A);
         if (!is_array($rows) || empty($rows)) {
-            self::track_grave_enforcement_run(0);
+            self::track_grave_enforcement_run(0, $source, 0, 'ok');
             return 0;
         }
 
@@ -1155,7 +1182,8 @@ class CatGame_Reports {
             $processed++;
         }
 
-        self::track_grave_enforcement_run($processed);
+        $duration_ms = (int) round((microtime(true) - $started_at) * 1000);
+        self::track_grave_enforcement_run($processed, $source, $duration_ms, 'ok');
         return $processed;
     }
 
@@ -1200,15 +1228,21 @@ class CatGame_Reports {
     }
 
 
-    private static function track_grave_enforcement_run(int $processed): void {
-        update_option(
-            self::GRAVE_ENFORCEMENT_LAST_RUN_OPTION,
-            [
-                'ran_at' => current_time('mysql'),
-                'processed' => max(0, (int) $processed),
-            ],
-            false
-        );
+    private static function track_grave_enforcement_run(int $processed, string $source = 'runtime', int $duration_ms = 0, string $status = 'ok'): void {
+        $record = [
+            'ran_at' => current_time('mysql'),
+            'processed' => max(0, (int) $processed),
+            'source' => sanitize_key($source),
+            'duration_ms' => max(0, (int) $duration_ms),
+            'status' => sanitize_key($status),
+        ];
+
+        update_option(self::GRAVE_ENFORCEMENT_LAST_RUN_OPTION, $record, false);
+
+        $history = self::get_grave_enforcement_history();
+        array_unshift($history, $record);
+        $history = array_slice($history, 0, self::GRAVE_ENFORCEMENT_HISTORY_LIMIT);
+        update_option(self::GRAVE_ENFORCEMENT_HISTORY_OPTION, $history, false);
     }
 
     public static function rebuild_bans_for_user(int $user_id): void {
@@ -1216,7 +1250,7 @@ class CatGame_Reports {
             return;
         }
 
-        self::enforce_grave_case_deadlines();
+        self::enforce_grave_case_deadlines('cli');
         self::recalculate_user_bans($user_id);
 
         global $wpdb;
