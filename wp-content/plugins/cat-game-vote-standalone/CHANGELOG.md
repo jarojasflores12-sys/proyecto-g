@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.21
+- Auth rate limit hardening: se evita bypass por rotación de identificador aplicando bucket por IP+acción y bucket adicional por identificador+acción.
+- Seguridad de origen IP: el cálculo del rate limit usa `REMOTE_ADDR` validada para evitar depender de headers spoofeables (`X-Forwarded-For`/`Client-IP`).
+
 ## 0.27.20
 - Seguridad auth: se agrega rate limit en endpoints de login, registro, recuperación y reset de contraseña para mitigar abuso por intentos masivos.
 - UX auth: nuevos mensajes de error `rate_limited` en vistas de acceso para feedback consistente cuando se supera el límite temporal.

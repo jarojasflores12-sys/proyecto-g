@@ -386,13 +386,28 @@ class CatGame_Auth {
     }
 
     private static function within_auth_rate_limit(string $action, string $identifier = ''): bool {
-        $ip = self::request_ip();
-        $fingerprint = sanitize_key($action) . '|' . strtolower(trim($ip)) . '|' . strtolower(trim($identifier));
-        $hash = hash('sha256', $fingerprint);
-        $transient_key = 'catgame_auth_rl_' . substr($hash, 0, 40);
-
         $window = self::AUTH_RATE_LIMIT_WINDOW_SECONDS;
         $max_attempts = self::AUTH_RATE_LIMIT_MAX_ATTEMPTS;
+
+        $action = sanitize_key($action);
+        $ip = self::request_ip();
+        $normalized_identifier = strtolower(trim($identifier));
+
+        $ip_allowed = self::increment_auth_rate_bucket($action . '|ip|' . $ip, $window, $max_attempts);
+        if (!$ip_allowed) {
+            return false;
+        }
+
+        if ($normalized_identifier === '') {
+            return true;
+        }
+
+        return self::increment_auth_rate_bucket($action . '|id|' . $normalized_identifier, $window, $max_attempts);
+    }
+
+    private static function increment_auth_rate_bucket(string $fingerprint, int $window, int $max_attempts): bool {
+        $hash = hash('sha256', $fingerprint);
+        $transient_key = 'catgame_auth_rl_' . substr($hash, 0, 40);
         $now = time();
 
         $bucket = get_transient($transient_key);
@@ -424,22 +439,11 @@ class CatGame_Auth {
     }
 
     private static function request_ip(): string {
-        $candidates = [
-            $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '',
-            $_SERVER['HTTP_CLIENT_IP'] ?? '',
-            $_SERVER['REMOTE_ADDR'] ?? '',
-        ];
-
-        foreach ($candidates as $candidate) {
-            if (!is_string($candidate) || trim($candidate) === '') {
-                continue;
-            }
-
-            $parts = array_map('trim', explode(',', $candidate));
-            foreach ($parts as $part) {
-                if (filter_var($part, FILTER_VALIDATE_IP)) {
-                    return $part;
-                }
+        $remote_addr = $_SERVER['REMOTE_ADDR'] ?? '';
+        if (is_string($remote_addr)) {
+            $remote_addr = trim($remote_addr);
+            if ($remote_addr !== '' && filter_var($remote_addr, FILTER_VALIDATE_IP)) {
+                return $remote_addr;
             }
         }
 
