@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Proyecto G
  * Description: Plugin base.
- * Version: 0.1.1
+ * Version: 0.1.3
  * Author: Tu equipo
  */
 
