@@ -127,7 +127,7 @@ class CatGame_Notifications {
         );
     }
 
-    private static function handle_get_notifications(): void {
+    public static function handle_get_notifications(): void {
         if (!is_user_logged_in()) {
             wp_send_json_error(['message' => 'Debes iniciar sesión.'], 401);
         }
@@ -147,7 +147,7 @@ class CatGame_Notifications {
         ]);
     }
 
-    private static function handle_mark_all_read(): void {
+    public static function handle_mark_all_read(): void {
         if (!is_user_logged_in()) {
             wp_send_json_error(['message' => 'Debes iniciar sesión.'], 401);
         }
