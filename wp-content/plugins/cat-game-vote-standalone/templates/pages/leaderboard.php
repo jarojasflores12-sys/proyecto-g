@@ -2,6 +2,9 @@
 $scope = $data['scope'] ?? 'global';
 $country = $data['country'] ?? '';
 $city = $data['city'] ?? '';
+$countries = isset($data['countries']) && is_array($data['countries']) ? $data['countries'] : [];
+$cities_by_country = isset($data['cities_by_country']) && is_array($data['cities_by_country']) ? $data['cities_by_country'] : [];
+$city_options = ($country !== '' && isset($cities_by_country[$country]) && is_array($cities_by_country[$country])) ? $cities_by_country[$country] : [];
 $items = $data['items'] ?? [];
 $top3_positions = $data['top3_positions'] ?? [];
 $current_user_id = (int) ($data['current_user_id'] ?? 0);
@@ -16,8 +19,22 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                 <option value="city" <?php selected($scope, 'city'); ?>>Ciudad</option>
             </select>
         </label>
-        <label>País <input type="text" name="country" value="<?php echo esc_attr($country); ?>"></label>
-        <label>Ciudad <input type="text" name="city" value="<?php echo esc_attr($city); ?>"></label>
+        <label>País
+            <select name="country">
+                <option value="">Todos</option>
+                <?php foreach ($countries as $country_option): ?>
+                    <option value="<?php echo esc_attr($country_option); ?>" <?php selected($country, $country_option); ?>><?php echo esc_html($country_option); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+        <label>Ciudad
+            <select name="city" <?php echo $country === '' ? 'disabled' : ''; ?>>
+                <option value="">Todas</option>
+                <?php foreach ($city_options as $city_option): ?>
+                    <option value="<?php echo esc_attr($city_option); ?>" <?php selected($city, $city_option); ?>><?php echo esc_html($city_option); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
         <button type="submit">Filtrar</button>
     </form>
 

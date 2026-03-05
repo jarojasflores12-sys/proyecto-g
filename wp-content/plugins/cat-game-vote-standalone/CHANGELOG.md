@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.24
+- Ranking UX: filtros de ubicación ahora usan valores guiados con `select` para País/Ciudad (catálogo real del evento activo) en lugar de texto libre.
+- Ranking robustez: si `country/city` de querystring no existen en catálogo del evento, se normalizan a vacío para evitar filtros inválidos por typo/manual URL.
+
 ## 0.27.23
 - Auth rate limit UX/safety: las validaciones de campos obligatorios en login/registro/recuperación/reset se ejecutan antes de incrementar buckets para evitar bloqueos falsos por envíos vacíos.
 - Se mantiene sin cambios la protección de intentos reales (`rate_limited`) y la lógica de buckets por IP+acción e identificador+acción.

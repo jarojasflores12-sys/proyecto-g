@@ -752,6 +752,57 @@ class CatGame_Submissions {
         return array_values(array_unique(array_filter($tags)));
     }
 
+
+    public static function leaderboard_location_catalog(int $event_id): array {
+        if ($event_id <= 0) {
+            return [
+                'countries' => [],
+                'cities_by_country' => [],
+            ];
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT DISTINCT country, city FROM {$table} WHERE event_id = %d AND status = 'active' AND is_hidden = 0",
+                $event_id
+            ),
+            ARRAY_A
+        );
+
+        $countries = [];
+        $cities_by_country = [];
+        foreach ($rows as $row) {
+            $country = sanitize_text_field((string) ($row['country'] ?? ''));
+            $city = sanitize_text_field((string) ($row['city'] ?? ''));
+            if ($country === '' || $city === '') {
+                continue;
+            }
+
+            $countries[$country] = true;
+            if (!isset($cities_by_country[$country])) {
+                $cities_by_country[$country] = [];
+            }
+            $cities_by_country[$country][$city] = true;
+        }
+
+        $country_list = array_keys($countries);
+        natcasesort($country_list);
+
+        $normalized_city_map = [];
+        foreach ($cities_by_country as $country => $city_map) {
+            $city_list = array_keys($city_map);
+            natcasesort($city_list);
+            $normalized_city_map[$country] = array_values($city_list);
+        }
+
+        return [
+            'countries' => array_values($country_list),
+            'cities_by_country' => $normalized_city_map,
+        ];
+    }
+
     public static function leaderboard(int $event_id, string $scope, string $country, string $city, int $limit = 20, array $tags = []): array {
         global $wpdb;
 
