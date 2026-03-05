@@ -183,6 +183,27 @@ class CatGame_Render {
                 if (!in_array($scope, ['global', 'country', 'city'], true)) {
                     $scope = 'global';
                 }
+
+                $location_catalog = $event ? CatGame_Submissions::leaderboard_location_catalog((int) $event['id']) : [
+                    'countries' => [],
+                    'cities_by_country' => [],
+                ];
+
+                $countries = is_array($location_catalog['countries'] ?? null) ? $location_catalog['countries'] : [];
+                $cities_by_country = is_array($location_catalog['cities_by_country'] ?? null) ? $location_catalog['cities_by_country'] : [];
+
+                if ($country !== '' && !in_array($country, $countries, true)) {
+                    $country = '';
+                }
+
+                $city_options = ($country !== '' && isset($cities_by_country[$country]) && is_array($cities_by_country[$country]))
+                    ? $cities_by_country[$country]
+                    : [];
+
+                if ($city !== '' && !in_array($city, $city_options, true)) {
+                    $city = '';
+                }
+
                 $items = $event ? self::with_reaction_payload(CatGame_Submissions::leaderboard((int) $event['id'], $scope, $country, $city, 20, []), $current_user_id) : [];
                 return [
                     'page' => $page,
@@ -190,6 +211,8 @@ class CatGame_Render {
                     'scope' => $scope,
                     'country' => $country,
                     'city' => $city,
+                    'countries' => $countries,
+                    'cities_by_country' => $cities_by_country,
                     'items' => $items,
                     'top3_positions' => $top3_positions,
                     'current_user_id' => $current_user_id,

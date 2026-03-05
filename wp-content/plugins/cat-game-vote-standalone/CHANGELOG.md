@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.27.24
+- Ranking UX: filtros de ubicación ahora usan valores guiados con `select` para País/Ciudad (catálogo real del evento activo) en lugar de texto libre.
+- Ranking robustez: si `country/city` de querystring no existen en catálogo del evento, se normalizan a vacío para evitar filtros inválidos por typo/manual URL.
+
+## 0.27.23
+- Auth rate limit UX/safety: las validaciones de campos obligatorios en login/registro/recuperación/reset se ejecutan antes de incrementar buckets para evitar bloqueos falsos por envíos vacíos.
+- Se mantiene sin cambios la protección de intentos reales (`rate_limited`) y la lógica de buckets por IP+acción e identificador+acción.
+
+## 0.27.22
+- Auth rate limit (DX/compat): se agregan filtros `catgame_auth_rate_limit_max_attempts` y `catgame_auth_rate_limit_window_seconds` para ajustar límites sin editar core del plugin.
+- Auth rate limit (infra): nuevo filtro `catgame_auth_rate_limit_ip` para resolver IP en entornos con proxy/CDN; por defecto se mantiene `REMOTE_ADDR` validada.
+
+## 0.27.21
+- Auth rate limit hardening: se evita bypass por rotación de identificador aplicando bucket por IP+acción y bucket adicional por identificador+acción.
+- Seguridad de origen IP: el cálculo del rate limit usa `REMOTE_ADDR` validada para evitar depender de headers spoofeables (`X-Forwarded-For`/`Client-IP`).
+
+## 0.27.20
+- Seguridad auth: se agrega rate limit en endpoints de login, registro, recuperación y reset de contraseña para mitigar abuso por intentos masivos.
+- UX auth: nuevos mensajes de error `rate_limited` en vistas de acceso para feedback consistente cuando se supera el límite temporal.
+
 ## 0.27.19
 - Event rules popup/game: ahora refleja exactamente el evento activo normalizado (`rules.mode` + `items`), incluyendo prioridad absoluta de `mode: none` sobre reglas legacy.
 - Si el evento no usa reglas (`mode=none`): el popup muestra solo **Reglas generales (resumen)** y no renderiza items del evento.

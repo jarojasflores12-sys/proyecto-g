@@ -6,6 +6,8 @@ if (!defined('ABSPATH')) {
 
 class CatGame_Auth {
     private static bool $password_reset_from_plugin = false;
+    private const AUTH_RATE_LIMIT_MAX_ATTEMPTS = 10;
+    private const AUTH_RATE_LIMIT_WINDOW_SECONDS = 300;
 
     public static function init(): void {
         add_action('admin_post_nopriv_catgame_login', [__CLASS__, 'handle_login']);
@@ -38,6 +40,10 @@ class CatGame_Auth {
 
         if ($identifier === '' || $password === '') {
             self::redirect_auth(['auth' => 'login', 'login_error' => 'missing_fields', 'login_identifier' => $identifier]);
+        }
+
+        if (!self::within_auth_rate_limit('login', $identifier)) {
+            self::redirect_auth(['auth' => 'login', 'login_error' => 'rate_limited', 'login_identifier' => $identifier]);
         }
 
         $signon = wp_signon(
@@ -82,6 +88,10 @@ class CatGame_Auth {
 
         if ($username === '' || $email === '' || $password === '' || $password_confirm === '') {
             self::redirect_auth($base + ['register_error' => 'missing_fields']);
+        }
+
+        if (!self::within_auth_rate_limit('register', $username . '|' . $email)) {
+            self::redirect_auth(['auth' => 'register', 'register_error' => 'rate_limited', 'reg_username' => $username, 'reg_email' => $email]);
         }
 
         if (!validate_username($username)) {
@@ -138,8 +148,13 @@ class CatGame_Auth {
         check_admin_referer('catgame_lost_password');
 
         $identifier = sanitize_text_field(wp_unslash($_POST['lost_identifier'] ?? ''));
+
         if ($identifier === '') {
             self::redirect_auth(['auth' => 'forgot', 'lost_error' => 'missing_identifier', 'lost_identifier' => $identifier]);
+        }
+
+        if (!self::within_auth_rate_limit('lost_password', $identifier)) {
+            self::redirect_auth(['auth' => 'forgot', 'lost_error' => 'rate_limited', 'lost_identifier' => $identifier]);
         }
 
         self::$password_reset_from_plugin = true;
@@ -168,13 +183,17 @@ class CatGame_Auth {
 
         $base = ['auth' => 'reset', 'rp_login' => $login, 'key' => $key];
 
+        if ($password === '' || $password_confirm === '') {
+            self::redirect_auth($base + ['reset_error' => 'missing_fields']);
+        }
+
+        if (!self::within_auth_rate_limit('reset_password', $login . '|' . $key)) {
+            self::redirect_auth(['auth' => 'reset', 'reset_error' => 'rate_limited', 'rp_login' => $login, 'key' => $key]);
+        }
+
         $user = check_password_reset_key($key, $login);
         if (is_wp_error($user)) {
             self::redirect_auth(['auth' => 'forgot', 'lost_error' => 'invalid_reset_link']);
-        }
-
-        if ($password === '' || $password_confirm === '') {
-            self::redirect_auth($base + ['reset_error' => 'missing_fields']);
         }
 
         if (strlen($password) < 8) {
@@ -323,6 +342,7 @@ class CatGame_Auth {
             'email_exists' => 'Ese email ya está registrado.',
             'registration_failed' => 'No se pudo crear la cuenta. Intenta de nuevo.',
             'account_removed' => 'No puedes registrarte: cuenta eliminada por infracción grave.',
+            'rate_limited' => 'Demasiados intentos. Espera unos minutos e intenta nuevamente.',
         ];
 
         return $messages[$code] ?? 'Error de registro.';
@@ -333,6 +353,7 @@ class CatGame_Auth {
             'missing_fields' => 'Completa usuario/correo y contraseña.',
             'invalid_credentials' => 'Usuario/correo o contraseña incorrectos.',
             'account_removed' => 'Cuenta eliminada por infracción grave.',
+            'rate_limited' => 'Demasiados intentos. Espera unos minutos e intenta nuevamente.',
         ];
 
         return $messages[$code] ?? 'No se pudo iniciar sesión.';
@@ -342,6 +363,7 @@ class CatGame_Auth {
         $messages = [
             'missing_identifier' => 'Ingresa usuario o correo.',
             'invalid_reset_link' => 'El enlace de recuperación no es válido o ya expiró.',
+            'rate_limited' => 'Demasiados intentos. Espera unos minutos e intenta nuevamente.',
         ];
 
         return $messages[$code] ?? '';
@@ -352,6 +374,7 @@ class CatGame_Auth {
             'missing_fields' => 'Completa y confirma la nueva contraseña.',
             'weak_password' => 'La nueva contraseña debe tener al menos 8 caracteres.',
             'password_mismatch' => 'Las contraseñas no coinciden.',
+            'rate_limited' => 'Demasiados intentos. Espera unos minutos e intenta nuevamente.',
         ];
 
         return $messages[$code] ?? 'No se pudo restablecer la contraseña.';
@@ -360,5 +383,88 @@ class CatGame_Auth {
     private static function redirect_auth(array $query_args): void {
         wp_safe_redirect(add_query_arg($query_args, home_url('/catgame/profile')));
         exit;
+    }
+
+
+    private static function auth_rate_limit_max_attempts(): int {
+        $value = (int) apply_filters('catgame_auth_rate_limit_max_attempts', self::AUTH_RATE_LIMIT_MAX_ATTEMPTS);
+        return max(1, $value);
+    }
+
+    private static function auth_rate_limit_window_seconds(): int {
+        $value = (int) apply_filters('catgame_auth_rate_limit_window_seconds', self::AUTH_RATE_LIMIT_WINDOW_SECONDS);
+        return max(1, $value);
+    }
+
+    private static function within_auth_rate_limit(string $action, string $identifier = ''): bool {
+        $window = self::auth_rate_limit_window_seconds();
+        $max_attempts = self::auth_rate_limit_max_attempts();
+
+        $action = sanitize_key($action);
+        $ip = self::request_ip();
+        $normalized_identifier = strtolower(trim($identifier));
+
+        $ip_allowed = self::increment_auth_rate_bucket($action . '|ip|' . $ip, $window, $max_attempts);
+        if (!$ip_allowed) {
+            return false;
+        }
+
+        if ($normalized_identifier === '') {
+            return true;
+        }
+
+        return self::increment_auth_rate_bucket($action . '|id|' . $normalized_identifier, $window, $max_attempts);
+    }
+
+    private static function increment_auth_rate_bucket(string $fingerprint, int $window, int $max_attempts): bool {
+        $hash = hash('sha256', $fingerprint);
+        $transient_key = 'catgame_auth_rl_' . substr($hash, 0, 40);
+        $now = time();
+
+        $bucket = get_transient($transient_key);
+        if (!is_array($bucket)) {
+            $bucket = [
+                'count' => 0,
+                'started_at' => $now,
+            ];
+        }
+
+        $count = isset($bucket['count']) ? (int) $bucket['count'] : 0;
+        $started_at = isset($bucket['started_at']) ? (int) $bucket['started_at'] : 0;
+
+        if ($started_at <= 0 || ($now - $started_at) >= $window) {
+            $count = 0;
+            $started_at = $now;
+        }
+
+        $count++;
+        $bucket = [
+            'count' => $count,
+            'started_at' => $started_at,
+        ];
+
+        $remaining_ttl = max(1, $window - ($now - $started_at));
+        set_transient($transient_key, $bucket, $remaining_ttl);
+
+        return $count <= $max_attempts;
+    }
+
+    private static function request_ip(): string {
+        $remote_addr = $_SERVER['REMOTE_ADDR'] ?? '';
+        $remote_addr = is_string($remote_addr) ? trim($remote_addr) : '';
+
+        $filtered_ip = apply_filters('catgame_auth_rate_limit_ip', $remote_addr);
+        if (is_string($filtered_ip)) {
+            $filtered_ip = trim($filtered_ip);
+            if ($filtered_ip !== '' && filter_var($filtered_ip, FILTER_VALIDATE_IP)) {
+                return $filtered_ip;
+            }
+        }
+
+        if ($remote_addr !== '' && filter_var($remote_addr, FILTER_VALIDATE_IP)) {
+            return $remote_addr;
+        }
+
+        return '0.0.0.0';
     }
 }
