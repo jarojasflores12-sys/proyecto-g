@@ -1018,6 +1018,57 @@ body.cg-has-custom-bg .cg-main {
   margin-top: 0;
 }
 
+.cg-history-section {
+  margin-top: 16px;
+}
+
+.cg-history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.cg-history-card {
+  display: grid;
+  gap: 8px;
+}
+
+.cg-history-podium {
+  display: grid;
+  gap: 10px;
+}
+
+.cg-history-slot {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.cg-history-medal {
+  margin: 0;
+  font-size: 15px;
+}
+
+.cg-history-thumb img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.cg-history-link {
+  margin: 0;
+  font-weight: 700;
+  color: #2f2f46;
+  text-decoration: none;
+}
+
+.cg-history-link:hover {
+  text-decoration: underline;
+}
+
 .cg-filter-tags {
   border: 1px solid var(--cg-border);
   border-radius: 12px;

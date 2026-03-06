@@ -216,11 +216,13 @@ class CatGame_Render {
                 }
 
                 $items = $competitive_event ? self::with_reaction_payload(CatGame_Submissions::leaderboard((int) $competitive_event['id'], $scope, $country, $city, 20, []), $current_user_id) : [];
+                $historical_winners = CatGame_Events::list_historical_winners(20);
                 return [
                     'page' => $page,
                     'event' => $event,
                     'ranking_event' => $competitive_event,
                     'has_competitive_event' => (bool) $competitive_event,
+                    'historical_winners' => $historical_winners,
                     'scope' => $scope,
                     'country' => $country,
                     'city' => $city,

@@ -8,6 +8,7 @@ $city_options = ($country !== '' && isset($cities_by_country[$country]) && is_ar
 $items = $data['items'] ?? [];
 $ranking_event = is_array($data['ranking_event'] ?? null) ? $data['ranking_event'] : null;
 $has_competitive_event = !empty($data['has_competitive_event']);
+$historical_winners = isset($data['historical_winners']) && is_array($data['historical_winners']) ? $data['historical_winners'] : [];
 $top3_positions = $data['top3_positions'] ?? [];
 $current_user_id = (int) ($data['current_user_id'] ?? 0);
 ?>
@@ -101,4 +102,59 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
             </article>
         <?php endforeach; ?>
     </div>
+
+    <section class="cg-history-section" aria-label="Ganadores anteriores">
+        <h3>Ganadores anteriores</h3>
+
+        <?php if (empty($historical_winners)): ?>
+            <p class="cg-empty-state">Aún no hay eventos finalizados con ganadores.</p>
+        <?php else: ?>
+            <div class="cg-history-list">
+                <?php foreach ($historical_winners as $history): ?>
+                    <?php
+                    $event_name = (string) ($history['event_name'] ?? 'Evento');
+                    $period = trim((string) ($history['starts_at'] ?? '') . ' - ' . (string) ($history['ends_at'] ?? ''));
+                    $slots = [
+                        'first' => '🥇',
+                        'second' => '🥈',
+                        'third' => '🥉',
+                    ];
+                    ?>
+                    <article class="cg-card cg-history-card">
+                        <p class="cg-rank-title"><?php echo esc_html($event_name); ?></p>
+                        <?php if ($period !== '-'): ?><p class="cg-file-picker-text"><?php echo esc_html($period); ?></p><?php endif; ?>
+                        <div class="cg-history-podium">
+                            <?php foreach ($slots as $slot => $medal): ?>
+                                <?php
+                                $winner = is_array($history['winners'][$slot] ?? null) ? $history['winners'][$slot] : [];
+                                $submission_id = (int) ($winner['submission_id'] ?? 0);
+                                $title = trim((string) ($winner['title'] ?? ''));
+                                $title = $title !== '' ? $title : 'Sin título';
+                                $attachment_id = (int) ($winner['attachment_id'] ?? 0);
+                                $user_id = (int) ($winner['user_id'] ?? 0);
+                                $author = $user_id > 0 ? get_userdata($user_id) : null;
+                                $username = $author ? (string) $author->user_login : 'usuario';
+                                $submission_url = $submission_id > 0 ? home_url('/catgame/submission/' . $submission_id) : '';
+                                ?>
+                                <div class="cg-history-slot">
+                                    <p class="cg-history-medal"><?php echo esc_html($medal); ?></p>
+                                    <?php if ($attachment_id > 0): ?>
+                                        <div class="cg-history-thumb">
+                                            <?php echo wp_get_attachment_image($attachment_id, 'thumbnail', false, ['loading' => 'lazy']); ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if ($submission_url !== ''): ?>
+                                        <a class="cg-history-link" href="<?php echo esc_url($submission_url); ?>"><?php echo esc_html($title); ?></a>
+                                    <?php else: ?>
+                                        <p class="cg-history-link"><?php echo esc_html($title); ?></p>
+                                    <?php endif; ?>
+                                    <small class="cg-author">@<?php echo esc_html($username); ?></small>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </section>
 </section>

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.27.34
+- Historial de ganadores: el listado ahora filtra estrictamente eventos de tipo `competitive` para evitar incluir eventos heredados sin tipo explícito.
+
+## 0.27.33
+- Ranking: nueva sección **Ganadores anteriores** debajo del ranking actual, mostrando historial de eventos competitivos finalizados con top 3 (🥇🥈🥉, imagen, título y usuario).
+- Historial de ganadores: nuevo helper backend para listar snapshots persistidos de `event_winners` (solo eventos competitivos finalizados), ordenados por más reciente.
+- UX vacío de históricos: mensaje `Aún no hay eventos finalizados con ganadores.` cuando no hay snapshots.
+
 ## 0.27.32
 - Ranking: ahora usa desempate completo por `total_reactions DESC`, luego `first_reaction_at ASC` y finalmente `created_at ASC` (con `id ASC` como estabilidad).
 - Ranking UX: cuando no hay evento activo competitivo muestra `No hay un evento competitivo activo en este momento.` y header con nombre/vigencia cuando sí existe.
