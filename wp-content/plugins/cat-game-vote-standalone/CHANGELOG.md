@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.45
+- Perfil: corrección de desfase horario en "Normas aceptadas" para usar timezone de WordPress al renderizar `catgame_terms_accepted_at`, evitando mostrar +3h por doble conversión.
+- Perfil: formato de fecha/hora actualizado a `d/m/Y a las H:i` (sin segundos) para mayor claridad.
+
 ## 0.27.44
 - Compartir perfil: `Mi perfil` ahora comparte la URL pública real (`/catgame/user/{username}`) en lugar de la vista privada de perfil.
 - Compartir publicación destacada: ahora comparte el detalle exacto de la destacada (`/catgame/submission/{id}`) y no el feed general.

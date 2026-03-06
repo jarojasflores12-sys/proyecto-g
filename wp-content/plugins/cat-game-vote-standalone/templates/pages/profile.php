@@ -257,8 +257,22 @@ if ($upload_banned_until_iso !== '') {
 
         <div class="cg-profile-terms">
             <?php if ($terms_accepted): ?>
-                <?php $terms_accepted_ts = $terms_accepted_at !== '' ? strtotime($terms_accepted_at) : false; ?>
-                <p class="cg-alert cg-alert-success">✅ Normas aceptadas<?php echo $terms_accepted_ts ? ' el ' . esc_html(wp_date('d/m/Y H:i', $terms_accepted_ts)) : ''; ?>.</p>
+                <?php
+                $terms_accepted_label = '';
+                if ($terms_accepted_at !== '') {
+                    $wp_timezone = wp_timezone();
+                    $accepted_dt = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $terms_accepted_at, $wp_timezone);
+                    if ($accepted_dt instanceof DateTimeImmutable) {
+                        $terms_accepted_label = wp_date('d/m/Y \a \l\a\s H:i', $accepted_dt->getTimestamp(), $wp_timezone);
+                    } else {
+                        $terms_accepted_ts = strtotime($terms_accepted_at);
+                        if ($terms_accepted_ts) {
+                            $terms_accepted_label = wp_date('d/m/Y \a \l\a\s H:i', $terms_accepted_ts, $wp_timezone);
+                        }
+                    }
+                }
+                ?>
+                <p class="cg-alert cg-alert-success">✅ Normas aceptadas<?php echo $terms_accepted_label !== '' ? ' el ' . esc_html($terms_accepted_label) : ''; ?>.</p>
             <?php else: ?>
                 <label class="cg-terms-checkbox">
                     <input type="checkbox" name="accept_terms" value="1">
