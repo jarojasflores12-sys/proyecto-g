@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.48
+- Subir / iPhone (Safari): compatibilidad mejorada en render de etiquetas guardadas reemplazando `replaceAll()` por `replace(.../g)` en `escapeHtml` para evitar fallas en versiones iOS con soporte parcial.
+- Subir / chips: se fuerza `-webkit-text-fill-color: currentColor` en botones de etiquetas para asegurar texto visible en Safari iOS.
+
 ## 0.27.47
 - Subir / Mis etiquetas guardadas: corrección de chips sin texto visible en sugerencias guardadas (se fuerza color de texto y fallback de label en render).
 - Subir / etiquetas: se mantiene la selección integrada al mismo input de tags, sin duplicados y sin cambiar fuente de datos personal del usuario.
