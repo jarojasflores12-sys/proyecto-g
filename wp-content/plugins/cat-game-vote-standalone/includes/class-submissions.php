@@ -45,7 +45,7 @@ class CatGame_Submissions {
             return '';
         }
 
-        return ucwords(str_replace('_', ' ', $normalized));
+        return self::visual_label(str_replace('_', ' ', $normalized));
     }
 
     private static function clean_tag_label(string $label): string {
@@ -53,6 +53,21 @@ class CatGame_Submissions {
         $clean = preg_replace('/^(tag[\s:_-]+)+/i', '', $clean);
         $clean = is_string($clean) ? trim($clean) : '';
         return $clean;
+    }
+
+    public static function visual_label(string $text): string {
+        $text = trim((string) $text);
+        if ($text === '') {
+            return '';
+        }
+
+        if (function_exists('mb_substr') && function_exists('mb_strtoupper')) {
+            $first = mb_substr($text, 0, 1);
+            $rest = mb_substr($text, 1);
+            return mb_strtoupper($first) . $rest;
+        }
+
+        return strtoupper(substr($text, 0, 1)) . substr($text, 1);
     }
 
     public static function user_custom_tag_map(int $user_id): array {
@@ -143,13 +158,12 @@ class CatGame_Submissions {
 
     public static function title_label(array $submission): string {
         $title = trim((string) ($submission['title'] ?? ''));
-        return $title !== '' ? $title : 'Sin título';
+        return $title !== '' ? self::visual_label($title) : 'Sin título';
     }
 
     public static function upload_error_message(string $error): string {
         $map = [
-            'confirm_required' => 'Debes confirmar que no hay personas en la foto.',
-            'missing_location' => 'Completa tu ciudad y país en tu perfil para continuar.',
+            'missing_profile' => 'Debes completar tu perfil y aceptar las normas antes de publicar.',
             'missing_title' => 'El título es obligatorio.',
             'title_too_short' => 'El título debe tener al menos 2 caracteres.',
             'title_too_long' => 'El título no puede superar los 40 caracteres.',
@@ -176,9 +190,6 @@ class CatGame_Submissions {
         }
         if (!empty($state['tags']) && is_array($state['tags'])) {
             $query['upload_tags'] = implode(',', array_values(array_filter(array_map([__CLASS__, 'normalize_tag'], $state['tags']))));
-        }
-        if (!empty($state['confirm_no_people'])) {
-            $query['upload_confirm_no_people'] = '1';
         }
         if (!empty($state['publish_mode']) && in_array((string) $state['publish_mode'], ['event', 'free'], true)) {
             $query['upload_publish_mode'] = (string) $state['publish_mode'];
@@ -213,7 +224,6 @@ class CatGame_Submissions {
         $title_length = function_exists('mb_strlen') ? mb_strlen($title) : strlen($title);
         $selected_tags = wp_unslash($_POST['tags'] ?? []);
         $custom_tags_input = (string) wp_unslash($_POST['custom_tags'] ?? '');
-        $confirm_no_people = !empty($_POST['confirm_no_people']);
         $publish_mode = sanitize_key(wp_unslash($_POST['publish_mode'] ?? ''));
         if (!in_array($publish_mode, ['event', 'free'], true)) {
             $publish_mode = '';
@@ -223,17 +233,11 @@ class CatGame_Submissions {
             'title' => $title,
             'tags' => is_array($selected_tags) ? $selected_tags : [],
             'custom_tags' => $custom_tags_input,
-            'confirm_no_people' => $confirm_no_people,
             'publish_mode' => $publish_mode,
         ];
 
-        if (!$confirm_no_people) {
-            self::upload_redirect_with_state('confirm_required', $upload_state);
-        }
-
-        if ($city === '' || $country === '') {
-            wp_safe_redirect(add_query_arg('complete_profile', '1', home_url('/catgame/profile')));
-            exit;
+        if (!CatGame_Auth::has_user_completed_profile_requirements($user_id)) {
+            self::upload_redirect_with_state('missing_profile', $upload_state);
         }
 
         if ($title === '') {

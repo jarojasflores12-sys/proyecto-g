@@ -151,9 +151,12 @@ $best_photo = is_array($data['best_photo'] ?? null) ? $data['best_photo'] : null
 
 $profile_link = home_url('/catgame/profile');
 $best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
-$default_city = trim((string) ($prefs['default_city'] ?? ''));
-$default_country = trim((string) ($prefs['default_country'] ?? ''));
+$default_city = CatGame_Submissions::visual_label(trim((string) ($prefs['default_city'] ?? '')));
+$default_country = CatGame_Submissions::visual_label(trim((string) ($prefs['default_country'] ?? '')));
+$terms_accepted = !empty($prefs['terms_accepted']);
+$terms_accepted_at = trim((string) ($prefs['terms_accepted_at'] ?? ''));
 $location_missing = $default_city === '' || $default_country === '';
+$profile_incomplete = $location_missing || !$terms_accepted;
 
 $account_status = (array) ($data['account_status'] ?? []);
 $strikes_status = (array) ($account_status['strikes'] ?? []);
@@ -192,19 +195,21 @@ if ($upload_banned_until_iso !== '') {
         <p class="cg-alert cg-alert-success">¡Cuenta creada! Ya estás dentro.</p>
     <?php endif; ?>
     <?php if ($complete_profile): ?>
-        <p class="cg-alert cg-alert-error">Completa tu ciudad y país para continuar.</p>
+        <p class="cg-alert cg-alert-error">Completa ciudad, país y aceptación de normas para continuar.</p>
     <?php endif; ?>
-    <?php if ($location_missing): ?>
-        <p class="cg-alert cg-alert-error">Completa tu ciudad y país para poder subir fotos.</p>
+    <?php if ($profile_incomplete): ?>
+        <p class="cg-alert cg-alert-error">Debes completar ciudad, país y aceptar las normas para poder subir fotos.</p>
     <?php endif; ?>
     <?php if ($tag_deleted): ?>
         <p class="cg-alert cg-alert-success">Etiqueta eliminada del catálogo personal.</p>
     <?php endif; ?>
     <?php if ($profile_saved): ?>
-        <p class="cg-alert cg-alert-success">Ubicación guardada.</p>
+        <p class="cg-alert cg-alert-success">Perfil guardado.</p>
     <?php endif; ?>
     <?php if ($profile_error === 'missing_location'): ?>
         <p class="cg-alert cg-alert-error">Debes completar ciudad y país para guardar.</p>
+    <?php elseif ($profile_error === 'missing_terms'): ?>
+        <p class="cg-alert cg-alert-error">Debes aceptar las normas y sanciones para guardar.</p>
     <?php endif; ?>
 
     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form" id="catgame-profile-form">
@@ -241,7 +246,65 @@ if ($upload_banned_until_iso !== '') {
                 <input type="text" name="default_country" value="<?php echo esc_attr($default_country); ?>" placeholder="Ej: Chile" required>
             </label>
         </div>
+
+        <div class="cg-profile-terms">
+            <?php if ($terms_accepted): ?>
+                <?php $terms_accepted_ts = $terms_accepted_at !== '' ? strtotime($terms_accepted_at) : false; ?>
+                <p class="cg-alert cg-alert-success">✅ Normas aceptadas<?php echo $terms_accepted_ts ? ' el ' . esc_html(wp_date('d/m/Y H:i', $terms_accepted_ts)) : ''; ?>.</p>
+            <?php else: ?>
+                <label class="cg-terms-checkbox">
+                    <input type="checkbox" name="accept_terms" value="1">
+                    Acepto las normas y sanciones del juego
+                </label>
+                <button type="button" class="secondary" data-open-upload-rules="1">Ver normas</button>
+            <?php endif; ?>
+        </div>
     </form>
+
+    <div class="cg-modal" id="catgame-upload-rules-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-upload-rules-title">
+        <div class="cg-modal__backdrop" data-upload-rules-close="1"></div>
+        <div class="cg-modal__content" role="document">
+            <button type="button" class="cg-modal__close" data-upload-rules-close="1" aria-label="Cerrar normas">✕</button>
+            <h2 id="catgame-upload-rules-title">Normas y sanciones</h2>
+            <div class="cg-modal__rules">
+                <section class="cg-modal__rules-section">
+                    <h3>Qué sí está permitido</h3>
+                    <ul>
+                        <li>Mascotas domésticas.</li>
+                        <li>Ejemplos: perro, gato, conejo, gallina, pez, etc.</li>
+                    </ul>
+                </section>
+                <section class="cg-modal__rules-section">
+                    <h3>Qué no se permite</h3>
+                    <ul>
+                        <li>Fauna silvestre o exótica.</li>
+                        <li>Personas.</li>
+                        <li>Contenido sexual, explícito o violento.</li>
+                        <li>Maltrato animal.</li>
+                        <li>Spam o imágenes que no correspondan.</li>
+                    </ul>
+                </section>
+                <section class="cg-modal__rules-section">
+                    <h3>Sanciones</h3>
+                    <ul>
+                        <li><strong>Leve:</strong> se elimina la publicación.</li>
+                        <li><strong>Moderada:</strong> se elimina la publicación + no puede subir por 3 días.</li>
+                        <li><strong>Grave:</strong> se elimina la publicación + no puede subir ni reaccionar + apelación 24h; si no apela o se rechaza, cuenta eliminada y ban permanente.</li>
+                    </ul>
+                </section>
+                <section class="cg-modal__rules-section">
+                    <h3>Apelaciones</h3>
+                    <ul>
+                        <li>Leve y moderada: 72 horas.</li>
+                        <li>Grave: 24 horas.</li>
+                    </ul>
+                </section>
+            </div>
+            <div class="cg-confirm-actions">
+                <button type="button" data-upload-rules-close="1">Entendido</button>
+            </div>
+        </div>
+    </div>
 
 
     <article class="cg-card cg-account-status-card">

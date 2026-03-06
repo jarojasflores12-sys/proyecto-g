@@ -373,15 +373,24 @@ textarea:focus {
 }
 
 .cg-modal__rules {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.cg-modal__rules-section h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.cg-modal__rules-section ul {
   margin: 0;
   padding-left: 18px;
 }
 
-.cg-modal__rules li {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 4px 0;
+.cg-modal__rules-section li {
+  padding: 3px 0;
+  line-height: 1.35;
 }
 
 body.cg-has-custom-bg {
@@ -1661,6 +1670,19 @@ body.cg-has-custom-bg .cg-main {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+.cg-profile-terms {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.cg-terms-checkbox {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 14px;
 }
 
 .cg-upload-location {

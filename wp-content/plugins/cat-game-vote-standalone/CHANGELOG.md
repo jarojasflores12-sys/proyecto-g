@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.35
+- Perfil: la aceptación de normas/sanciones pasa a ser requisito único y persistente (`catgame_terms_accepted`, `catgame_terms_accepted_at`) junto a ciudad/país para completar perfil.
+- Subir: se elimina checkbox de aceptación; queda solo botón `Ver normas` y bloqueo con CTA a perfil cuando falta completar perfil + aceptar normas.
+- Modal `Normas y sanciones`: contenido reordenado en secciones claras (permitido, no permitido, sanciones y apelaciones) con mejor spacing visual.
+- Capitalización visual: ciudad, país, títulos y etiquetas se muestran con mayúscula inicial en frontend sin migrar datos históricos.
+
 ## 0.27.34
 - Historial de ganadores: el listado ahora filtra estrictamente eventos de tipo `competitive` para evitar incluir eventos heredados sin tipo explícito.
 

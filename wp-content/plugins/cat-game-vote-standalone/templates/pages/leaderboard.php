@@ -93,7 +93,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                 </div>
 
                 <div class="cg-rank-meta">
-                    <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
+                    <p class="cg-location">📍 <?php echo esc_html(CatGame_Submissions::visual_label((string) ($item['city'] ?? '')) . ', ' . CatGame_Submissions::visual_label((string) ($item['country'] ?? ''))); ?></p>
                     <p class="cg-score">Total reacciones: <?php echo (int) ($item['total_reactions'] ?? 0); ?></p>
                     <div class="cg-rank-reactions">
                         <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in(), (array) ($item['reaction_counts'] ?? []) ? ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)] : []); ?>

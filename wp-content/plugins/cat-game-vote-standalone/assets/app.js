@@ -449,7 +449,6 @@
 
   const uploadRulesModal = document.getElementById('catgame-upload-rules-modal');
   const openUploadRulesButtons = Array.from(document.querySelectorAll('[data-open-upload-rules="1"]'));
-  const confirmTermsCheckbox = document.getElementById('catgame-confirm-terms');
   if (uploadRulesModal && openUploadRulesButtons.length) {
     const acknowledgeButton = uploadRulesModal.querySelector('[data-upload-rules-close="1"]:not(.cg-modal__backdrop)');
 
@@ -465,10 +464,6 @@
     openUploadRulesButtons.forEach((btn) => {
       btn.addEventListener('click', () => setUploadRulesOpen(true));
     });
-
-    if (confirmTermsCheckbox) {
-      confirmTermsCheckbox.addEventListener('click', () => setUploadRulesOpen(true));
-    }
 
     uploadRulesModal.addEventListener('click', (event) => {
       const target = event.target;
@@ -773,6 +768,7 @@
   const saveButton = profileForm.querySelector('.js-profile-save');
   const cityInput = profileForm.querySelector('input[name="default_city"]');
   const countryInput = profileForm.querySelector('input[name="default_country"]');
+  const termsInput = profileForm.querySelector('input[name="accept_terms"]');
   if (!toggleButton || !colorsPanel || !saveButton) {
     return;
   }
@@ -800,7 +796,7 @@
     radio.addEventListener('change', showSave);
   });
 
-  [cityInput, countryInput].forEach((input) => {
+  [cityInput, countryInput, termsInput].forEach((input) => {
     if (!input) return;
     input.addEventListener('input', showSave);
   });

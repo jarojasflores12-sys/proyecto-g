@@ -52,7 +52,7 @@ $post_type_badge_label = $has_event ? '🏆 Evento' : '🐾 Libre';
                 <?php endif; ?>
             </div>
         </div>
-        <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
+        <p class="cg-location">📍 <?php echo esc_html(CatGame_Submissions::visual_label((string) ($item['city'] ?? '')) . ', ' . CatGame_Submissions::visual_label((string) ($item['country'] ?? ''))); ?></p>
     </div>
 
     <?php if (!empty($item_tags)): ?>

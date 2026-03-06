@@ -6,7 +6,7 @@ $active_items = (array) ($data['active_items'] ?? []);
 $recent_items = (array) ($data['recent_items'] ?? []);
 $viewer_logged_in = !empty($data['viewer_logged_in']);
 $current_user_id = (int) ($data['viewer_user_id'] ?? 0);
-$location_text = trim((string) ($location['city'] ?? '')) . ', ' . trim((string) ($location['country'] ?? ''));
+$location_text = CatGame_Submissions::visual_label(trim((string) ($location['city'] ?? ''))) . ', ' . CatGame_Submissions::visual_label(trim((string) ($location['country'] ?? '')));
 $location_text = trim($location_text, ' ,');
 ?>
 <section>
@@ -43,7 +43,7 @@ $location_text = trim($location_text, ' ,');
                             <span class="cg-badge">#<?php echo (int) ($item['id'] ?? 0); ?></span>
                             <p class="cg-title"><?php echo esc_html($title_label); ?></p>
                             <small class="cg-author">por <a href="<?php echo esc_url($author_profile_url); ?>">@<?php echo esc_html($username); ?></a></small>
-                            <p class="cg-location">📍 <?php echo esc_html((string) ($item['city'] ?? '') . ', ' . (string) ($item['country'] ?? '')); ?></p>
+                            <p class="cg-location">📍 <?php echo esc_html(CatGame_Submissions::visual_label((string) ($item['city'] ?? '')) . ', ' . CatGame_Submissions::visual_label((string) ($item['country'] ?? ''))); ?></p>
                         </div>
                     </div>
                     <?php if (!empty($item_tags)): ?>
@@ -88,7 +88,7 @@ $location_text = trim($location_text, ' ,');
                             <span class="cg-badge">#<?php echo (int) ($item['id'] ?? 0); ?></span>
                             <p class="cg-title"><?php echo esc_html($title_label); ?></p>
                             <small class="cg-author">por <a href="<?php echo esc_url($author_profile_url); ?>">@<?php echo esc_html($username); ?></a></small>
-                            <p class="cg-location">📍 <?php echo esc_html((string) ($item['city'] ?? '') . ', ' . (string) ($item['country'] ?? '')); ?></p>
+                            <p class="cg-location">📍 <?php echo esc_html(CatGame_Submissions::visual_label((string) ($item['city'] ?? '')) . ', ' . CatGame_Submissions::visual_label((string) ($item['country'] ?? ''))); ?></p>
                         </div>
                     </div>
                     <?php if (!empty($item_tags)): ?>

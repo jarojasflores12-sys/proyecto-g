@@ -4,8 +4,8 @@ $user_tags = $data['user_tags'] ?? [];
 $upload_defaults = $data['upload_defaults'] ?? ['default_city' => '', 'default_country' => ''];
 $upload_state = $data['upload_state'] ?? [];
 $upload_error = (string) ($data['upload_error'] ?? '');
-$requires_location = !empty($data['requires_location']);
-$location_text = trim((string) ($upload_defaults['default_city'] ?? '')) . ', ' . trim((string) ($upload_defaults['default_country'] ?? ''));
+$requires_profile_completion = !empty($data['requires_profile_completion']);
+$location_text = CatGame_Submissions::visual_label(trim((string) ($upload_defaults['default_city'] ?? ''))) . ', ' . CatGame_Submissions::visual_label(trim((string) ($upload_defaults['default_country'] ?? '')));
 $location_text = trim($location_text, ' ,');
 $upload_restriction = (array) ($data['upload_restriction'] ?? []);
 $upload_is_banned = !empty($upload_restriction['upload_banned']);
@@ -34,8 +34,8 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
     <h2>Subir foto</h2>
     <?php if (!is_user_logged_in()): ?>
         <p>Debes iniciar sesión para subir fotos.</p>
-    <?php elseif ($requires_location): ?>
-        <p class="cg-alert cg-alert-error">Completa tu ciudad y país en tu perfil para poder subir fotos.</p>
+    <?php elseif ($requires_profile_completion): ?>
+        <p class="cg-alert cg-alert-error">Debes completar tu perfil y aceptar las normas antes de publicar.</p>
         <a class="cg-cta" href="<?php echo esc_url(home_url('/catgame/profile?complete_profile=1')); ?>">Ir a mi perfil</a>
     <?php elseif ($upload_is_banned): ?>
         <article class="cg-card cg-upload-ban-card" role="status" aria-live="polite">
@@ -106,12 +106,6 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
             <p id="catgame-compress-status" class="cg-file-size cg-visually-hidden" aria-live="polite">Estado: esperando archivo</p>
             <img id="catgame-image-preview" class="cg-image-preview" alt="Preview de imagen seleccionada" style="display:none;" />
 
-            <label>
-                <input type="checkbox" name="confirm_no_people" id="catgame-confirm-terms" value="1" required <?php checked(!empty($upload_state['confirm_no_people'])); ?>>
-                Acepto los términos
-                <button type="button" class="cg-terms-link" data-open-upload-rules="1">(ver normas)</button>
-            </label>
-            <small class="cg-terms-help">Tu aceptación confirma que leíste y entendiste las normas y sanciones.</small>
             <button type="button" class="secondary" data-open-upload-rules="1">Ver normas</button>
             <button type="submit" class="cg-upload-submit">Enviar</button>
         </form>
@@ -121,14 +115,40 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
             <div class="cg-modal__content" role="document">
                 <button type="button" class="cg-modal__close" data-upload-rules-close="1" aria-label="Cerrar normas">✕</button>
                 <h2 id="catgame-upload-rules-title">Normas y sanciones</h2>
-                <ul class="cg-modal__rules">
-                    <li><strong>Prohibido:</strong> fotos con personas visibles, contenido explícito/sexual/violento, no mascotas domésticas y reportes falsos.</li>
-                    <li><strong>Gravedad leve:</strong> +1 punto y acción correctiva según el caso.</li>
-                    <li><strong>Gravedad moderada:</strong> +3 puntos y sanción de mayor impacto.</li>
-                    <li><strong>Gravedad grave:</strong> +9 puntos, bloqueo inmediato (hold) de 24h para subir y reaccionar, con ventana de apelación de 24h.</li>
-                    <li><strong>Puntos y bans:</strong> desde 3 puntos bloqueo de subida por 3 días; desde 9 puntos bloqueo de subida por 7 días.</li>
-                    <li><strong>Si no apela o se rechaza la apelación grave:</strong> eliminación de cuenta de juego y ban permanente.</li>
-                </ul>
+                <div class="cg-modal__rules">
+                    <section class="cg-modal__rules-section">
+                        <h3>Qué sí está permitido</h3>
+                        <ul>
+                            <li>Mascotas domésticas.</li>
+                            <li>Ejemplos: perro, gato, conejo, gallina, pez, etc.</li>
+                        </ul>
+                    </section>
+                    <section class="cg-modal__rules-section">
+                        <h3>Qué no se permite</h3>
+                        <ul>
+                            <li>Fauna silvestre o exótica.</li>
+                            <li>Personas.</li>
+                            <li>Contenido sexual, explícito o violento.</li>
+                            <li>Maltrato animal.</li>
+                            <li>Spam o imágenes que no correspondan.</li>
+                        </ul>
+                    </section>
+                    <section class="cg-modal__rules-section">
+                        <h3>Sanciones</h3>
+                        <ul>
+                            <li><strong>Leve:</strong> se elimina la publicación.</li>
+                            <li><strong>Moderada:</strong> se elimina la publicación + no puede subir por 3 días.</li>
+                            <li><strong>Grave:</strong> se elimina la publicación + no puede subir ni reaccionar + apelación 24h; si no apela o se rechaza, cuenta eliminada y ban permanente.</li>
+                        </ul>
+                    </section>
+                    <section class="cg-modal__rules-section">
+                        <h3>Apelaciones</h3>
+                        <ul>
+                            <li>Leve y moderada: 72 horas.</li>
+                            <li>Grave: 24 horas.</li>
+                        </ul>
+                    </section>
+                </div>
                 <div class="cg-confirm-actions">
                     <button type="button" data-upload-rules-close="1">Entendido</button>
                 </div>

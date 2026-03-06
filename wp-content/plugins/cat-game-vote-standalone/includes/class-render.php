@@ -92,13 +92,13 @@ class CatGame_Render {
                     'default_city' => '',
                     'default_country' => '',
                 ];
-                $requires_location = false;
+                $requires_profile_completion = false;
                 if (is_user_logged_in()) {
                     $uid = get_current_user_id();
                     $location = CatGame_Auth::get_user_default_location($uid);
                     $upload_defaults['default_city'] = $location['city'];
                     $upload_defaults['default_country'] = $location['country'];
-                    $requires_location = !CatGame_Auth::has_user_default_location($uid);
+                    $requires_profile_completion = !CatGame_Auth::has_user_completed_profile_requirements($uid);
                 }
 
                 $selected_tags_raw = sanitize_text_field(wp_unslash($_GET['upload_tags'] ?? ''));
@@ -116,7 +116,6 @@ class CatGame_Render {
                     'title' => sanitize_text_field(wp_unslash($_GET['upload_title'] ?? '')),
                     'custom_tags' => sanitize_textarea_field(wp_unslash($_GET['upload_custom_tags'] ?? '')),
                     'selected_tags' => array_values(array_unique($selected_tags)),
-                    'confirm_no_people' => (int) ($_GET['upload_confirm_no_people'] ?? 0) === 1,
                     'publish_mode' => sanitize_key(wp_unslash($_GET['upload_publish_mode'] ?? (($event && (($event['event_type'] ?? 'competitive') === 'competitive')) ? '' : 'free'))),
                 ];
 
@@ -146,7 +145,7 @@ class CatGame_Render {
                     'upload_defaults' => $upload_defaults,
                     'upload_state' => $upload_state,
                     'upload_error' => $upload_error,
-                    'requires_location' => $requires_location,
+                    'requires_profile_completion' => $requires_profile_completion,
                     'upload_restriction' => $upload_restriction,
                 ];
             case 'feed':
@@ -252,6 +251,7 @@ class CatGame_Render {
                 $profile_city = sanitize_text_field(wp_unslash($_GET['profile_city'] ?? ''));
                 $profile_country = sanitize_text_field(wp_unslash($_GET['profile_country'] ?? ''));
                 $profile_avatar = sanitize_key(wp_unslash($_GET['profile_avatar'] ?? ''));
+                $profile_terms = isset($_GET['profile_terms']) ? (int) $_GET['profile_terms'] : -1;
                 $login_identifier = sanitize_text_field(wp_unslash($_GET['login_identifier'] ?? ''));
                 $reg_username = sanitize_user(wp_unslash($_GET['reg_username'] ?? ''), true);
                 $reg_email = sanitize_email(wp_unslash($_GET['reg_email'] ?? ''));
@@ -357,6 +357,7 @@ class CatGame_Render {
                     }
                 }
                 $avatar_color_pref = (string) get_user_meta($user_id, 'catgame_avatar_color', true);
+                $terms_acceptance = CatGame_Auth::get_user_terms_acceptance($user_id);
 
                 return [
                     'page' => $page,
@@ -383,6 +384,8 @@ class CatGame_Render {
                         'avatar_color' => $profile_error !== '' && $profile_avatar !== '' ? $profile_avatar : $avatar_color_pref,
                         'default_city' => $profile_error !== '' ? $profile_city : $location['city'],
                         'default_country' => $profile_error !== '' ? $profile_country : $location['country'],
+                        'terms_accepted' => $terms_acceptance['accepted'] || $profile_terms === 1,
+                        'terms_accepted_at' => (string) ($terms_acceptance['accepted_at'] ?? ''),
                         'language' => (string) get_user_meta($user_id, 'catgame_language', true),
                     ],
                 ];
