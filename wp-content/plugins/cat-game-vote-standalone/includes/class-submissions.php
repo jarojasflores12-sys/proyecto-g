@@ -12,6 +12,7 @@ class CatGame_Submissions {
 
     public static function init(): void {
         add_action('admin_post_catgame_upload', [__CLASS__, 'handle_upload']);
+        add_action('admin_post_catgame_submit_review_appeal', [__CLASS__, 'handle_submit_review_appeal']);
         add_action('admin_post_catgame_delete_custom_tag', [__CLASS__, 'handle_delete_custom_tag']);
         add_action('admin_post_catgame_delete_submission', [__CLASS__, 'handle_delete_submission']);
         add_action('admin_post_catgame_feed_more', [__CLASS__, 'handle_feed_more']);
@@ -339,11 +340,12 @@ class CatGame_Submissions {
                 'image_size_bytes' => $final_size > 0 ? $final_size : null,
                 'created_at' => current_time('mysql'),
                 'status' => 'active',
+                'review_status' => 'pending_review',
                 'score_cached' => 0,
                 'votes_count' => 0,
                 'votes_sum' => 0,
             ],
-            ['%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%f', '%d', '%d']
+            ['%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%f', '%d', '%d']
         );
 
         update_post_meta((int) $attachment_id, 'catgv_title', $title);
@@ -443,6 +445,224 @@ class CatGame_Submissions {
         $table = CatGame_DB::table('submissions');
         $submission = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE id = %d", $id), ARRAY_A);
         return $submission ?: null;
+    }
+
+    public static function list_review_submissions(string $type_filter = 'all', string $status_filter = 'pending_review', int $limit = 100): array {
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+
+        $allowed_types = ['all', 'event', 'free'];
+        $allowed_status = ['pending_review', 'reviewed', 'removed_review', 'appealed_review'];
+        $type_filter = in_array($type_filter, $allowed_types, true) ? $type_filter : 'all';
+        $status_filter = in_array($status_filter, $allowed_status, true) ? $status_filter : 'pending_review';
+
+        $where = ['1=1'];
+        $params = [];
+
+        if ($type_filter === 'event') {
+            $where[] = 'event_id > 0';
+        } elseif ($type_filter === 'free') {
+            $where[] = 'event_id = 0';
+        }
+
+        if ($status_filter !== 'all') {
+            $where[] = 'review_status = %s';
+            $params[] = $status_filter;
+        }
+
+        $limit = max(1, min(500, $limit));
+        $params[] = $limit;
+        $sql = "SELECT * FROM {$table} WHERE " . implode(' AND ', $where) . ' ORDER BY created_at DESC, id DESC LIMIT %d';
+        return $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
+    }
+
+    public static function mark_reviewed(int $submission_id, int $admin_user_id): void {
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        $wpdb->update(
+            $table,
+            [
+                'review_status' => 'reviewed',
+                'review_decision' => 'keep',
+                'reviewed_by' => $admin_user_id,
+                'reviewed_at' => current_time('mysql'),
+            ],
+            ['id' => $submission_id],
+            ['%s', '%s', '%d', '%s'],
+            ['%d']
+        );
+    }
+
+    public static function remove_by_review(int $submission_id, int $admin_user_id, string $reason, string $detail = ''): void {
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        $deadline = gmdate('Y-m-d H:i:s', time() + DAY_IN_SECONDS);
+        $wpdb->update(
+            $table,
+            [
+                'is_hidden' => 1,
+                'hidden_reason' => 'review_removed',
+                'hidden_at' => current_time('mysql'),
+                'review_status' => 'removed_review',
+                'review_decision' => 'remove',
+                'review_reason' => sanitize_key($reason),
+                'review_detail' => sanitize_text_field($detail),
+                'reviewed_by' => $admin_user_id,
+                'reviewed_at' => current_time('mysql'),
+                'appeal_deadline_at' => $deadline,
+            ],
+            ['id' => $submission_id],
+            ['%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s'],
+            ['%d']
+        );
+    }
+
+    public static function decide_review_appeal(int $submission_id, int $admin_user_id, bool $accept): void {
+        $submission = self::get_submission($submission_id);
+        if (!$submission) {
+            return;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        if ($accept) {
+            $wpdb->update(
+                $table,
+                [
+                    'is_hidden' => 0,
+                    'hidden_reason' => null,
+                    'hidden_at' => null,
+                    'review_status' => 'reviewed',
+                    'review_decision' => 'appeal_accepted',
+                    'reviewed_by' => $admin_user_id,
+                    'reviewed_at' => current_time('mysql'),
+                    'review_appeal_decision_at' => current_time('mysql'),
+                ],
+                ['id' => $submission_id],
+                ['%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s'],
+                ['%d']
+            );
+            return;
+        }
+
+        $attachment_id = (int) ($submission['attachment_id'] ?? 0);
+        if ($attachment_id > 0) {
+            wp_delete_attachment($attachment_id, true);
+        }
+        $wpdb->update(
+            $table,
+            [
+                'review_status' => 'removed_review',
+                'review_decision' => 'appeal_rejected',
+                'reviewed_by' => $admin_user_id,
+                'reviewed_at' => current_time('mysql'),
+                'review_appeal_decision_at' => current_time('mysql'),
+                'attachment_id' => 0,
+                'image_size_bytes' => null,
+            ],
+            ['id' => $submission_id],
+            ['%s', '%s', '%d', '%s', '%s', '%d', '%d'],
+            ['%d']
+        );
+    }
+
+    public static function handle_submit_review_appeal(): void {
+        if (!is_user_logged_in()) {
+            wp_safe_redirect(home_url('/catgame/profile'));
+            exit;
+        }
+
+        check_admin_referer('catgame_submit_review_appeal');
+        $submission_id = (int) ($_POST['submission_id'] ?? 0);
+        $message = sanitize_textarea_field(wp_unslash($_POST['appeal_message'] ?? ''));
+        $user_id = get_current_user_id();
+        $submission = self::get_submission($submission_id);
+        if (!$submission || (int) ($submission['user_id'] ?? 0) !== $user_id || (string) ($submission['review_status'] ?? '') !== 'removed_review') {
+            wp_safe_redirect(add_query_arg('review_appeal', 'invalid', home_url('/catgame/profile')));
+            exit;
+        }
+
+        $deadline_at = strtotime((string) ($submission['appeal_deadline_at'] ?? ''));
+        if ($deadline_at <= 0 || $deadline_at < time()) {
+            wp_safe_redirect(add_query_arg('review_appeal', 'expired', home_url('/catgame/profile')));
+            exit;
+        }
+
+        global $wpdb;
+        $wpdb->update(
+            CatGame_DB::table('submissions'),
+            [
+                'review_status' => 'appealed_review',
+                'review_appeal_message' => $message,
+                'review_appealed_at' => current_time('mysql'),
+            ],
+            ['id' => $submission_id],
+            ['%s', '%s', '%s'],
+            ['%d']
+        );
+
+        wp_safe_redirect(add_query_arg('review_appeal', 'sent', home_url('/catgame/profile')));
+        exit;
+    }
+
+    public static function review_appeal_button_html(array $submission, int $current_user_id): string {
+        $submission_id = (int) ($submission['id'] ?? 0);
+        if ($submission_id <= 0 || $current_user_id <= 0 || (int) ($submission['user_id'] ?? 0) !== $current_user_id) {
+            return '';
+        }
+
+        $status = (string) ($submission['review_status'] ?? '');
+        if ($status === 'appealed_review') {
+            return '<p class="cg-appeal-state">Apelación de revisión pendiente</p>';
+        }
+        if ($status !== 'removed_review') {
+            return '';
+        }
+
+        $deadline_at = strtotime((string) ($submission['appeal_deadline_at'] ?? ''));
+        if ($deadline_at <= 0 || $deadline_at < time()) {
+            return '<p class="cg-appeal-state">Ventana de apelación cerrada</p>';
+        }
+
+        ob_start();
+        ?>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-appeal-form">
+            <?php wp_nonce_field('catgame_submit_review_appeal'); ?>
+            <input type="hidden" name="action" value="catgame_submit_review_appeal">
+            <input type="hidden" name="submission_id" value="<?php echo (int) $submission_id; ?>">
+            <textarea name="appeal_message" rows="2" maxlength="500" placeholder="Explica tu apelación (opcional)"></textarea>
+            <button type="submit" class="button button-small">Apelar revisión (24h)</button>
+        </form>
+        <?php
+        return (string) ob_get_clean();
+    }
+
+    public static function purge_expired_review_removals(int $limit = 25): void {
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        $now = current_time('mysql');
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, attachment_id FROM {$table} WHERE review_status = 'removed_review' AND attachment_id > 0 AND (review_appealed_at IS NULL OR review_appealed_at = '0000-00-00 00:00:00') AND appeal_deadline_at IS NOT NULL AND appeal_deadline_at <= %s ORDER BY appeal_deadline_at ASC LIMIT %d",
+                $now,
+                max(1, min(200, $limit))
+            ),
+            ARRAY_A
+        );
+
+        foreach ($rows as $row) {
+            $attachment_id = (int) ($row['attachment_id'] ?? 0);
+            if ($attachment_id > 0) {
+                wp_delete_attachment($attachment_id, true);
+            }
+            $wpdb->update(
+                $table,
+                ['attachment_id' => 0, 'image_size_bytes' => null],
+                ['id' => (int) ($row['id'] ?? 0)],
+                ['%d', '%d'],
+                ['%d']
+            );
+        }
     }
 
     public static function list_feed(int $event_id, int $limit = 20, int $offset = 0, string $tag = ''): array {

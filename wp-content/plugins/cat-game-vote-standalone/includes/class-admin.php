@@ -15,6 +15,9 @@ class CatGame_Admin {
         add_action('admin_post_catgame_moderate_report', ['CatGame_Reports', 'handle_moderate_report']);
         add_action('admin_post_catgame_update_moderation_action', [__CLASS__, 'update_moderation_action']);
         add_action('admin_post_catgame_admin_remove_submission', [__CLASS__, 'admin_remove_submission']);
+        add_action('admin_post_catgame_review_keep_submission', [__CLASS__, 'review_keep_submission']);
+        add_action('admin_post_catgame_review_remove_submission', [__CLASS__, 'review_remove_submission']);
+        add_action('admin_post_catgame_review_decide_appeal', [__CLASS__, 'review_decide_appeal']);
         add_action('admin_post_catgame_save_settings', [__CLASS__, 'save_settings']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_assets']);
         add_action('admin_notices', [__CLASS__, 'permalink_notice']);
@@ -24,13 +27,14 @@ class CatGame_Admin {
         add_menu_page('Cat Game', 'Cat Game', 'manage_options', 'catgame-events', [__CLASS__, 'events_page'], 'dashicons-pets', 56);
         add_submenu_page('catgame-events', 'Events', 'Events', 'manage_options', 'catgame-events', [__CLASS__, 'events_page']);
         add_submenu_page('catgame-events', 'Moderation', 'Moderation', 'manage_options', 'catgame-moderation', [__CLASS__, 'moderation_page']);
+        add_submenu_page('catgame-events', 'Revisión', 'Revisión', 'manage_options', 'catgame-review', [__CLASS__, 'review_page']);
         add_submenu_page('catgame-events', 'Ajustes', 'Ajustes', 'manage_options', 'catgame-settings', [__CLASS__, 'settings_page']);
     }
 
     public static function enqueue_admin_assets(): void {
         $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
 
-        if (!in_array($page, ['catgame-events', 'catgame-settings', 'catgame-moderation'], true)) {
+        if (!in_array($page, ['catgame-events', 'catgame-settings', 'catgame-moderation', 'catgame-review'], true)) {
             return;
         }
 
@@ -960,6 +964,136 @@ class CatGame_Admin {
         );
 
         wp_safe_redirect(admin_url('admin.php?page=catgame-moderation&status=pending&mod_notice=manual_removed'));
+        exit;
+    }
+
+    public static function review_page(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        CatGame_Submissions::purge_expired_review_removals();
+
+        $type_filter = sanitize_key((string) wp_unslash($_GET['type'] ?? 'all'));
+        $status_filter = sanitize_key((string) wp_unslash($_GET['review_status'] ?? 'pending_review'));
+        $rows = CatGame_Submissions::list_review_submissions($type_filter, $status_filter, 200);
+        ?>
+        <div class="wrap catgame-admin-page">
+            <h1>Cat Game - Revisión editorial</h1>
+            <p>Publicaciones visibles para usuarios pero pendientes de revisión editorial interna.</p>
+
+            <p>
+                <a class="button <?php echo $type_filter === 'all' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(add_query_arg(['page' => 'catgame-review', 'type' => 'all', 'review_status' => $status_filter], admin_url('admin.php'))); ?>">Todas</a>
+                <a class="button <?php echo $type_filter === 'event' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(add_query_arg(['page' => 'catgame-review', 'type' => 'event', 'review_status' => $status_filter], admin_url('admin.php'))); ?>">Evento</a>
+                <a class="button <?php echo $type_filter === 'free' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(add_query_arg(['page' => 'catgame-review', 'type' => 'free', 'review_status' => $status_filter], admin_url('admin.php'))); ?>">Libre</a>
+            </p>
+            <p>
+                <a class="button <?php echo $status_filter === 'pending_review' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(add_query_arg(['page' => 'catgame-review', 'type' => $type_filter, 'review_status' => 'pending_review'], admin_url('admin.php'))); ?>">Pendientes</a>
+                <a class="button <?php echo $status_filter === 'reviewed' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(add_query_arg(['page' => 'catgame-review', 'type' => $type_filter, 'review_status' => 'reviewed'], admin_url('admin.php'))); ?>">Revisadas</a>
+                <a class="button <?php echo $status_filter === 'removed_review' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(add_query_arg(['page' => 'catgame-review', 'type' => $type_filter, 'review_status' => 'removed_review'], admin_url('admin.php'))); ?>">Eliminadas</a>
+                <a class="button <?php echo $status_filter === 'appealed_review' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(add_query_arg(['page' => 'catgame-review', 'type' => $type_filter, 'review_status' => 'appealed_review'], admin_url('admin.php'))); ?>">Apeladas</a>
+            </p>
+
+            <table class="widefat striped">
+                <thead><tr><th>Miniatura</th><th>ID</th><th>Título</th><th>Usuario</th><th>Tipo</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody>
+                <?php if (empty($rows)): ?>
+                    <tr><td colspan="8">No hay publicaciones para este filtro.</td></tr>
+                <?php else: ?>
+                    <?php foreach ($rows as $row): ?>
+                        <?php $user = get_userdata((int) ($row['user_id'] ?? 0)); ?>
+                        <tr>
+                            <td><?php echo wp_get_attachment_image((int) ($row['attachment_id'] ?? 0), [64, 64]); ?></td>
+                            <td>#<?php echo (int) ($row['id'] ?? 0); ?></td>
+                            <td><?php echo esc_html(CatGame_Submissions::title_label((array) $row)); ?></td>
+                            <td>@<?php echo esc_html($user ? $user->user_login : 'usuario'); ?></td>
+                            <td><?php echo (int) ($row['event_id'] ?? 0) > 0 ? 'Evento' : 'Libre'; ?></td>
+                            <td><?php echo esc_html((string) ($row['created_at'] ?? '')); ?></td>
+                            <td><span class="catgame-pill"><?php echo esc_html((string) ($row['review_status'] ?? 'pending_review')); ?></span></td>
+                            <td class="catgame-table-actions">
+                                <?php if (($row['review_status'] ?? '') === 'pending_review'): ?>
+                                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                        <?php wp_nonce_field('catgame_review_keep_submission'); ?>
+                                        <input type="hidden" name="action" value="catgame_review_keep_submission" />
+                                        <input type="hidden" name="submission_id" value="<?php echo (int) ($row['id'] ?? 0); ?>" />
+                                        <button class="button button-small" type="submit">Mantener</button>
+                                    </form>
+                                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                        <?php wp_nonce_field('catgame_review_remove_submission'); ?>
+                                        <input type="hidden" name="action" value="catgame_review_remove_submission" />
+                                        <input type="hidden" name="submission_id" value="<?php echo (int) ($row['id'] ?? 0); ?>" />
+                                        <input type="text" name="reason" placeholder="Motivo" required />
+                                        <input type="text" name="detail" placeholder="Detalle (opcional)" />
+                                        <button class="button button-small button-link-delete" type="submit">Eliminar publicación</button>
+                                    </form>
+                                <?php elseif (($row['review_status'] ?? '') === 'appealed_review'): ?>
+                                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                        <?php wp_nonce_field('catgame_review_decide_appeal'); ?>
+                                        <input type="hidden" name="action" value="catgame_review_decide_appeal" />
+                                        <input type="hidden" name="submission_id" value="<?php echo (int) ($row['id'] ?? 0); ?>" />
+                                        <button class="button button-small" type="submit" name="decision" value="accept">Aceptar apelación</button>
+                                        <button class="button button-small button-link-delete" type="submit" name="decision" value="reject">Rechazar apelación</button>
+                                    </form>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
+    public static function review_keep_submission(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+        check_admin_referer('catgame_review_keep_submission');
+        $submission_id = (int) ($_POST['submission_id'] ?? 0);
+        if ($submission_id > 0) {
+            CatGame_Submissions::mark_reviewed($submission_id, get_current_user_id());
+        }
+        wp_safe_redirect(admin_url('admin.php?page=catgame-review&review_status=pending_review'));
+        exit;
+    }
+
+    public static function review_remove_submission(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+        check_admin_referer('catgame_review_remove_submission');
+        $submission_id = (int) ($_POST['submission_id'] ?? 0);
+        $reason = sanitize_key(wp_unslash($_POST['reason'] ?? 'other'));
+        $detail = sanitize_text_field(wp_unslash($_POST['detail'] ?? ''));
+        $submission = CatGame_Submissions::get_submission($submission_id);
+        if ($submission_id > 0 && $submission) {
+            CatGame_Submissions::remove_by_review($submission_id, get_current_user_id(), $reason, $detail);
+            if (class_exists('CatGame_Reports')) {
+                CatGame_Reports::add_notification((int) ($submission['user_id'] ?? 0), 'moderation', 'Publicación eliminada en revisión', 'Tu publicación fue retirada en revisión editorial. Puedes apelar dentro de 24 horas.', 'review_removed_' . $submission_id);
+            }
+        }
+        wp_safe_redirect(admin_url('admin.php?page=catgame-review&review_status=pending_review'));
+        exit;
+    }
+
+    public static function review_decide_appeal(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+        check_admin_referer('catgame_review_decide_appeal');
+        $submission_id = (int) ($_POST['submission_id'] ?? 0);
+        $decision = sanitize_key(wp_unslash($_POST['decision'] ?? 'reject'));
+        $accept = $decision === 'accept';
+        $submission = CatGame_Submissions::get_submission($submission_id);
+        if ($submission_id > 0 && $submission) {
+            CatGame_Submissions::decide_review_appeal($submission_id, get_current_user_id(), $accept);
+            if (class_exists('CatGame_Reports')) {
+                $msg = $accept ? 'Tu apelación fue aceptada. Publicación restaurada.' : 'Tu apelación fue rechazada. La publicación permanece eliminada.';
+                CatGame_Reports::add_notification((int) ($submission['user_id'] ?? 0), 'moderation', 'Resultado de apelación', $msg, 'review_appeal_decision_' . $submission_id . '_' . ($accept ? 'accepted' : 'rejected'));
+            }
+        }
+        wp_safe_redirect(admin_url('admin.php?page=catgame-review&review_status=appealed_review'));
         exit;
     }
 

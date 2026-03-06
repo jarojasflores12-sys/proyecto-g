@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.27.42
+- Admin: nuevo submenú **Revisión** separado de **Moderation**, con tabla de publicaciones (miniatura, ID, título, usuario, tipo, fecha, estado) y filtros por tipo (`Todas/Evento/Libre`) y estado (`Pendientes/Revisadas/Eliminadas/Apeladas`).
+- Revisión editorial: nuevo flujo interno en `submissions` con estados `pending_review`, `reviewed`, `removed_review`, `appealed_review` y metadatos de decisión/motivo/revisor/ventana de apelación.
+- Upload: cada publicación nueva entra automáticamente en `pending_review` sin alterar su visibilidad pública inicial.
+- Revisión admin: acciones **Mantener** y **Eliminar publicación** (con motivo y detalle), notificación al usuario y ventana de apelación de 24h.
+- Perfil usuario: nueva apelación de revisión (24h) para publicaciones eliminadas por revisión editorial, separada de apelaciones de Moderation.
+- Revisión admin (apeladas): aceptar apelación restaura publicación; rechazar apelación mantiene eliminación y borra adjunto de medios.
+- Limpieza 24h: rutina automática que purga adjuntos vencidos sin apelación en eliminaciones por revisión, conservando registro mínimo interno.
+- DB: versión de esquema `13` con columnas e índices editoriales de revisión en `catgame_submissions`.
+
 ## 0.27.41
 - Moderación admin (`Resueltos`): ajuste visual del cuadro **Editar acción** para mostrarse horizontal en una sola franja bajo la información del caso, con scroll horizontal cuando falta ancho.
 

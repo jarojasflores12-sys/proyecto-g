@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_DB {
-    private const SCHEMA_VERSION = '12';
+    private const SCHEMA_VERSION = '13';
     private const SCHEMA_OPTION_KEY = 'catgame_schema_version';
 
     public static function init(): void {
@@ -80,6 +80,16 @@ class CatGame_DB {
             is_hidden TINYINT(1) NOT NULL DEFAULT 0,
             hidden_reason VARCHAR(32) NULL,
             hidden_at DATETIME NULL,
+            review_status VARCHAR(24) NOT NULL DEFAULT 'pending_review',
+            review_decision VARCHAR(24) NULL,
+            review_reason VARCHAR(64) NULL,
+            review_detail VARCHAR(250) NULL,
+            reviewed_by BIGINT UNSIGNED NULL,
+            reviewed_at DATETIME NULL,
+            appeal_deadline_at DATETIME NULL,
+            review_appeal_message TEXT NULL,
+            review_appealed_at DATETIME NULL,
+            review_appeal_decision_at DATETIME NULL,
             created_at DATETIME NOT NULL,
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             score_cached DECIMAL(5,2) NOT NULL DEFAULT 0,
@@ -89,7 +99,9 @@ class CatGame_DB {
             KEY event_status_score (event_id, status, score_cached),
             KEY geo (country, city),
             KEY user_id (user_id),
-            KEY hidden_idx (is_hidden, event_id)
+            KEY hidden_idx (is_hidden, event_id),
+            KEY review_status_idx (review_status),
+            KEY review_appeal_deadline_idx (appeal_deadline_at)
         ) {$charset};";
 
         $sql[] = "CREATE TABLE {$votes} (

@@ -79,6 +79,7 @@ class CatGame_Render {
     private static function page_data(string $page): array {
 
         CatGame_Events::finalize_ended_competitive_events();
+        CatGame_Submissions::purge_expired_review_removals();
 
         $event = CatGame_Events::get_active_event();
         $competitive_event = CatGame_Events::get_active_competitive_event();

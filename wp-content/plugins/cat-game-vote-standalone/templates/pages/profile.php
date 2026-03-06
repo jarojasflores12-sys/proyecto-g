@@ -211,6 +211,14 @@ if ($upload_banned_until_iso !== '') {
     <?php elseif ($profile_error === 'missing_terms'): ?>
         <p class="cg-alert cg-alert-error">Debes aceptar las normas y sanciones para guardar.</p>
     <?php endif; ?>
+    <?php $review_appeal_status = sanitize_key(wp_unslash($_GET['review_appeal'] ?? '')); ?>
+    <?php if ($review_appeal_status === 'sent'): ?>
+        <p class="cg-alert cg-alert-success">Apelación de revisión enviada.</p>
+    <?php elseif ($review_appeal_status === 'expired'): ?>
+        <p class="cg-alert cg-alert-error">La ventana de apelación de revisión (24h) expiró.</p>
+    <?php elseif ($review_appeal_status === 'invalid'): ?>
+        <p class="cg-alert cg-alert-error">No se pudo procesar la apelación solicitada.</p>
+    <?php endif; ?>
 
     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form" id="catgame-profile-form">
         <?php wp_nonce_field('catgame_profile_update'); ?>
@@ -443,6 +451,7 @@ if ($upload_banned_until_iso !== '') {
                     <button type="submit" class="cg-tag-delete">Eliminar mi publicación</button>
                 </form>
                 <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::appeal_button_html((array) $item, (int) get_current_user_id()) : ''; ?>
+                <?php echo CatGame_Submissions::review_appeal_button_html((array) $item, (int) get_current_user_id()); ?>
                 <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in(), (array) ($item['reaction_counts'] ?? []) ? ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)] : []); ?>
             </article>
         <?php endforeach; ?>
