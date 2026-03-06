@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.47
+- Subir / Mis etiquetas guardadas: corrección de chips sin texto visible en sugerencias guardadas (se fuerza color de texto y fallback de label en render).
+- Subir / etiquetas: se mantiene la selección integrada al mismo input de tags, sin duplicados y sin cambiar fuente de datos personal del usuario.
+
 ## 0.27.46
 - Subir: nueva sección desplegable **Mis etiquetas guardadas** (cerrada por defecto) que muestra solo etiquetas personales del usuario actual cuando existen.
 - Subir / etiquetas: chips seleccionables reutilizables integrados al mismo input/payload de tags del formulario (compatible con tags manuales), sin duplicados.

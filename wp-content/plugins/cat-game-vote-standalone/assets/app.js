@@ -545,7 +545,9 @@
       .map((tag) => {
         const isActive = selected.has(tag);
         const activeClass = isActive ? ' is-active' : '';
-        return `<button type="button" class="cg-tag-suggest__btn${activeClass}" data-tag="${escapeHtml(tag)}" aria-pressed="${isActive ? 'true' : 'false'}">${escapeHtml(visualLabel(tag))}</button>`;
+        const fallbackLabel = String(tag || '').replace(/_/g, ' ').trim();
+        const label = visualLabel(tag) || fallbackLabel;
+        return `<button type="button" class="cg-tag-suggest__btn${activeClass}" data-tag="${escapeHtml(tag)}" aria-pressed="${isActive ? 'true' : 'false'}">${escapeHtml(label)}</button>`;
       })
       .join('');
   };
