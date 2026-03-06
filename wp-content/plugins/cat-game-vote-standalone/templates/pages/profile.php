@@ -149,8 +149,8 @@ $most_voted = is_array($stats['most_voted'] ?? null) ? $stats['most_voted'] : nu
 $best_ranked = is_array($stats['best_ranked'] ?? null) ? $stats['best_ranked'] : null;
 $best_photo = is_array($data['best_photo'] ?? null) ? $data['best_photo'] : null;
 
-$profile_link = home_url('/catgame/profile');
-$best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
+$profile_link = home_url('/catgame/user/' . rawurlencode(sanitize_user($username, true)));
+$best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) ($best_photo['id'] ?? 0)) : '';
 $default_city = CatGame_Submissions::visual_label(trim((string) ($prefs['default_city'] ?? '')));
 $default_country = CatGame_Submissions::visual_label(trim((string) ($prefs['default_country'] ?? '')));
 $terms_accepted = !empty($prefs['terms_accepted']);
@@ -396,8 +396,8 @@ if ($upload_banned_until_iso !== '') {
     <?php endif; ?>
 
     <div class="cg-profile-share">
-        <button type="button" class="secondary js-share-profile" data-url="<?php echo esc_url($profile_link); ?>">Compartir mi perfil</button>
-        <button type="button" class="secondary js-share-best" data-url="<?php echo esc_url($best_photo_link ?: $profile_link); ?>">Compartir mi publicación destacada</button>
+        <button type="button" class="secondary js-share-link" data-url="<?php echo esc_url($profile_link); ?>" data-share-title="Cat Game Vote" data-share-text="Mira el perfil de esta mascota en Cat Game Vote">Compartir mi perfil</button>
+        <button type="button" class="secondary js-share-link" data-url="<?php echo esc_url($best_photo_link ?: $profile_link); ?>" data-share-title="Cat Game Vote" data-share-text="Mira esta publicación destacada en Cat Game Vote">Compartir mi publicación destacada</button>
     </div>
 
     <section class="cg-card">

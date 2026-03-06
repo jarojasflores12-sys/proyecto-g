@@ -40,6 +40,13 @@ $post_type_badge_label = $has_event ? '🏆 Evento' : '🐾 Libre';
                 <?php if ($position > 0): ?><span class="cg-inline-badge">Top 3 #<?php echo (int) $position; ?></span><?php endif; ?>
             </div>
             <div class="catgame-card-head-action">
+                <button
+                    type="button"
+                    class="catgame-mini-action js-share-link"
+                    data-url="<?php echo esc_url(home_url('/catgame/submission/' . (int) ($item['id'] ?? 0))); ?>"
+                    data-share-title="Cat Game Vote"
+                    data-share-text="Mira esta publicación en Cat Game Vote"
+                >Compartir</button>
                 <?php if ($is_mine && is_user_logged_in()): ?>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-inline-delete-form" data-cg-confirm="1" data-cg-confirm-title="Eliminar publicación" data-cg-confirm-text="Esta acción no se puede deshacer. ¿Eliminar esta publicación?">
                         <?php wp_nonce_field('catgame_delete_submission'); ?>

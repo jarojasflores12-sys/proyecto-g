@@ -729,42 +729,77 @@
 })();
 
 (function () {
-  const profileButton = document.querySelector('.js-share-profile');
-  const bestButton = document.querySelector('.js-share-best');
-
   const copyText = async (text) => {
     if (!text) return false;
+
+    const legacyCopy = () => {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', 'readonly');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const copied = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        return copied;
+      } catch (_) {
+        return false;
+      }
+    };
+
     try {
-      await navigator.clipboard.writeText(text);
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(text);
+      } else if (!legacyCopy()) {
+        throw new Error('clipboard_unavailable');
+      }
       window.catgameToast?.('Enlace copiado', 'success');
       return true;
     } catch (_) {
+      if (legacyCopy()) {
+        window.catgameToast?.('Enlace copiado', 'success');
+        return true;
+      }
+
       window.catgameToast?.('No se pudo copiar', 'error');
       return false;
     }
   };
 
-  if (profileButton) {
-    profileButton.addEventListener('click', async () => {
-      const url = profileButton.getAttribute('data-url') || window.location.href;
-      await copyText(url);
-    });
-  }
+  const shareLink = async (button) => {
+    const url = button?.getAttribute('data-url') || window.location.href;
+    const title = button?.getAttribute('data-share-title') || 'Cat Game Vote';
+    const text = button?.getAttribute('data-share-text') || 'Mira esta publicación en Cat Game Vote';
 
-  if (bestButton) {
-    bestButton.addEventListener('click', async () => {
-      const url = bestButton.getAttribute('data-url') || window.location.href;
-      if (navigator.share) {
-        try {
-          await navigator.share({ title: 'Cat Game Vote', text: 'Mira esta publicación', url });
-          return;
-        } catch (_) {
-          // fallback copy
-        }
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch (_) {
+        // fallback copy
       }
-      await copyText(url);
-    });
-  }
+    }
+
+    await copyText(url);
+  };
+
+  document.addEventListener('click', async (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    const button = target.closest('.js-share-link');
+    if (!button) {
+      return;
+    }
+
+    event.preventDefault();
+    await shareLink(button);
+  });
 })();
 
 

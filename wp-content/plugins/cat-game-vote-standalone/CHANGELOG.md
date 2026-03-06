@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.44
+- Compartir perfil: `Mi perfil` ahora comparte la URL pública real (`/catgame/user/{username}`) en lugar de la vista privada de perfil.
+- Compartir publicación destacada: ahora comparte el detalle exacto de la destacada (`/catgame/submission/{id}`) y no el feed general.
+- Publicaciones (cards): nueva acción `Compartir` por publicación (evento/libre) apuntando al detalle exacto.
+- Share unificado: para perfil/destacada/publicación se usa Web Share API cuando está disponible; fallback a copiado de enlace con toast `Enlace copiado`.
+
 ## 0.27.43
 - Revisión admin: la bandeja ahora muestra solo publicaciones creadas en las últimas 24 horas para evitar acumulación histórica.
 - Revisión admin: publicaciones con al menos un reporte dejan de aparecer en Revisión (quedan para flujo de Moderation).
