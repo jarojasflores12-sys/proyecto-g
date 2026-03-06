@@ -466,12 +466,7 @@ class CatGame_Submissions {
         $filter = in_array($filter, $allowed_filters, true) ? $filter : 'all';
 
         if ($filter === 'event') {
-            if ($active_event_id > 0) {
-                $where[] = 'event_id = %d';
-                $params[] = $active_event_id;
-            } else {
-                $where[] = 'event_id = -1';
-            }
+            $where[] = 'event_id IS NOT NULL AND event_id != 0';
         } elseif ($filter === 'free') {
             $where[] = '(event_id IS NULL OR event_id = 0)';
         }

@@ -6,10 +6,9 @@ $feed_per_page = (int) ($data['feed_per_page'] ?? 20);
 $feed_next_offset = (int) ($data['feed_next_offset'] ?? count($items));
 $feed_has_more = !empty($data['feed_has_more']);
 $feed_filter = (string) ($data['feed_filter'] ?? 'all');
-$feed_has_active_event = !empty($data['feed_has_active_event']);
 $empty_messages = [
     'all' => 'Aún no hay publicaciones disponibles.',
-    'event' => $feed_has_active_event ? 'No hay publicaciones de evento disponibles.' : 'No hay evento activo en este momento.',
+    'event' => 'No hay publicaciones de evento disponibles.',
     'free' => 'Aún no hay publicaciones en modo libre.',
 ];
 $empty_message = $empty_messages[$feed_filter] ?? $empty_messages['all'];
@@ -32,7 +31,7 @@ $empty_message = $empty_messages[$feed_filter] ?? $empty_messages['all'];
         <?php endforeach; ?>
     </div>
 
-    <div class="cg-feed-more" data-feed-more="1" data-per-page="<?php echo (int) $feed_per_page; ?>" data-next-offset="<?php echo (int) $feed_next_offset; ?>" data-has-more="<?php echo $feed_has_more ? '1' : '0'; ?>" data-current-filter="<?php echo esc_attr($feed_filter); ?>" data-has-active-event="<?php echo $feed_has_active_event ? '1' : '0'; ?>" data-empty-all="<?php echo esc_attr($empty_messages['all']); ?>" data-empty-event="<?php echo esc_attr($empty_messages['event']); ?>" data-empty-free="<?php echo esc_attr($empty_messages['free']); ?>">
+    <div class="cg-feed-more" data-feed-more="1" data-per-page="<?php echo (int) $feed_per_page; ?>" data-next-offset="<?php echo (int) $feed_next_offset; ?>" data-has-more="<?php echo $feed_has_more ? '1' : '0'; ?>" data-current-filter="<?php echo esc_attr($feed_filter); ?>" data-empty-all="<?php echo esc_attr($empty_messages['all']); ?>" data-empty-event="<?php echo esc_attr($empty_messages['event']); ?>" data-empty-free="<?php echo esc_attr($empty_messages['free']); ?>">
         <button type="button" class="secondary" data-feed-more-btn="1" <?php echo $feed_has_more ? '' : 'hidden'; ?>>Cargar más</button>
         <p class="cg-feed-end" data-feed-end="1" <?php echo $feed_has_more ? 'hidden' : ''; ?>>No hay más publicaciones</p>
     </div>

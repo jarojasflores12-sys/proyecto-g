@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.28
+- Feed filtro `Evento`: se corrige para incluir cualquier publicación con `event_id IS NOT NULL AND event_id != 0` (no solo del evento activo), manteniendo orden `created_at DESC, id DESC`.
+- Estado vacío `Evento`: se unifica a `No hay publicaciones de evento disponibles.` para alinearse con la lógica del filtro.
+
 ## 0.27.27
 - Feed Publicaciones: nuevo filtro visual por pestañas `Todo`, `🏆 Evento`, `🐾 Libre` sin cambiar estructura de cards ni reacciones.
 - Feed backend/paginación: el endpoint `catgame_feed_more` ahora acepta `filter` (`all/event/free`) y `Cargar más` respeta el filtro activo.
