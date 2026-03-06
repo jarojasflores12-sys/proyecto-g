@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.39
+- Capitalización visual: nuevo helper reutilizable `format_first_capital()` (sin tocar BD), usado en render para ciudad/país/título/tags con primera letra en mayúscula y resto intacto.
+- Ranking filtros/histórico: labels de país/ciudad en selects y títulos de ganadores históricos ahora se muestran capitalizados en frontend.
+- Detalle alterno (`detail.php`): título/ubicación alineados a capitalización visual estándar.
+
 ## 0.27.38
 - Detalle de publicación: imagen principal ahora respeta proporción y viewport (`max-height` con `object-fit: contain`) para mejor visual en móvil/escritorio.
 - Detalle de publicación: se ocultan el mensaje de apelación sin moderación activa y el bloque de tamaño de imagen para una vista más limpia.

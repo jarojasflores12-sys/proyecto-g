@@ -29,7 +29,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                 <select name="country">
                     <option value="">Todos</option>
                     <?php foreach ($countries as $country_option): ?>
-                        <option value="<?php echo esc_attr($country_option); ?>" <?php selected($country, $country_option); ?>><?php echo esc_html($country_option); ?></option>
+                        <option value="<?php echo esc_attr($country_option); ?>" <?php selected($country, $country_option); ?>><?php echo esc_html(CatGame_Submissions::visual_label((string) $country_option)); ?></option>
                     <?php endforeach; ?>
                 </select>
             </label>
@@ -37,7 +37,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                 <select name="city" <?php echo $country === '' ? 'disabled' : ''; ?>>
                     <option value="">Todas</option>
                     <?php foreach ($city_options as $city_option): ?>
-                        <option value="<?php echo esc_attr($city_option); ?>" <?php selected($city, $city_option); ?>><?php echo esc_html($city_option); ?></option>
+                        <option value="<?php echo esc_attr($city_option); ?>" <?php selected($city, $city_option); ?>><?php echo esc_html(CatGame_Submissions::visual_label((string) $city_option)); ?></option>
                     <?php endforeach; ?>
                 </select>
             </label>
@@ -129,7 +129,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                                 $winner = is_array($history['winners'][$slot] ?? null) ? $history['winners'][$slot] : [];
                                 $submission_id = (int) ($winner['submission_id'] ?? 0);
                                 $title = trim((string) ($winner['title'] ?? ''));
-                                $title = $title !== '' ? $title : 'Sin título';
+                                $title = $title !== '' ? CatGame_Submissions::visual_label($title) : 'Sin título';
                                 $attachment_id = (int) ($winner['attachment_id'] ?? 0);
                                 $user_id = (int) ($winner['user_id'] ?? 0);
                                 $author = $user_id > 0 ? get_userdata($user_id) : null;

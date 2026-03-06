@@ -55,7 +55,7 @@ class CatGame_Submissions {
         return $clean;
     }
 
-    public static function visual_label(string $text): string {
+    public static function format_first_capital(string $text): string {
         $text = trim((string) $text);
         if ($text === '') {
             return '';
@@ -68,6 +68,10 @@ class CatGame_Submissions {
         }
 
         return strtoupper(substr($text, 0, 1)) . substr($text, 1);
+    }
+
+    public static function visual_label(string $text): string {
+        return self::format_first_capital($text);
     }
 
     public static function user_custom_tag_map(int $user_id): array {
