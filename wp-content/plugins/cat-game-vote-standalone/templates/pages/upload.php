@@ -86,7 +86,12 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
                 Etiquetas (separadas por coma o salto de línea)
                 <textarea name="custom_tags" rows="3" id="catgame-upload-tags-input" placeholder="ej: pelusa, siesta, ventana"><?php echo esc_textarea((string) ($upload_state['custom_tags'] ?? '')); ?></textarea>
             </label>
-            <div class="cg-tag-suggest" id="catgame-tag-suggestions" data-user-tags="<?php echo esc_attr(wp_json_encode(array_values($user_tags))); ?>"></div>
+            <?php if (!empty($user_tags)): ?>
+                <details class="cg-tag-suggest" id="catgame-tag-suggestions" data-user-tags="<?php echo esc_attr(wp_json_encode(array_values($user_tags))); ?>">
+                    <summary class="cg-tag-suggest__summary">Mis etiquetas guardadas</summary>
+                    <div class="cg-tag-suggest__list" data-tag-saved-list="1"></div>
+                </details>
+            <?php endif; ?>
 
             <div class="cg-upload-picker" data-catgame-upload-picker>
                 <p class="cg-upload-picker__title">Selecciona tu foto</p>

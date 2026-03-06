@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.46
+- Subir: nueva sección desplegable **Mis etiquetas guardadas** (cerrada por defecto) que muestra solo etiquetas personales del usuario actual cuando existen.
+- Subir / etiquetas: chips seleccionables reutilizables integrados al mismo input/payload de tags del formulario (compatible con tags manuales), sin duplicados.
+- Subir / etiquetas: mejoras visuales del bloque desplegable y estado activo de chips seleccionados.
+
 ## 0.27.45
 - Perfil: corrección de desfase horario en "Normas aceptadas" para usar timezone de WordPress al renderizar `catgame_terms_accepted_at`, evitando mostrar +3h por doble conversión.
 - Perfil: formato de fecha/hora actualizado a `d/m/Y a las H:i` (sin segundos) para mayor claridad.

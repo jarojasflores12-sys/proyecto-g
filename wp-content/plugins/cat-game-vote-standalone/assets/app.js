@@ -506,7 +506,7 @@
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 
-  const splitTags = (value) => value.split(/[\n,]+/).map((item) => item.trim().toLowerCase()).filter(Boolean);
+  const splitTags = (value) => value.split(/[\n,]+/).map((item) => normalizeTag(item)).filter(Boolean);
 
   const normalizeTag = (value) => {
     const stripped = String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -519,37 +519,48 @@
       .slice(0, 20);
   };
 
-  const activeToken = () => {
-    const value = input.value || '';
-    const parts = value.split(/[\n,]/);
-    return normalizeTag(parts[parts.length - 1] || '');
+  const visualLabel = (value) => {
+    const normalized = normalizeTag(value).replace(/_/g, ' ').trim();
+    if (!normalized) {
+      return '';
+    }
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
   };
 
   const renderSuggestions = () => {
-    const token = activeToken();
-    if (!token || !Array.isArray(userTags) || userTags.length === 0) {
-      root.innerHTML = '';
+    if (!Array.isArray(userTags) || userTags.length === 0) {
+      root.hidden = true;
       return;
     }
+
+    root.hidden = false;
 
     const selected = new Set(splitTags(input.value || ''));
-    const items = userTags
-      .filter((tag) => tag.includes(token) && !selected.has(tag))
-      .slice(0, 8);
-
-    if (!items.length) {
-      root.innerHTML = '';
+    const list = root.querySelector('[data-tag-saved-list="1"]');
+    if (!(list instanceof HTMLElement)) {
       return;
     }
 
-    root.innerHTML = `<p class="cg-tag-suggest__title">Mis etiquetas sugeridas</p><div class="cg-tag-suggest__list">${items.map((tag) => `<button type="button" class="cg-tag-suggest__btn" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`).join('')}</div>`;
+    list.innerHTML = userTags
+      .map((tag) => {
+        const isActive = selected.has(tag);
+        const activeClass = isActive ? ' is-active' : '';
+        return `<button type="button" class="cg-tag-suggest__btn${activeClass}" data-tag="${escapeHtml(tag)}" aria-pressed="${isActive ? 'true' : 'false'}">${escapeHtml(visualLabel(tag))}</button>`;
+      })
+      .join('');
   };
 
   const applySuggestion = (tag) => {
-    const parts = (input.value || '').split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
-    parts.pop();
-    parts.push(tag);
-    input.value = `${parts.join(', ')}, `;
+    const current = splitTags(input.value || '');
+    const next = new Set(current);
+
+    if (next.has(tag)) {
+      next.delete(tag);
+    } else {
+      next.add(tag);
+    }
+
+    input.value = Array.from(next).join(', ');
     input.focus();
     renderSuggestions();
   };
@@ -606,6 +617,7 @@
       const payload = await response.json();
       const tags = payload?.success && Array.isArray(payload?.data?.tags) ? payload.data.tags : [];
       userTags = tags.map((tag) => normalizeTag(String(tag || ''))).filter(Boolean);
+      userTags = Array.from(new Set(userTags));
       renderSuggestions();
     } catch (_) {
       bootstrapFromDataset();
