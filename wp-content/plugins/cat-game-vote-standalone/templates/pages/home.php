@@ -54,11 +54,22 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
     <?php else: ?>
         <div class="cg-home-latest" role="list">
             <?php foreach ($latest_items as $item): ?>
-                <?php $title_label = CatGame_Submissions::title_label($item); $author = get_userdata((int) ($item['user_id'] ?? 0)); $author_name = $author ? (string) $author->user_login : 'usuario'; ?>
+                <?php
+                $title_label = CatGame_Submissions::title_label($item);
+                $author = get_userdata((int) ($item['user_id'] ?? 0));
+                $author_name = $author ? (string) $author->user_login : 'usuario';
+                $is_event_publication = !empty($item['event_id']);
+                $post_type_badge = $is_event_publication ? '🏆 Evento' : '🐾 Libre';
+                $submission_url = home_url('/catgame/submission/' . (int) ($item['id'] ?? 0));
+                ?>
                 <article class="cg-card cg-home-latest-item" role="listitem">
-                    <?php echo wp_get_attachment_image((int) ($item['attachment_id'] ?? 0), 'medium', false, ['loading' => 'lazy', 'class' => 'cg-home-latest-image']); ?>
-                    <span class="cg-badge">#<?php echo (int) ($item['id'] ?? 0); ?></span><strong class="cg-title"><?php echo esc_html($title_label); ?></strong>
+                    <a href="<?php echo esc_url($submission_url); ?>" class="cg-home-latest-image-link" aria-label="Ver detalle de la publicación #<?php echo (int) ($item['id'] ?? 0); ?>">
+                        <?php echo wp_get_attachment_image((int) ($item['attachment_id'] ?? 0), 'medium', false, ['loading' => 'lazy', 'class' => 'cg-home-latest-image']); ?>
+                    </a>
+                    <span class="cg-badge"><?php echo esc_html($post_type_badge); ?></span>
+                    <strong class="cg-title"><?php echo esc_html($title_label); ?></strong>
                     <small class="cg-author">por @<?php echo esc_html($author_name); ?></small>
+                    <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in(), (array) ($item['reaction_counts'] ?? []) ? ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)] : []); ?>
                 </article>
             <?php endforeach; ?>
         </div>

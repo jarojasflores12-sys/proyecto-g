@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.37
+- Inicio / Últimas publicaciones: ahora usa feed cronológico mixto (`all`) con publicaciones de evento + libre (solo activas/no ocultas), orden `created_at DESC, id DESC`.
+- Inicio / cards recientes: click en foto abre detalle reutilizando `/catgame/submission/{id}`, mantiene badges `🏆 Evento` / `🐾 Libre` y widget de reacciones.
+
 ## 0.27.36
 - Perfil: se corrige apertura del modal de `Ver normas` en la sección de aceptación de normas/sanciones (ya no depende de la inicialización del formulario de Subir).
 

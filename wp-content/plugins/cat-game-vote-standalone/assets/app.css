@@ -1924,3 +1924,12 @@ body.cg-has-custom-bg .cg-main {
   color: var(--cg-muted);
   font-size: 12px;
 }
+
+
+.cg-home-latest-image-link {
+  display: block;
+}
+
+.cg-home-latest-image-link .cg-home-latest-image {
+  width: 100%;
+}

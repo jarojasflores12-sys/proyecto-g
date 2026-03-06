@@ -445,7 +445,8 @@ class CatGame_Render {
 
             case 'home':
                 $top_items = $event ? self::with_reaction_payload(CatGame_Submissions::leaderboard((int) $event['id'], 'global', '', '', 3), $current_user_id) : [];
-                $latest_items = $event ? self::with_reaction_payload(CatGame_Submissions::list_feed((int) $event['id'], 5, 0), $current_user_id) : [];
+                $latest_page = CatGame_Submissions::list_feed_publications_paginated($event ? (int) ($event['id'] ?? 0) : 0, 5, 0, 'all');
+                $latest_items = self::with_reaction_payload((array) ($latest_page['items'] ?? []), $current_user_id);
                 return [
                     'page' => 'home',
                     'event' => $event,
