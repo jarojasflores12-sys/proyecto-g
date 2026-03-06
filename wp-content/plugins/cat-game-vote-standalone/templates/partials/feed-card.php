@@ -9,9 +9,13 @@ $author_name = $author ? (string) $author->user_login : 'usuario';
 $author_profile_url = home_url('/catgame/user/' . rawurlencode(sanitize_user($author_name, true)));
 $position = isset($top3_positions[(int) $item['id']]) ? (int) $top3_positions[(int) $item['id']] : 0;
 $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_user_id;
+$is_event_submission = !empty($item['event_id']);
+$feed_type_badge_class = $is_event_submission ? 'cg-badge-event' : 'cg-badge-free';
+$feed_type_badge_text = $is_event_submission ? '🏆 Evento' : '🐾 Libre';
 ?>
 <article class="cg-card <?php echo ($is_mine || $position > 0) ? 'cg-is-mine' : ''; ?>">
     <div class="cg-img-wrap">
+        <div class="cg-badge cg-feed-type-badge <?php echo esc_attr($feed_type_badge_class); ?>"><?php echo esc_html($feed_type_badge_text); ?></div>
         <?php echo wp_get_attachment_image(
             (int) $item['attachment_id'],
             'medium',
