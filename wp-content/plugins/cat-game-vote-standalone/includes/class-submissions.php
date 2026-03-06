@@ -452,7 +452,7 @@ class CatGame_Submissions {
         ];
     }
 
-    public static function list_feed_publications_paginated(int $active_event_id = 0, int $per_page = 20, int $offset = 0, string $tag = ''): array {
+    public static function list_feed_publications_paginated(int $active_event_id = 0, int $per_page = 20, int $offset = 0, string $filter = 'all', string $tag = ''): array {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
 
@@ -462,11 +462,18 @@ class CatGame_Submissions {
         $where = ["status = 'active'", 'is_hidden = 0'];
         $params = [];
 
-        if ($active_event_id > 0) {
-            $where[] = '(event_id = %d OR event_id = 0)';
-            $params[] = $active_event_id;
-        } else {
-            $where[] = 'event_id = 0';
+        $allowed_filters = ['all', 'event', 'free'];
+        $filter = in_array($filter, $allowed_filters, true) ? $filter : 'all';
+
+        if ($filter === 'event') {
+            if ($active_event_id > 0) {
+                $where[] = 'event_id = %d';
+                $params[] = $active_event_id;
+            } else {
+                $where[] = 'event_id = -1';
+            }
+        } elseif ($filter === 'free') {
+            $where[] = '(event_id IS NULL OR event_id = 0)';
         }
 
         if ($tag !== '') {
@@ -512,7 +519,12 @@ class CatGame_Submissions {
         $offset = isset($_GET['offset']) ? (int) $_GET['offset'] : 0;
         $per_page = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 20;
         $active_event_id = $event ? (int) ($event['id'] ?? 0) : 0;
-        $page = self::list_feed_publications_paginated($active_event_id, $per_page, $offset);
+        $filter = sanitize_key(wp_unslash($_GET['filter'] ?? 'all'));
+        if (!in_array($filter, ['all', 'event', 'free'], true)) {
+            $filter = 'all';
+        }
+
+        $page = self::list_feed_publications_paginated($active_event_id, $per_page, $offset, $filter);
         $items = $page['items'];
 
         $current_user_id = is_user_logged_in() ? get_current_user_id() : 0;

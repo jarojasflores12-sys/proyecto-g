@@ -1248,6 +1248,8 @@
 (function () {
   const config = window.CATGAME_FEED;
   const container = document.querySelector('[data-feed-more="1"]');
+  const tabsWrap = document.querySelector('[data-feed-tabs="1"]');
+  const tabs = tabsWrap ? Array.from(tabsWrap.querySelectorAll('.cg-feed-tab[data-filter]')) : [];
   const list = document.getElementById('catgame-feed-list');
   const button = container ? container.querySelector('[data-feed-more-btn="1"]') : null;
   const end = container ? container.querySelector('[data-feed-end="1"]') : null;
@@ -1258,25 +1260,72 @@
   const perPage = Number(container.dataset.perPage || '20');
   let nextOffset = Number(container.dataset.nextOffset || '0');
   let hasMore = container.dataset.hasMore === '1';
+  let currentFilter = String(container.dataset.currentFilter || 'all');
   let isLoading = false;
+
+  const validFilters = new Set(['all', 'event', 'free']);
+  if (!validFilters.has(currentFilter)) {
+    currentFilter = 'all';
+  }
+
+  const emptyMessages = {
+    all: String(container.dataset.emptyAll || 'Aún no hay publicaciones disponibles.'),
+    event: String(container.dataset.emptyEvent || 'No hay publicaciones de evento disponibles.'),
+    free: String(container.dataset.emptyFree || 'Aún no hay publicaciones en modo libre.'),
+  };
+
+  const removeEmptyState = () => {
+    const existing = list.querySelector('[data-feed-empty="1"]');
+    if (existing) {
+      existing.remove();
+    }
+  };
+
+  const ensureEmptyState = () => {
+    if (list.querySelector('.cg-card')) {
+      removeEmptyState();
+      return;
+    }
+
+    let empty = list.querySelector('[data-feed-empty="1"]');
+    if (!empty) {
+      empty = document.createElement('p');
+      empty.className = 'cg-empty-state';
+      empty.setAttribute('data-feed-empty', '1');
+      list.appendChild(empty);
+    }
+    empty.textContent = emptyMessages[currentFilter] || emptyMessages.all;
+  };
+
+  const syncTabs = () => {
+    tabs.forEach((tab) => {
+      const isActive = String(tab.dataset.filter || '') === currentFilter;
+      tab.classList.toggle('is-active', isActive);
+      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+  };
 
   const syncUi = () => {
     button.hidden = !hasMore;
     button.disabled = isLoading;
     button.textContent = isLoading ? 'Cargando…' : 'Cargar más';
     end.hidden = hasMore;
+    ensureEmptyState();
+    syncTabs();
   };
 
-  const loadMore = async () => {
-    if (!hasMore || isLoading) return;
+  const loadPage = async (mode = 'append') => {
+    const shouldAppend = mode === 'append';
+    if (shouldAppend && (!hasMore || isLoading)) return;
     isLoading = true;
     syncUi();
 
     try {
       const url = new URL(config.moreUrl, window.location.origin);
       url.searchParams.set('_wpnonce', config.nonce || '');
-      url.searchParams.set('offset', String(nextOffset));
+      url.searchParams.set('offset', shouldAppend ? String(nextOffset) : '0');
       url.searchParams.set('per_page', String(perPage));
+      url.searchParams.set('filter', currentFilter);
       const response = await fetch(url.toString(), { credentials: 'same-origin' });
       if (!response.ok) {
         throw new Error('http_error');
@@ -1287,7 +1336,12 @@
       }
 
       const html = String(payload.data.html || '');
+      if (!shouldAppend) {
+        list.innerHTML = '';
+      }
+
       if (html !== '') {
+        removeEmptyState();
         const fragment = document.createRange().createContextualFragment(html);
         list.appendChild(fragment);
         window.catgameInitReactions?.(list);
@@ -1305,7 +1359,25 @@
     }
   };
 
-  button.addEventListener('click', loadMore);
+  const setFilter = async (filter) => {
+    if (!validFilters.has(filter) || isLoading || filter === currentFilter) {
+      return;
+    }
+    currentFilter = filter;
+    container.dataset.currentFilter = currentFilter;
+    nextOffset = 0;
+    hasMore = true;
+    await loadPage('replace');
+  };
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const nextFilter = String(tab.dataset.filter || 'all');
+      setFilter(nextFilter);
+    });
+  });
+
+  button.addEventListener('click', () => loadPage('append'));
   syncUi();
 })();
 

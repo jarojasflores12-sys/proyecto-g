@@ -550,6 +550,30 @@ body.cg-has-custom-bg .cg-main {
   padding: 16px;
 }
 
+.cg-feed-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.cg-feed-tab {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.85);
+  color: #4f4f4f;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.cg-feed-tab.is-active {
+  background: #c7ceea;
+  color: #2f2f46;
+  border-color: rgba(89, 99, 155, 0.25);
+}
+
 .cg-img-wrap {
   position: relative;
   border-radius: 14px;

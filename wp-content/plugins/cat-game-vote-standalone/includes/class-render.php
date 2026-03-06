@@ -148,12 +148,18 @@ class CatGame_Render {
             case 'feed':
                 $feed_per_page = 20;
                 $active_event_id = $event ? (int) ($event['id'] ?? 0) : 0;
-                $feed_page = CatGame_Submissions::list_feed_publications_paginated($active_event_id, $feed_per_page, 0);
+                $feed_filter = sanitize_key(wp_unslash($_GET['filter'] ?? 'all'));
+                if (!in_array($feed_filter, ['all', 'event', 'free'], true)) {
+                    $feed_filter = 'all';
+                }
+                $feed_page = CatGame_Submissions::list_feed_publications_paginated($active_event_id, $feed_per_page, 0, $feed_filter);
 
                 return [
                     'page' => $page,
                     'event' => $event,
                     'submissions' => self::with_reaction_payload((array) ($feed_page['items'] ?? []), $current_user_id),
+                    'feed_filter' => $feed_filter,
+                    'feed_has_active_event' => $active_event_id > 0,
                     'feed_per_page' => $feed_per_page,
                     'feed_has_more' => !empty($feed_page['has_more']),
                     'feed_next_offset' => (int) ($feed_page['next_offset'] ?? 0),

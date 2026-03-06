@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.27
+- Feed Publicaciones: nuevo filtro visual por pestañas `Todo`, `🏆 Evento`, `🐾 Libre` sin cambiar estructura de cards ni reacciones.
+- Feed backend/paginación: el endpoint `catgame_feed_more` ahora acepta `filter` (`all/event/free`) y `Cargar más` respeta el filtro activo.
+- Estado vacío contextual por filtro: evento sin activo (`No hay evento activo en este momento.`), evento sin items (`No hay publicaciones de evento disponibles.`) y libre sin items (`Aún no hay publicaciones en modo libre.`).
+
 ## 0.27.26
 - Upload: ahora permite publicar aunque no exista evento activo; en ese caso la submission se guarda en modo libre con `event_id=0` (sin bloquear el envío).
 - Feed Publicaciones: ahora muestra tanto publicaciones del evento activo como publicaciones en modo libre, incluyendo paginación "Cargar más".
