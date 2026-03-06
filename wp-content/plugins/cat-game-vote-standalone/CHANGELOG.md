@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.27.31
+- Gestor de eventos: nuevo campo **Tipo de evento** (`competitive` / `thematic`) en creación/edición, persistido en BD con fallback compatible para eventos existentes (`competitive`).
+- Admin preview: ahora muestra etiqueta de tipo (**Competitivo**/**Temático**) y, si es temático, mensaje explícito de que no compite en ranking.
+- Juego / Subir: si el evento activo es **competitivo** se mantienen ambos modos (evento/libre); si es **temático** se oculta participar en evento y queda solo modo libre con mensaje `Tema actual: {nombre}`.
+- Juego / Ranking: usa únicamente el evento activo **competitivo** (si el activo es temático, no se cargan publicaciones competitivas).
+- Popup Reglas del evento: siempre muestra nombre+vigencia y, cuando el evento es temático, muestra aviso de no-competencia en ranking.
+
 ## 0.27.30
 - Upload UX: nueva selección explícita de destino con 2 botones grandes (`🏆 Participar en el evento` / `🐾 Publicar en modo libre`) antes del selector de foto.
 - Con evento activo: se exige elegir modo antes de publicar; sin evento activo: se preselecciona automáticamente modo libre y se oculta la opción de evento.

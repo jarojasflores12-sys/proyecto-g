@@ -89,6 +89,10 @@ class CatGame_Admin {
         }
 
         $form_name = $event_in_edit['name'] ?? '';
+        $form_event_type = sanitize_key((string) ($event_in_edit['event_type'] ?? 'competitive'));
+        if (!in_array($form_event_type, ['competitive', 'thematic'], true)) {
+            $form_event_type = 'competitive';
+        }
         $form_starts_at = isset($event_in_edit['starts_at']) ? self::to_datetime_local($event_in_edit['starts_at']) : '';
         $form_ends_at = isset($event_in_edit['ends_at']) ? self::to_datetime_local($event_in_edit['ends_at']) : '';
         $form_rules_data = self::parse_rules_for_admin($event_in_edit['rules_json'] ?? null);
@@ -127,6 +131,15 @@ class CatGame_Admin {
                             <tr>
                                 <th><label for="starts_at">Inicio</label></th>
                                 <td><input type="datetime-local" name="starts_at" id="starts_at" value="<?php echo esc_attr($form_starts_at); ?>" required /></td>
+                            </tr>
+                            <tr>
+                                <th><label for="event_type">Tipo de evento</label></th>
+                                <td>
+                                    <select name="event_type" id="event_type">
+                                        <option value="competitive" <?php selected($form_event_type, 'competitive'); ?>>Competitivo</option>
+                                        <option value="thematic" <?php selected($form_event_type, 'thematic'); ?>>Temático</option>
+                                    </select>
+                                </td>
                             </tr>
                             <tr>
                                 <th><label for="ends_at">Fin</label></th>
@@ -182,6 +195,7 @@ class CatGame_Admin {
                         <dl class="catgame-detail-list">
                             <dt>ID</dt><dd>#<?php echo (int) $event_in_edit['id']; ?></dd>
                             <dt>Nombre</dt><dd><?php echo esc_html((string) $event_in_edit['name']); ?></dd>
+                            <dt>Tipo</dt><dd><span class="catgame-pill"><?php echo esc_html((($event_in_edit['event_type'] ?? 'competitive') === 'thematic') ? 'Temático' : 'Competitivo'); ?></span></dd>
                             <dt>Estado</dt><dd><span class="catgame-pill"><?php echo esc_html($status_label); ?></span></dd>
                             <dt>Inicio</dt><dd><?php echo esc_html((string) $event_in_edit['starts_at']); ?></dd>
                             <dt>Fin</dt><dd><?php echo esc_html((string) $event_in_edit['ends_at']); ?></dd>
@@ -205,7 +219,7 @@ class CatGame_Admin {
                     <p class="description">No hay eventos creados todavía.</p>
                 <?php else: ?>
                     <table class="widefat striped">
-                        <thead><tr><th>ID</th><th>Nombre</th><th>Vigencia</th><th>Estado</th><th>Acciones</th></tr></thead>
+                        <thead><tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Vigencia</th><th>Estado</th><th>Acciones</th></tr></thead>
                         <tbody>
                         <?php foreach ($events as $event): ?>
                             <?php
@@ -216,6 +230,7 @@ class CatGame_Admin {
                             <tr>
                                 <td><?php echo (int) $event['id']; ?></td>
                                 <td><?php echo esc_html($event['name']); ?></td>
+                                <td><span class="catgame-pill"><?php echo esc_html((($event['event_type'] ?? 'competitive') === 'thematic') ? 'Temático' : 'Competitivo'); ?></span></td>
                                 <td><?php echo esc_html($event['starts_at'] . ' - ' . $event['ends_at']); ?></td>
                                 <td><span class="catgame-pill"><?php echo esc_html($status_label); ?></span></td>
                                 <td class="catgame-table-actions">
@@ -355,6 +370,10 @@ class CatGame_Admin {
         $name = sanitize_text_field(wp_unslash($_POST['name'] ?? ''));
         $starts_at = sanitize_text_field(wp_unslash($_POST['starts_at'] ?? ''));
         $ends_at = sanitize_text_field(wp_unslash($_POST['ends_at'] ?? ''));
+        $event_type = sanitize_key(wp_unslash($_POST['event_type'] ?? 'competitive'));
+        if (!in_array($event_type, ['competitive', 'thematic'], true)) {
+            $event_type = 'competitive';
+        }
         $rules_json = self::build_rules_json_from_post($_POST);
         $is_active = !empty($_POST['is_active']) ? 1 : 0;
 
@@ -368,6 +387,7 @@ class CatGame_Admin {
 
         $data = [
             'name' => $name,
+            'event_type' => $event_type,
             'starts_at' => gmdate('Y-m-d H:i:s', strtotime($starts_at)),
             'ends_at' => gmdate('Y-m-d H:i:s', strtotime($ends_at)),
             'is_active' => $is_active,
@@ -381,7 +401,7 @@ class CatGame_Admin {
                 $table,
                 $data,
                 ['id' => $event_id],
-                ['%s', '%s', '%s', '%d', '%s'],
+                ['%s', '%s', '%s', '%s', '%d', '%s'],
                 ['%d']
             );
         } else {
@@ -390,7 +410,7 @@ class CatGame_Admin {
             $wpdb->insert(
                 $table,
                 $data,
-                ['%s', '%s', '%s', '%d', '%s', '%s']
+                ['%s', '%s', '%s', '%s', '%d', '%s', '%s']
             );
             $event_id = (int) $wpdb->insert_id;
         }
@@ -426,17 +446,23 @@ class CatGame_Admin {
 
         global $wpdb;
         $table = CatGame_DB::table('events');
+        $duplicate_event_type = sanitize_key((string) ($event['event_type'] ?? 'competitive'));
+        if (!in_array($duplicate_event_type, ['competitive', 'thematic'], true)) {
+            $duplicate_event_type = 'competitive';
+        }
+
         $wpdb->insert(
             $table,
             [
                 'name' => 'Copia de ' . sanitize_text_field((string) ($event['name'] ?? 'Evento')),
+                'event_type' => $duplicate_event_type,
                 'starts_at' => (string) ($event['starts_at'] ?? current_time('mysql')),
                 'ends_at' => (string) ($event['ends_at'] ?? current_time('mysql')),
                 'is_active' => 0,
                 'rules_json' => (string) ($event['rules_json'] ?? ''),
                 'created_at' => current_time('mysql'),
             ],
-            ['%s', '%s', '%s', '%d', '%s', '%s']
+            ['%s', '%s', '%s', '%s', '%d', '%s', '%s']
         );
 
         $new_event_id = (int) $wpdb->insert_id;
@@ -1187,6 +1213,7 @@ class CatGame_Admin {
         $status_label = self::event_status_label($start_ts, $end_ts, (int) ($event['is_active'] ?? 0), $now_ts);
 
         $popup_view = CatGame_Events::build_rules_popup_view($event);
+        $event_type = sanitize_key((string) ($popup_view['event_type'] ?? 'competitive'));
         $mode = sanitize_key((string) ($popup_view['mode'] ?? 'none'));
         $items = isset($popup_view['items']) && is_array($popup_view['items']) ? $popup_view['items'] : [];
         $general = isset($popup_view['general_summary']) && is_array($popup_view['general_summary']) ? $popup_view['general_summary'] : [];
@@ -1194,10 +1221,19 @@ class CatGame_Admin {
         <section class="catgame-event-preview">
             <h3>Previsualización (1:1 juego)</h3>
             <p><strong>Nombre:</strong> <?php echo esc_html((string) ($popup_view['name'] ?? 'Evento vigente')); ?></p>
+            <p><strong>Tipo:</strong> <span class="catgame-pill"><?php echo esc_html((($popup_view['event_type'] ?? 'competitive') === 'thematic') ? 'Temático' : 'Competitivo'); ?></span></p>
             <p><strong>Estado:</strong> <?php echo esc_html($status_label); ?></p>
             <p><strong>Vigencia:</strong> <?php echo esc_html((string) ($popup_view['date_range'] ?? '')); ?></p>
 
-            <?php if ($mode === 'none'): ?>
+            <?php if ($event_type === 'thematic'): ?>
+                <p><strong>Este evento es temático.</strong> Las publicaciones relacionadas no compiten en ranking.</p>
+                <p><strong>Reglas generales (resumen):</strong></p>
+                <ul class="catgame-preview-rules">
+                    <?php foreach ($general as $line): ?>
+                        <li>• <?php echo esc_html((string) $line); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php elseif ($mode === 'none'): ?>
                 <p><strong>Reglas generales (resumen):</strong></p>
                 <ul class="catgame-preview-rules">
                     <?php foreach ($general as $line): ?>

@@ -249,7 +249,8 @@ class CatGame_Submissions {
         }
 
         $event = CatGame_Events::get_active_event();
-        $has_active_event = (bool) $event;
+        $is_competitive_event = $event && (($event['event_type'] ?? 'competitive') === 'competitive');
+        $has_active_event = (bool) $is_competitive_event;
 
         if ($has_active_event && $publish_mode === '') {
             self::upload_redirect_with_state('mode_required', $upload_state);
@@ -530,6 +531,7 @@ class CatGame_Submissions {
         }
 
         $event = CatGame_Events::get_active_event();
+        $competitive_event = CatGame_Events::get_active_competitive_event();
         $offset = isset($_GET['offset']) ? (int) $_GET['offset'] : 0;
         $per_page = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 20;
         $active_event_id = $event ? (int) ($event['id'] ?? 0) : 0;
@@ -542,7 +544,7 @@ class CatGame_Submissions {
         $items = $page['items'];
 
         $current_user_id = is_user_logged_in() ? get_current_user_id() : 0;
-        $top_items = $event ? self::leaderboard((int) $event['id'], 'global', '', '', 3, []) : [];
+        $top_items = $competitive_event ? self::leaderboard((int) $competitive_event['id'], 'global', '', '', 3, []) : [];
         $top3_positions = [];
         foreach ($top_items as $idx => $top_item) {
             $top3_positions[(int) ($top_item['id'] ?? 0)] = $idx + 1;

@@ -29,6 +29,15 @@ class CatGame_Events {
         return self::hydrate_event_payload($event);
     }
 
+    public static function get_active_competitive_event(): ?array {
+        $event = self::get_active_event();
+        if (!$event) {
+            return null;
+        }
+
+        return (($event['event_type'] ?? 'competitive') === 'competitive') ? $event : null;
+    }
+
     public static function get_event(int $event_id): ?array {
         global $wpdb;
         $table = CatGame_DB::table('events');
@@ -141,6 +150,7 @@ class CatGame_Events {
         return [
             'name' => $name !== '' ? $name : 'Evento vigente',
             'date_range' => $date_range,
+            'event_type' => ($event['event_type'] ?? 'competitive') === 'thematic' ? 'thematic' : 'competitive',
             'mode' => $mode === 'none' ? 'none' : $mode,
             'items' => $items,
             'general_summary' => self::general_rules_summary(),
@@ -149,6 +159,11 @@ class CatGame_Events {
 
     private static function hydrate_event_payload(array $event): array {
         $rules = self::normalize_rules_payload(isset($event['rules_json']) ? (string) $event['rules_json'] : null);
+        $event_type = sanitize_key((string) ($event['event_type'] ?? 'competitive'));
+        if (!in_array($event_type, ['competitive', 'thematic'], true)) {
+            $event_type = 'competitive';
+        }
+        $event['event_type'] = $event_type;
         $event['rules'] = $rules;
         $event['no_rules'] = ($rules['mode'] ?? 'none') === 'none';
         $event['event_updated_at'] = (string) ($event['created_at'] ?? '');

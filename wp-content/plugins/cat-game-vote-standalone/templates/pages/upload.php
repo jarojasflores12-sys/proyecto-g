@@ -17,10 +17,14 @@ if ($upload_ban_until_iso !== '') {
         $upload_ban_until = wp_date('d/m/Y H:i', $upload_ban_until_ts);
     }
 }
-$publish_context = $event
-    ? 'Se publicará en: Evento activo — ' . (string) ($event['name'] ?? 'Evento')
-    : 'Se publicará en: Modo libre (no competitivo)';
-$has_active_event = !empty($event['id']);
+$event_type = sanitize_key((string) ($event['event_type'] ?? 'competitive'));
+$is_thematic_event = !empty($event['id']) && $event_type === 'thematic';
+$publish_context = $is_thematic_event
+    ? 'Tema actual: ' . (string) ($event['name'] ?? 'Evento')
+    : ($event
+        ? 'Se publicará en: Evento activo — ' . (string) ($event['name'] ?? 'Evento')
+        : 'Se publicará en: Modo libre (no competitivo)');
+$has_active_event = !empty($event['id']) && !$is_thematic_event;
 $selected_publish_mode = (string) ($upload_state['publish_mode'] ?? ($has_active_event ? '' : 'free'));
 if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
     $selected_publish_mode = $has_active_event ? '' : 'free';

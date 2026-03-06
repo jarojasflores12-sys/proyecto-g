@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_DB {
-    private const SCHEMA_VERSION = '10';
+    private const SCHEMA_VERSION = '11';
     private const SCHEMA_OPTION_KEY = 'catgame_schema_version';
 
     public static function init(): void {
@@ -55,6 +55,7 @@ class CatGame_DB {
         $sql[] = "CREATE TABLE {$events} (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             name VARCHAR(200) NOT NULL,
+            event_type VARCHAR(20) NOT NULL DEFAULT 'competitive',
             starts_at DATETIME NOT NULL,
             ends_at DATETIME NOT NULL,
             is_active TINYINT(1) NOT NULL DEFAULT 0,

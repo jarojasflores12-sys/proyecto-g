@@ -79,7 +79,8 @@ class CatGame_Render {
     private static function page_data(string $page): array {
 
         $event = CatGame_Events::get_active_event();
-        $top3_positions = self::top3_positions($event);
+        $competitive_event = CatGame_Events::get_active_competitive_event();
+        $top3_positions = self::top3_positions($competitive_event);
         $current_user_id = is_user_logged_in() ? get_current_user_id() : 0;
 
         switch ($page) {
@@ -114,7 +115,7 @@ class CatGame_Render {
                     'custom_tags' => sanitize_textarea_field(wp_unslash($_GET['upload_custom_tags'] ?? '')),
                     'selected_tags' => array_values(array_unique($selected_tags)),
                     'confirm_no_people' => (int) ($_GET['upload_confirm_no_people'] ?? 0) === 1,
-                    'publish_mode' => sanitize_key(wp_unslash($_GET['upload_publish_mode'] ?? ($event ? '' : 'free'))),
+                    'publish_mode' => sanitize_key(wp_unslash($_GET['upload_publish_mode'] ?? (($event && (($event['event_type'] ?? 'competitive') === 'competitive')) ? '' : 'free'))),
                 ];
 
                 $upload_error_key = sanitize_key(wp_unslash($_GET['catgame_error'] ?? ''));
@@ -192,7 +193,7 @@ class CatGame_Render {
                     $scope = 'global';
                 }
 
-                $location_catalog = $event ? CatGame_Submissions::leaderboard_location_catalog((int) $event['id']) : [
+                $location_catalog = $competitive_event ? CatGame_Submissions::leaderboard_location_catalog((int) $competitive_event['id']) : [
                     'countries' => [],
                     'cities_by_country' => [],
                 ];
@@ -212,7 +213,7 @@ class CatGame_Render {
                     $city = '';
                 }
 
-                $items = $event ? self::with_reaction_payload(CatGame_Submissions::leaderboard((int) $event['id'], $scope, $country, $city, 20, []), $current_user_id) : [];
+                $items = $competitive_event ? self::with_reaction_payload(CatGame_Submissions::leaderboard((int) $competitive_event['id'], $scope, $country, $city, 20, []), $current_user_id) : [];
                 return [
                     'page' => $page,
                     'event' => $event,
