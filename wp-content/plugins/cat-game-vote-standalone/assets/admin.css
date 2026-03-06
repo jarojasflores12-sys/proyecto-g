@@ -172,14 +172,18 @@
 
 .catgame-admin-page .catgame-mod-actions-row--full {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .catgame-admin-page .catgame-mod-edit-form {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   width: 100%;
   align-items: center;
+  overflow-x: auto;
   padding: 8px;
   border: 1px solid #ccd0d4;
   border-radius: 6px;
@@ -189,6 +193,7 @@
 .catgame-admin-page .catgame-mod-edit-form select,
 .catgame-admin-page .catgame-mod-edit-form input[type='text'] {
   min-width: 140px;
+  flex: 0 0 auto;
 }
 
 .catgame-admin-page .catgame-admin-accordion {

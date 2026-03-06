@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.27.41
+- Moderación admin (`Resueltos`): ajuste visual del cuadro **Editar acción** para mostrarse horizontal en una sola franja bajo la información del caso, con scroll horizontal cuando falta ancho.
+
 ## 0.27.40
 - Moderación admin: nueva acción directa **Eliminar publicación** con modal de motivo (`Incumple normas` / `Imagen repetida en el evento` / `Otro`) y notificación automática al usuario afectado.
 - Moderación `Resueltos`: redistribución del bloque `Editar acción` en una fila horizontal de ancho completo, más legible en móvil y escritorio.
