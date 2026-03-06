@@ -9,9 +9,13 @@ $author_name = $author ? (string) $author->user_login : 'usuario';
 $author_profile_url = home_url('/catgame/user/' . rawurlencode(sanitize_user($author_name, true)));
 $position = isset($top3_positions[(int) $item['id']]) ? (int) $top3_positions[(int) $item['id']] : 0;
 $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_user_id;
+$has_event = !empty($item['event_id']);
+$post_type_badge_class = $has_event ? 'cg-post-type-badge cg-badge-event' : 'cg-post-type-badge cg-badge-free';
+$post_type_badge_label = $has_event ? '🏆 Evento' : '🐾 Libre';
 ?>
 <article class="cg-card <?php echo ($is_mine || $position > 0) ? 'cg-is-mine' : ''; ?>">
     <div class="cg-img-wrap">
+        <div class="<?php echo esc_attr($post_type_badge_class); ?>"><?php echo esc_html($post_type_badge_label); ?></div>
         <?php echo wp_get_attachment_image(
             (int) $item['attachment_id'],
             'medium',
@@ -29,7 +33,7 @@ $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_us
     <div class="cg-card-meta">
         <div class="catgame-card-head">
             <div class="catgame-card-head-left">
-                <span class="cg-badge">#<?php echo (int) $item['id']; ?></span>
+                <span class="cg-id-badge">#<?php echo (int) $item['id']; ?></span>
                 <p class="cg-title"><?php echo esc_html($title_label); ?></p>
                 <small class="cg-author">por <a href="<?php echo esc_url($author_profile_url); ?>">@<?php echo esc_html($author_name); ?></a></small>
                 <?php if ($is_mine): ?><span class="cg-inline-badge">Tu publicación</span><?php endif; ?>

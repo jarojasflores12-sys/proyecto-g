@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.25
+- Feed UX: se agrega badge visual por tipo de publicación sobre la foto en cada card del feed: `🏆 Evento` cuando `event_id` existe y `🐾 Libre` cuando `event_id` está vacío.
+- Estilos del badge: posición absoluta esquina superior izquierda y variantes de color (`#f5b942`/`#6ec7a8`) sin alterar reacciones, acciones de card ni paginación.
+
 ## 0.27.24
 - Ranking UX: filtros de ubicación ahora usan valores guiados con `select` para País/Ciudad (catálogo real del evento activo) en lugar de texto libre.
 - Ranking robustez: si `country/city` de querystring no existen en catálogo del evento, se normalizan a vacío para evitar filtros inválidos por typo/manual URL.
