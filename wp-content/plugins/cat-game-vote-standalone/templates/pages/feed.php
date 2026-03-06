@@ -34,9 +34,11 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
             $author_name = $author ? (string) $author->user_login : 'usuario';
             $position = isset($top3_positions[(int) $item['id']]) ? (int) $top3_positions[(int) $item['id']] : 0;
             $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_user_id;
+            $is_event_submission = isset($item['event_id']) && (int) $item['event_id'] > 0;
             ?>
             <article class="cg-card <?php echo ($is_mine || $position > 0) ? 'cg-is-mine' : ''; ?>">
                 <div class="cg-img-wrap">
+                    <div class="cg-badge <?php echo $is_event_submission ? 'cg-badge-event' : 'cg-badge-free'; ?>"><?php echo $is_event_submission ? '🏆 Evento' : '🐾 Libre'; ?></div>
                     <?php echo wp_get_attachment_image(
                         (int) $item['attachment_id'],
                         'medium',
@@ -53,7 +55,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
 
                 <div class="cg-card-meta">
                     <div class="cg-card-header">
-                        <span class="cg-badge">#<?php echo (int) $item['id']; ?></span>
+                        <span class="cg-id-badge">#<?php echo (int) $item['id']; ?></span>
                         <p class="cg-title"><?php echo esc_html($title_label); ?></p>
                         <small class="cg-author">por @<?php echo esc_html($author_name); ?></small>
                         <?php if ($is_mine): ?><span class="cg-inline-badge">Tu publicación</span><?php endif; ?>

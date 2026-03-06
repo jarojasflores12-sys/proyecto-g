@@ -617,7 +617,8 @@ body.cg-has-custom-bg .cg-main {
   flex-wrap: wrap;
 }
 
-.cg-badge {
+.cg-badge,
+.cg-id-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -629,6 +630,31 @@ body.cg-has-custom-bg .cg-main {
   color: #4f4f4f;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--cg-border);
+}
+
+.cg-img-wrap > .cg-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 0;
+}
+
+.cg-badge-event {
+  background: #f5b942;
+  color: #fff;
+}
+
+.cg-badge-free {
+  background: #6ec7a8;
+  color: #fff;
 }
 
 .cg-location {
@@ -1387,4 +1413,90 @@ body.cg-has-custom-bg .cg-main {
   .cg-profile-location-fields {
     grid-template-columns: 1fr;
   }
+}
+
+.cg-profile-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cg-notifications-btn {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(103, 80, 164, 0.2);
+  background: rgba(255, 255, 255, 0.85);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.cg-notifications-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.cg-notifications-badge {
+  position: absolute;
+  top: -4px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #ff5a7d;
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  padding: 0 4px;
+  font-weight: 700;
+}
+
+.cg-notifications-modal-content {
+  max-width: 520px;
+}
+
+.cg-notifications-list {
+  display: grid;
+  gap: 10px;
+  max-height: min(60vh, 480px);
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+.cg-notification-item {
+  border: 1px solid rgba(103, 80, 164, 0.14);
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.cg-notification-item.is-unread {
+  background: rgba(191, 227, 255, 0.45);
+  border-color: rgba(74, 108, 247, 0.28);
+}
+
+.cg-notification-item h3 {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+}
+
+.cg-notification-item p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.cg-notification-item time {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: #5a5a74;
+}
+
+.cg-notifications-empty {
+  margin: 0;
+  opacity: 0.75;
 }

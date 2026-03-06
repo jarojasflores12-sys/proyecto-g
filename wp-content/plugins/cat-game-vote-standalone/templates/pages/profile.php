@@ -23,6 +23,19 @@ if (!empty($data['requires_login'])): ?>
     <h2>Acceso</h2>
     <p>Inicia sesión o crea tu cuenta para participar, subir fotos y votar.</p>
 
+
+
+    <div class="cg-modal" id="catgame-notifications-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-notifications-title">
+        <div class="cg-modal__backdrop" data-notifications-close="1"></div>
+        <div class="cg-modal__content cg-notifications-modal-content" role="document">
+            <button type="button" class="cg-modal__close" data-notifications-close="1" aria-label="Cerrar notificaciones">✕</button>
+            <h2 id="catgame-notifications-title">Notificaciones</h2>
+            <div class="cg-notifications-list" id="catgame-notifications-list" aria-live="polite">
+                <p class="cg-notifications-empty">No tienes notificaciones</p>
+            </div>
+        </div>
+    </div>
+
     <?php if ($registered): ?>
         <p class="cg-alert cg-alert-success">¡Cuenta creada! Ya puedes iniciar sesión.</p>
     <?php endif; ?>
@@ -154,11 +167,37 @@ $location_missing = $default_city === '' || $default_country === '';
 <section>
     <div class="cg-profile-topbar">
         <h2>Mi perfil</h2>
-        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-logout-form cg-logout-form-top">
-            <?php wp_nonce_field('catgame_logout'); ?>
-            <input type="hidden" name="action" value="catgame_logout">
-            <button type="submit" class="secondary cg-logout-btn" aria-label="Cerrar sesión">⎋ <span>Cerrar sesión</span></button>
-        </form>
+        <div class="cg-profile-topbar-actions">
+            <button
+                type="button"
+                class="cg-notifications-btn"
+                id="catgame-notifications-trigger"
+                aria-label="Notificaciones"
+                aria-controls="catgame-notifications-modal"
+                aria-expanded="false"
+            >
+                <span class="cg-notifications-icon" aria-hidden="true">🔔</span>
+                <span class="cg-notifications-badge" id="catgame-notifications-badge" hidden>0</span>
+            </button>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-logout-form cg-logout-form-top">
+                <?php wp_nonce_field('catgame_logout'); ?>
+                <input type="hidden" name="action" value="catgame_logout">
+                <button type="submit" class="secondary cg-logout-btn" aria-label="Cerrar sesión">⎋ <span>Cerrar sesión</span></button>
+            </form>
+        </div>
+    </div>
+
+
+
+    <div class="cg-modal" id="catgame-notifications-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-notifications-title">
+        <div class="cg-modal__backdrop" data-notifications-close="1"></div>
+        <div class="cg-modal__content cg-notifications-modal-content" role="document">
+            <button type="button" class="cg-modal__close" data-notifications-close="1" aria-label="Cerrar notificaciones">✕</button>
+            <h2 id="catgame-notifications-title">Notificaciones</h2>
+            <div class="cg-notifications-list" id="catgame-notifications-list" aria-live="polite">
+                <p class="cg-notifications-empty">No tienes notificaciones</p>
+            </div>
+        </div>
     </div>
 
     <?php if ($registered): ?>
