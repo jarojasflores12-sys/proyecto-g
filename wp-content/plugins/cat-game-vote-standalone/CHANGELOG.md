@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.49
+- Perfil / Mis publicaciones: rediseño de cards para orden visual consistente con Publicaciones (header compacto con `#ID + título` y acción `Eliminar`, foto, ubicación, total de reacciones y resumen por emoji+conteo).
+- Perfil / Mis publicaciones: reducción de espaciados verticales y alineación compacta de elementos en la card.
+- iPhone/Safari: prevención de auto-zoom en formularios del juego estableciendo `font-size: 16px` para `input`, `textarea` y `select` en móvil.
+
 ## 0.27.48
 - Subir / iPhone (Safari): compatibilidad mejorada en render de etiquetas guardadas reemplazando `replaceAll()` por `replace(.../g)` en `escapeHtml` para evitar fallas en versiones iOS con soporte parcial.
 - Subir / chips: se fuerza `-webkit-text-fill-color: currentColor` en botones de etiquetas para asegurar texto visible en Safari iOS.

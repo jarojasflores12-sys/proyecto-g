@@ -446,24 +446,39 @@ if ($upload_banned_until_iso !== '') {
         <?php endif; ?>
         <?php foreach ($items as $item): ?>
             <?php
-            ?>
-            <article class="cg-card cg-profile-item">
-                <?php
                 $item_title = CatGame_Submissions::title_label($item);
-                $item_author = get_userdata((int) ($item['user_id'] ?? 0));
-                $item_author_name = $item_author ? (string) $item_author->user_login : 'usuario';
                 $item_reactions = (int) ($item['total_reactions'] ?? 0);
+                $item_is_event = (int) ($item['event_id'] ?? 0) > 0;
+                $item_location = CatGame_Submissions::visual_label((string) ($item['city'] ?? '')) . ', ' . CatGame_Submissions::visual_label((string) ($item['country'] ?? ''));
+                $item_reaction_counts = is_array($item['reaction_counts'] ?? null) ? (array) $item['reaction_counts'] : [];
+                $reaction_labels = CatGame_Reactions::reaction_labels();
                 ?>
+            <article class="cg-card cg-profile-item">
+                <header class="cg-profile-item__header">
+                    <div class="cg-profile-item__title-wrap">
+                        <p class="cg-profile-item__title"><span class="cg-badge">#<?php echo (int) ($item['id'] ?? 0); ?></span> <?php echo esc_html($item_title); ?></p>
+                        <small class="cg-profile-item__badge-line">
+                            <span class="cg-inline-badge"><?php echo $item_is_event ? '🏆 Evento' : '🐾 Libre'; ?></span>
+                        </small>
+                    </div>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-inline-delete-form" data-cg-confirm="1" data-cg-confirm-title="Eliminar publicación" data-cg-confirm-text="Esta acción no se puede deshacer. ¿Eliminar esta publicación?">
+                        <?php wp_nonce_field('catgame_delete_submission'); ?>
+                        <input type="hidden" name="action" value="catgame_delete_submission">
+                        <input type="hidden" name="submission_id" value="<?php echo (int) ($item['id'] ?? 0); ?>">
+                        <button type="submit" class="cg-tag-delete cg-profile-item__delete">Eliminar</button>
+                    </form>
+                </header>
+
                 <?php echo wp_get_attachment_image((int) $item['attachment_id'], 'medium_large', false, ['loading' => 'lazy', 'class' => 'cg-profile-thumb']); ?>
-                <p><span class="cg-badge">#<?php echo (int) $item['id']; ?></span> <?php echo esc_html($item_title); ?></p>
-                <small class="cg-author">por @<?php echo esc_html($item_author_name); ?></small>
-                <p><?php echo $item_reactions > 0 ? esc_html($item_reactions . ' reacciones') : 'Sin reacciones'; ?></p>
-                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-inline-delete-form" data-cg-confirm="1" data-cg-confirm-title="Eliminar publicación" data-cg-confirm-text="Esta acción no se puede deshacer. ¿Eliminar esta publicación?">
-                    <?php wp_nonce_field('catgame_delete_submission'); ?>
-                    <input type="hidden" name="action" value="catgame_delete_submission">
-                    <input type="hidden" name="submission_id" value="<?php echo (int) ($item['id'] ?? 0); ?>">
-                    <button type="submit" class="cg-tag-delete">Eliminar mi publicación</button>
-                </form>
+
+                <p class="cg-profile-item__location">📍 <?php echo esc_html($item_location); ?></p>
+                <p class="cg-profile-item__total">Reacciones: <?php echo (int) $item_reactions; ?></p>
+                <div class="cg-profile-item__reaction-summary" aria-label="Resumen de reacciones">
+                    <?php foreach ($reaction_labels as $slug => $meta): ?>
+                        <span class="cg-profile-item__reaction-chip"><?php echo esc_html((string) ($meta['emoji'] ?? '')); ?> <?php echo (int) ($item_reaction_counts[$slug] ?? 0); ?></span>
+                    <?php endforeach; ?>
+                </div>
+
                 <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::appeal_button_html((array) $item, (int) get_current_user_id()) : ''; ?>
                 <?php echo CatGame_Submissions::review_appeal_button_html((array) $item, (int) get_current_user_id()); ?>
                 <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in(), (array) ($item['reaction_counts'] ?? []) ? ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)] : []); ?>
