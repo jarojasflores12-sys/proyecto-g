@@ -617,7 +617,8 @@ body.cg-has-custom-bg .cg-main {
   flex-wrap: wrap;
 }
 
-.cg-badge {
+.cg-badge,
+.cg-id-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -629,6 +630,31 @@ body.cg-has-custom-bg .cg-main {
   color: #4f4f4f;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--cg-border);
+}
+
+.cg-img-wrap > .cg-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 0;
+}
+
+.cg-badge-event {
+  background: #f5b942;
+  color: #fff;
+}
+
+.cg-badge-free {
+  background: #6ec7a8;
+  color: #fff;
 }
 
 .cg-location {

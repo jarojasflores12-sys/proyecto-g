@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.25.3
+- Feed: se agrega badge visual sobre la foto en cada tarjeta para indicar tipo de publicación: `🏆 Evento` cuando `event_id` existe y `🐾 Libre` cuando no pertenece a evento.
+- UI: se añaden estilos `cg-badge-event` y `cg-badge-free` (esquina superior izquierda, fondo de color y texto blanco) sin modificar ranking, reacciones, reportar/eliminar ni paginación.
+- Feed: el badge numérico `#ID` de la cabecera se mantiene con clase dedicada (`cg-id-badge`) para evitar conflicto de estilos con el nuevo badge de tipo.
+
 ## 0.25.2
 - Perfil: se agrega botón de notificaciones tipo campana (🔔) en el header con badge de no leídas y accesibilidad básica (`aria-label`, `aria-controls`, `aria-expanded`).
 - Notificaciones: nuevo modal pastel en Perfil con listado (título, detalle, fecha/hora), resaltado de no leídas y estado vacío "No tienes notificaciones".
