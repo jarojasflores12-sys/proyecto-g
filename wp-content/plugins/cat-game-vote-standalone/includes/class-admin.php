@@ -14,6 +14,7 @@ class CatGame_Admin {
         add_action('admin_post_catgame_toggle_submission', [__CLASS__, 'toggle_submission']);
         add_action('admin_post_catgame_moderate_report', ['CatGame_Reports', 'handle_moderate_report']);
         add_action('admin_post_catgame_update_moderation_action', [__CLASS__, 'update_moderation_action']);
+        add_action('admin_post_catgame_admin_remove_submission', [__CLASS__, 'admin_remove_submission']);
         add_action('admin_post_catgame_save_settings', [__CLASS__, 'save_settings']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_assets']);
         add_action('admin_notices', [__CLASS__, 'permalink_notice']);
@@ -29,7 +30,7 @@ class CatGame_Admin {
     public static function enqueue_admin_assets(): void {
         $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
 
-        if (!in_array($page, ['catgame-events', 'catgame-settings'], true)) {
+        if (!in_array($page, ['catgame-events', 'catgame-settings', 'catgame-moderation'], true)) {
             return;
         }
 
@@ -547,6 +548,10 @@ class CatGame_Admin {
                 <div class="notice notice-warning is-dismissible"><p>No se puede editar: la acción previa fue eliminación de cuenta.</p></div>
             <?php elseif ($notice === 'invalid'): ?>
                 <div class="notice notice-error is-dismissible"><p>No se pudo actualizar la acción (datos inválidos).</p></div>
+            <?php elseif ($notice === 'manual_removed'): ?>
+                <div class="notice notice-success is-dismissible"><p>Publicación eliminada y usuario notificado.</p></div>
+            <?php elseif ($notice === 'manual_invalid'): ?>
+                <div class="notice notice-error is-dismissible"><p>No se pudo eliminar la publicación (datos inválidos).</p></div>
             <?php endif; ?>
             <section class="catgame-panel" style="margin-bottom:16px;">
                 <h2>Enforcement casos graves</h2>
@@ -554,63 +559,69 @@ class CatGame_Admin {
                 $last_run_at = sanitize_text_field((string) ($last_grave_run['ran_at'] ?? ''));
                 $last_run_processed = (int) ($last_grave_run['processed'] ?? 0);
                 ?>
-                <p class="description">
-                    Última ejecución: <strong><?php echo $last_run_at !== '' ? esc_html($last_run_at) : 'sin registros'; ?></strong>
-                    <?php if ($last_run_at !== ''): ?>
-                        · Casos procesados: <strong><?php echo (int) $last_run_processed; ?></strong>
-                    <?php endif; ?>
-                </p>
-                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-                    <?php wp_nonce_field('catgame_run_grave_enforcement'); ?>
-                    <input type="hidden" name="action" value="catgame_run_grave_enforcement" />
-                    <input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>" />
-                    <input type="hidden" name="grave_history_source" value="<?php echo esc_attr($grave_history_source_filter); ?>" />
-                    <input type="hidden" name="grave_history_status" value="<?php echo esc_attr($grave_history_status_filter); ?>" />
-                    <button type="submit" class="button">Ejecutar enforcement ahora</button>
-                </form>
-                <h3 style="margin-top:12px;">Historial corto</h3>
-                <form method="get" action="<?php echo esc_url(admin_url('admin.php')); ?>" style="margin:8px 0 10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                    <input type="hidden" name="page" value="catgame-moderation" />
-                    <input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>" />
-                    <label>Origen
-                        <select name="grave_history_source">
-                            <option value="all" <?php selected($grave_history_source_filter, 'all'); ?>>Todos</option>
-                            <option value="runtime" <?php selected($grave_history_source_filter, 'runtime'); ?>>runtime</option>
-                            <option value="manual" <?php selected($grave_history_source_filter, 'manual'); ?>>manual</option>
-                            <option value="cli" <?php selected($grave_history_source_filter, 'cli'); ?>>cli</option>
-                        </select>
-                    </label>
-                    <label>Estado
-                        <select name="grave_history_status">
-                            <option value="all" <?php selected($grave_history_status_filter, 'all'); ?>>Todos</option>
-                            <option value="ok" <?php selected($grave_history_status_filter, 'ok'); ?>>ok</option>
-                            <option value="error" <?php selected($grave_history_status_filter, 'error'); ?>>error</option>
-                        </select>
-                    </label>
-                    <button type="submit" class="button">Filtrar</button>
-                </form>
-                <p>
-                    <button type="button" class="button" id="catgame-copy-grave-history">Copiar diagnóstico (JSON)</button>
-                    <span id="catgame-copy-grave-history-status" style="margin-left:8px;"></span>
-                </p>
-                <textarea id="catgame-grave-history-json" readonly style="position:absolute; left:-9999px;"><?php echo esc_textarea(wp_json_encode($grave_run_history, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?></textarea>
-                <table class="widefat striped" style="max-width:780px;">
-                    <thead><tr><th>Fecha</th><th>Procesados</th><th>Origen</th><th>Duración</th><th>Estado</th></tr></thead>
-                    <tbody>
-                    <?php if (empty($grave_run_history)): ?>
-                        <tr><td colspan="5">Sin historial para el filtro actual.</td></tr>
-                    <?php else: ?>
-                        <?php foreach ($grave_run_history as $run): ?>
-                            <tr>
-                                <td><?php echo esc_html((string) ($run['ran_at'] ?? '')); ?></td>
-                                <td><?php echo (int) ($run['processed'] ?? 0); ?></td>
-                                <td><?php echo esc_html((string) ($run['source'] ?? 'runtime')); ?></td>
-                                <td><?php echo (int) ($run['duration_ms'] ?? 0); ?> ms</td>
-                                <td><?php echo esc_html((string) ($run['status'] ?? 'ok')); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                    </tbody>
+                <details class="catgame-admin-accordion" open>
+                    <summary><strong>Revisar sanciones pendientes</strong></summary>
+                    <p class="description">
+                        Última ejecución: <strong><?php echo $last_run_at !== '' ? esc_html($last_run_at) : 'sin registros'; ?></strong>
+                        <?php if ($last_run_at !== ''): ?>
+                            · Casos procesados: <strong><?php echo (int) $last_run_processed; ?></strong>
+                        <?php endif; ?>
+                    </p>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                        <?php wp_nonce_field('catgame_run_grave_enforcement'); ?>
+                        <input type="hidden" name="action" value="catgame_run_grave_enforcement" />
+                        <input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>" />
+                        <input type="hidden" name="grave_history_source" value="<?php echo esc_attr($grave_history_source_filter); ?>" />
+                        <input type="hidden" name="grave_history_status" value="<?php echo esc_attr($grave_history_status_filter); ?>" />
+                        <button type="submit" class="button">Revisar sanciones pendientes</button>
+                    </form>
+                </details>
+                <details class="catgame-admin-accordion" style="margin-top:12px;">
+                    <summary><strong>Historial de revisiones automáticas</strong></summary>
+                    <form method="get" action="<?php echo esc_url(admin_url('admin.php')); ?>" style="margin:8px 0 10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <input type="hidden" name="page" value="catgame-moderation" />
+                        <input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>" />
+                        <label>Origen
+                            <select name="grave_history_source">
+                                <option value="all" <?php selected($grave_history_source_filter, 'all'); ?>>Todos</option>
+                                <option value="runtime" <?php selected($grave_history_source_filter, 'runtime'); ?>>runtime</option>
+                                <option value="manual" <?php selected($grave_history_source_filter, 'manual'); ?>>manual</option>
+                                <option value="cli" <?php selected($grave_history_source_filter, 'cli'); ?>>cli</option>
+                            </select>
+                        </label>
+                        <label>Estado
+                            <select name="grave_history_status">
+                                <option value="all" <?php selected($grave_history_status_filter, 'all'); ?>>Todos</option>
+                                <option value="ok" <?php selected($grave_history_status_filter, 'ok'); ?>>ok</option>
+                                <option value="error" <?php selected($grave_history_status_filter, 'error'); ?>>error</option>
+                            </select>
+                        </label>
+                        <button type="submit" class="button">Filtrar</button>
+                    </form>
+                    <p>
+                        <button type="button" class="button" id="catgame-copy-grave-history">Copiar informe técnico</button>
+                        <span id="catgame-copy-grave-history-status" style="margin-left:8px;"></span>
+                    </p>
+                    <textarea id="catgame-grave-history-json" readonly style="position:absolute; left:-9999px;"><?php echo esc_textarea(wp_json_encode($grave_run_history, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?></textarea>
+                    <table class="widefat striped" style="max-width:780px;">
+                        <thead><tr><th>Fecha</th><th>Procesados</th><th>Origen</th><th>Duración</th><th>Estado</th></tr></thead>
+                        <tbody>
+                        <?php if (empty($grave_run_history)): ?>
+                            <tr><td colspan="5">Sin historial para el filtro actual.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($grave_run_history as $run): ?>
+                                <tr>
+                                    <td><?php echo esc_html((string) ($run['ran_at'] ?? '')); ?></td>
+                                    <td><?php echo (int) ($run['processed'] ?? 0); ?></td>
+                                    <td><?php echo esc_html((string) ($run['source'] ?? 'runtime')); ?></td>
+                                    <td><?php echo (int) ($run['duration_ms'] ?? 0); ?> ms</td>
+                                    <td><?php echo esc_html((string) ($run['status'] ?? 'ok')); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                        </tbody>
+                    </table>
+                </details>
                 </table>
             </section>
 
@@ -702,75 +713,100 @@ class CatGame_Admin {
                         <td><?php echo esc_html((string) ($row['created_at'] ?? '')); ?></td>
                         <td><?php echo esc_html($status_filter === 'pending' ? 'Pendiente' : 'Resuelto'); ?></td>
                         <td>
-                            <?php if ($status_filter === 'pending'): ?>
-                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline-block; margin-right:6px;">
-                                    <?php wp_nonce_field('catgame_moderate_report'); ?>
-                                    <input type="hidden" name="action" value="catgame_moderate_report" />
-                                    <input type="hidden" name="report_id" value="<?php echo (int) ($row['id'] ?? 0); ?>" />
-                                    <input type="hidden" name="resolution" value="restored" />
-                                    <button type="submit" class="button button-small">Restaurar</button>
-                                </form>
-                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline-block; margin-right:6px;">
-                                    <?php wp_nonce_field('catgame_moderate_report'); ?>
-                                    <input type="hidden" name="action" value="catgame_moderate_report" />
-                                    <input type="hidden" name="report_id" value="<?php echo (int) ($row['id'] ?? 0); ?>" />
-                                    <input type="hidden" name="resolution" value="removed" />
-                                    <select name="severity" required>
-                                        <option value="leve">Leve</option>
-                                        <option value="moderado">Moderado</option>
-                                        <option value="grave">Grave</option>
-                                    </select>
-                                    <button type="submit" class="button button-small button-primary">Eliminar</button>
-                                </form>
-                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline-block;">
-                                    <?php wp_nonce_field('catgame_moderate_report'); ?>
-                                    <input type="hidden" name="action" value="catgame_moderate_report" />
-                                    <input type="hidden" name="report_id" value="<?php echo (int) ($row['id'] ?? 0); ?>" />
-                                    <input type="hidden" name="resolution" value="false_report" />
-                                    <button type="submit" class="button button-small">Reporte falso</button>
-                                </form>
-                            <?php else: ?>
-                                <small><?php echo esc_html((string) ($row['resolution'] ?? '')); ?><?php if (!empty($row['severity'])): ?> (<?php echo esc_html((string) $row['severity']); ?>)<?php endif; ?></small>
-                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top:8px; padding:8px; border:1px solid #ccd0d4;">
-                                    <?php wp_nonce_field('catgame_update_moderation_action'); ?>
-                                    <input type="hidden" name="action" value="catgame_update_moderation_action" />
-                                    <input type="hidden" name="submission_id" value="<?php echo (int) ($row['submission_id'] ?? 0); ?>" />
-                                    <p style="margin:0 0 8px;"><strong>Editar acción</strong></p>
-                                    <p style="margin:0 0 6px;">
-                                        <select name="moderation_action" required>
-                                            <?php $selected_action = (string) ($row['action_name'] ?? 'delete'); ?>
-                                            <?php foreach (['restore', 'delete', 'strike', 'suspend_3d', 'delete_account'] as $opt): ?>
-                                                <option value="<?php echo esc_attr($opt); ?>" <?php selected($selected_action, $opt); ?>><?php echo esc_html($opt); ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </p>
-                                    <p style="margin:0 0 6px;">
-                                        <select name="severity" required>
-                                            <?php $selected_severity = (string) ($row['action_severity'] ?? 'leve'); ?>
-                                            <?php foreach (['leve', 'moderada', 'grave'] as $opt): ?>
-                                                <option value="<?php echo esc_attr($opt); ?>" <?php selected($selected_severity, $opt); ?>><?php echo esc_html(ucfirst($opt)); ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </p>
-                                    <p style="margin:0 0 6px;">
-                                        <select name="reason" required>
-                                            <?php $selected_reason = (string) ($row['action_reason'] ?? ($row['reason'] ?? 'other')); ?>
-                                            <?php foreach (['not_pet', 'human', 'inappropriate', 'other'] as $opt): ?>
-                                                <option value="<?php echo esc_attr($opt); ?>" <?php selected($selected_reason, $opt); ?>><?php echo esc_html($reason_label_map[$opt] ?? $opt); ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </p>
-                                    <p style="margin:0 0 6px;">
-                                        <input type="text" name="detail" maxlength="250" value="<?php echo esc_attr((string) ($row['action_detail'] ?? '')); ?>" placeholder="Detalle (opcional)" style="width:100%;" />
-                                    </p>
-                                    <button type="submit" class="button button-small">Guardar edición</button>
-                                </form>
-                            <?php endif; ?>
+                            <div class="catgame-mod-actions-wrap">
+                                <?php if ($status_filter === 'pending'): ?>
+                                    <div class="catgame-mod-actions-row">
+                                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                            <?php wp_nonce_field('catgame_moderate_report'); ?>
+                                            <input type="hidden" name="action" value="catgame_moderate_report" />
+                                            <input type="hidden" name="report_id" value="<?php echo (int) ($row['id'] ?? 0); ?>" />
+                                            <input type="hidden" name="resolution" value="restored" />
+                                            <button type="submit" class="button button-small">Restaurar</button>
+                                        </form>
+                                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                            <?php wp_nonce_field('catgame_moderate_report'); ?>
+                                            <input type="hidden" name="action" value="catgame_moderate_report" />
+                                            <input type="hidden" name="report_id" value="<?php echo (int) ($row['id'] ?? 0); ?>" />
+                                            <input type="hidden" name="resolution" value="removed" />
+                                            <select name="severity" required>
+                                                <option value="leve">Leve</option>
+                                                <option value="moderado">Moderado</option>
+                                                <option value="grave">Grave</option>
+                                            </select>
+                                            <button type="submit" class="button button-small button-primary">Eliminar</button>
+                                        </form>
+                                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                            <?php wp_nonce_field('catgame_moderate_report'); ?>
+                                            <input type="hidden" name="action" value="catgame_moderate_report" />
+                                            <input type="hidden" name="report_id" value="<?php echo (int) ($row['id'] ?? 0); ?>" />
+                                            <input type="hidden" name="resolution" value="false_report" />
+                                            <button type="submit" class="button button-small">Reporte falso</button>
+                                        </form>
+                                        <button type="button" class="button button-small button-secondary" data-catgame-open-remove="1" data-submission-id="<?php echo (int) ($row['submission_id'] ?? 0); ?>" data-submission-title="<?php echo esc_attr(CatGame_Submissions::title_label((array) $row)); ?>">Eliminar publicación</button>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="catgame-mod-case-info">
+                                        <small><?php echo esc_html((string) ($row['resolution'] ?? '')); ?><?php if (!empty($row['severity'])): ?> (<?php echo esc_html((string) $row['severity']); ?>)<?php endif; ?></small>
+                                    </div>
+                                    <div class="catgame-mod-actions-row catgame-mod-actions-row--full">
+                                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="catgame-mod-edit-form">
+                                            <?php wp_nonce_field('catgame_update_moderation_action'); ?>
+                                            <input type="hidden" name="action" value="catgame_update_moderation_action" />
+                                            <input type="hidden" name="submission_id" value="<?php echo (int) ($row['submission_id'] ?? 0); ?>" />
+                                            <strong>Editar acción</strong>
+                                            <select name="moderation_action" required>
+                                                <?php $selected_action = (string) ($row['action_name'] ?? 'delete'); ?>
+                                                <?php foreach (['restore', 'delete', 'strike', 'suspend_3d', 'delete_account'] as $opt): ?>
+                                                    <option value="<?php echo esc_attr($opt); ?>" <?php selected($selected_action, $opt); ?>><?php echo esc_html($opt); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <select name="severity" required>
+                                                <?php $selected_severity = (string) ($row['action_severity'] ?? 'leve'); ?>
+                                                <?php foreach (['leve', 'moderada', 'grave'] as $opt): ?>
+                                                    <option value="<?php echo esc_attr($opt); ?>" <?php selected($selected_severity, $opt); ?>><?php echo esc_html(ucfirst($opt)); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <select name="reason" required>
+                                                <?php $selected_reason = (string) ($row['action_reason'] ?? ($row['reason'] ?? 'other')); ?>
+                                                <?php foreach (['not_pet', 'human', 'inappropriate', 'other'] as $opt): ?>
+                                                    <option value="<?php echo esc_attr($opt); ?>" <?php selected($selected_reason, $opt); ?>><?php echo esc_html($reason_label_map[$opt] ?? $opt); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <input type="text" name="detail" maxlength="250" value="<?php echo esc_attr((string) ($row['action_detail'] ?? '')); ?>" placeholder="Detalle (opcional)" />
+                                            <button type="submit" class="button button-small">Guardar edición</button>
+                                        </form>
+                                        <button type="button" class="button button-small" data-catgame-open-remove="1" data-submission-id="<?php echo (int) ($row['submission_id'] ?? 0); ?>" data-submission-title="<?php echo esc_attr(CatGame_Submissions::title_label((array) $row)); ?>">Eliminar publicación</button>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
             </table>
+
+            <div id="catgame-admin-remove-modal" class="catgame-admin-remove-modal" hidden>
+                <div class="catgame-admin-remove-modal__backdrop" data-catgame-remove-close="1"></div>
+                <div class="catgame-admin-remove-modal__content">
+                    <h3>Eliminar publicación</h3>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" id="catgame-admin-remove-form">
+                        <?php wp_nonce_field('catgame_admin_remove_submission'); ?>
+                        <input type="hidden" name="action" value="catgame_admin_remove_submission" />
+                        <input type="hidden" name="submission_id" id="catgame-admin-remove-submission-id" value="0" />
+                        <p id="catgame-admin-remove-submission-label"></p>
+                        <label><input type="radio" name="remove_reason" value="policy_violation" checked> Incumple normas</label><br>
+                        <label><input type="radio" name="remove_reason" value="duplicate_event"> Imagen repetida en el evento</label><br>
+                        <label><input type="radio" name="remove_reason" value="other"> Otro</label>
+                        <p id="catgame-admin-remove-other-wrap" style="display:none; margin-top:8px;">
+                            <textarea name="remove_reason_other" maxlength="250" rows="3" style="width:100%;" placeholder="Escribe el motivo"></textarea>
+                        </p>
+                        <div class="catgame-mod-actions-row" style="margin-top:10px;">
+                            <button type="submit" class="button button-primary">Confirmar eliminación</button>
+                            <button type="button" class="button" data-catgame-remove-close="1">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
         <script>
             (function () {
@@ -829,9 +865,102 @@ class CatGame_Admin {
                         onDone(ok);
                     });
                 }
+
+                var removeModal = document.getElementById('catgame-admin-remove-modal');
+                var removeForm = document.getElementById('catgame-admin-remove-form');
+                var removeIdInput = document.getElementById('catgame-admin-remove-submission-id');
+                var removeLabel = document.getElementById('catgame-admin-remove-submission-label');
+                var removeOtherWrap = document.getElementById('catgame-admin-remove-other-wrap');
+                if (removeModal && removeForm && removeIdInput) {
+                    document.querySelectorAll('[data-catgame-open-remove="1"]').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            removeIdInput.value = btn.getAttribute('data-submission-id') || '0';
+                            if (removeLabel) {
+                                removeLabel.textContent = 'Publicación: ' + (btn.getAttribute('data-submission-title') || '#');
+                            }
+                            removeModal.hidden = false;
+                        });
+                    });
+
+                    removeModal.addEventListener('click', function (event) {
+                        var target = event.target;
+                        if (!(target instanceof HTMLElement)) return;
+                        if (target.closest('[data-catgame-remove-close="1"]')) {
+                            removeModal.hidden = true;
+                        }
+                    });
+
+                    removeForm.querySelectorAll('input[name="remove_reason"]').forEach(function (radio) {
+                        radio.addEventListener('change', function () {
+                            removeOtherWrap.style.display = radio.value === 'other' && radio.checked ? 'block' : 'none';
+                        });
+                    });
+                }
             })();
         </script>
         <?php
+    }
+
+    public static function admin_remove_submission(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        check_admin_referer('catgame_admin_remove_submission');
+
+        $submission_id = (int) ($_POST['submission_id'] ?? 0);
+        $remove_reason = sanitize_key((string) wp_unslash($_POST['remove_reason'] ?? 'policy_violation'));
+        $remove_reason_other = sanitize_textarea_field((string) wp_unslash($_POST['remove_reason_other'] ?? ''));
+        if (function_exists('mb_substr')) {
+            $remove_reason_other = mb_substr($remove_reason_other, 0, 250);
+        } else {
+            $remove_reason_other = substr($remove_reason_other, 0, 250);
+        }
+
+        if ($submission_id <= 0 || !in_array($remove_reason, ['policy_violation', 'duplicate_event', 'other'], true)) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-moderation&status=pending&mod_notice=manual_invalid'));
+            exit;
+        }
+
+        $submission = CatGame_Submissions::get_submission($submission_id);
+        $user_id = (int) ($submission['user_id'] ?? 0);
+        if (!$submission || $user_id <= 0) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-moderation&status=pending&mod_notice=manual_invalid'));
+            exit;
+        }
+
+        $reason = 'other';
+        $detail = '';
+        $message = 'Tu publicación fue eliminada por incumplir las normas.';
+
+        if ($remove_reason === 'policy_violation') {
+            $reason = 'inappropriate';
+            $detail = 'Incumple normas';
+            $message = 'Tu publicación fue eliminada por incumplir las normas.';
+        } elseif ($remove_reason === 'duplicate_event') {
+            $reason = 'other';
+            $detail = 'Imagen repetida en el evento';
+            $message = 'Tu publicación fue eliminada por estar repetida dentro del evento.';
+        } else {
+            $reason = 'other';
+            $detail = $remove_reason_other !== '' ? $remove_reason_other : 'Otro';
+            $message = $remove_reason_other !== '' ? $remove_reason_other : 'Tu publicación fue eliminada por revisión de moderación.';
+        }
+
+        $current = self::get_current_moderation_action($submission_id);
+        $new_id = self::insert_moderation_action($submission_id, $user_id, 'delete', 'leve', $reason, $detail, (int) ($current['id'] ?? 0));
+        self::apply_moderation($submission_id, $user_id, 'delete', 'leve');
+
+        CatGame_Reports::add_notification(
+            $user_id,
+            'moderation',
+            'Publicación eliminada',
+            $message,
+            'manual_remove:' . $submission_id . ':' . $new_id
+        );
+
+        wp_safe_redirect(admin_url('admin.php?page=catgame-moderation&status=pending&mod_notice=manual_removed'));
+        exit;
     }
 
     public static function update_moderation_action(): void {

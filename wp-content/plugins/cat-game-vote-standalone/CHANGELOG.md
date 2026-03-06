@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.40
+- Moderación admin: nueva acción directa **Eliminar publicación** con modal de motivo (`Incumple normas` / `Imagen repetida en el evento` / `Otro`) y notificación automática al usuario afectado.
+- Moderación `Resueltos`: redistribución del bloque `Editar acción` en una fila horizontal de ancho completo, más legible en móvil y escritorio.
+- Panel técnico: renombres UX (`Revisar sanciones pendientes`, `Copiar informe técnico`, `Historial de revisiones automáticas`) y uso de acordeones para reducir ruido visual.
+
 ## 0.27.39
 - Capitalización visual: nuevo helper reutilizable `format_first_capital()` (sin tocar BD), usado en render para ciudad/país/título/tags con primera letra en mayúscula y resto intacto.
 - Ranking filtros/histórico: labels de país/ciudad en selects y títulos de ganadores históricos ahora se muestran capitalizados en frontend.

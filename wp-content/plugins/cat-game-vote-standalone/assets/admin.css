@@ -157,3 +157,67 @@
     grid-template-columns: 1fr;
   }
 }
+
+.catgame-admin-page .catgame-mod-actions-wrap {
+  display: grid;
+  gap: 8px;
+}
+
+.catgame-admin-page .catgame-mod-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.catgame-admin-page .catgame-mod-actions-row--full {
+  width: 100%;
+}
+
+.catgame-admin-page .catgame-mod-edit-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #ccd0d4;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.catgame-admin-page .catgame-mod-edit-form select,
+.catgame-admin-page .catgame-mod-edit-form input[type='text'] {
+  min-width: 140px;
+}
+
+.catgame-admin-page .catgame-admin-accordion {
+  margin-bottom: 12px;
+}
+
+.catgame-admin-page .catgame-admin-accordion summary {
+  cursor: pointer;
+}
+
+.catgame-admin-remove-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+.catgame-admin-remove-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.catgame-admin-remove-modal__content {
+  position: relative;
+  max-width: 560px;
+  margin: 8vh auto 0;
+  background: #fff;
+  border: 1px solid #ccd0d4;
+  border-radius: 8px;
+  padding: 16px;
+  z-index: 1;
+}
