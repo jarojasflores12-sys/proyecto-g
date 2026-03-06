@@ -240,9 +240,7 @@ class CatGame_Submissions {
         }
 
         $event = CatGame_Events::get_active_event();
-        if (!$event) {
-            self::upload_redirect_with_state('no_event', $upload_state);
-        }
+        $event_id = $event ? (int) ($event['id'] ?? 0) : 0;
 
         if (empty($_FILES['cat_image']['tmp_name'])) {
             self::upload_redirect_with_state('missing_file', $upload_state);
@@ -294,7 +292,7 @@ class CatGame_Submissions {
             $table,
             [
                 'user_id' => $user_id,
-                'event_id' => (int) $event['id'],
+                'event_id' => $event_id,
                 'city' => $city,
                 'country' => $country,
                 'tags_json' => wp_json_encode($filtered_tags),
@@ -454,6 +452,56 @@ class CatGame_Submissions {
         ];
     }
 
+    public static function list_feed_publications_paginated(int $active_event_id = 0, int $per_page = 20, int $offset = 0, string $tag = ''): array {
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+
+        $per_page = max(1, min(50, $per_page));
+        $offset = max(0, $offset);
+
+        $where = ["status = 'active'", 'is_hidden = 0'];
+        $params = [];
+
+        if ($active_event_id > 0) {
+            $where[] = '(event_id = %d OR event_id = 0)';
+            $params[] = $active_event_id;
+        } else {
+            $where[] = 'event_id = 0';
+        }
+
+        if ($tag !== '') {
+            $search_tags = self::tag_storage_variants($tag);
+            if (!empty($search_tags)) {
+                $tag_clauses = [];
+                foreach ($search_tags as $search_tag) {
+                    $tag_clauses[] = '(tags_text LIKE %s OR tags_json LIKE %s)';
+                    $params[] = '%,' . $wpdb->esc_like($search_tag) . ',%';
+                    $params[] = '%"' . $wpdb->esc_like($search_tag) . '"%';
+                }
+                $where[] = '(' . implode(' OR ', $tag_clauses) . ')';
+            }
+        }
+
+        $limit_plus_one = $per_page + 1;
+        $params[] = $limit_plus_one;
+        $params[] = $offset;
+
+        $sql = "SELECT * FROM {$table} WHERE " . implode(' AND ', $where) . ' ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d';
+        $prepared = $wpdb->prepare($sql, ...$params);
+        $rows = $wpdb->get_results($prepared, ARRAY_A);
+
+        $has_more = count($rows) > $per_page;
+        if ($has_more) {
+            $rows = array_slice($rows, 0, $per_page);
+        }
+
+        return [
+            'items' => $rows,
+            'has_more' => $has_more,
+            'next_offset' => $offset + count($rows),
+        ];
+    }
+
     public static function handle_feed_more(): void {
         $nonce = wp_unslash($_REQUEST['_wpnonce'] ?? '');
         if (!is_string($nonce) || !wp_verify_nonce($nonce, 'catgame_feed_more')) {
@@ -461,17 +509,14 @@ class CatGame_Submissions {
         }
 
         $event = CatGame_Events::get_active_event();
-        if (!$event) {
-            wp_send_json_success(['html' => '', 'has_more' => false, 'next_offset' => 0]);
-        }
-
         $offset = isset($_GET['offset']) ? (int) $_GET['offset'] : 0;
         $per_page = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 20;
-        $page = self::list_feed_paginated((int) $event['id'], $per_page, $offset);
+        $active_event_id = $event ? (int) ($event['id'] ?? 0) : 0;
+        $page = self::list_feed_publications_paginated($active_event_id, $per_page, $offset);
         $items = $page['items'];
 
         $current_user_id = is_user_logged_in() ? get_current_user_id() : 0;
-        $top_items = self::leaderboard((int) $event['id'], 'global', '', '', 3, []);
+        $top_items = $event ? self::leaderboard((int) $event['id'], 'global', '', '', 3, []) : [];
         $top3_positions = [];
         foreach ($top_items as $idx => $top_item) {
             $top3_positions[(int) ($top_item['id'] ?? 0)] = $idx + 1;

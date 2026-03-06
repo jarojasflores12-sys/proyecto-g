@@ -1593,6 +1593,13 @@ body.cg-has-custom-bg .cg-main {
   font-weight: 600;
 }
 
+.cg-upload-context {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4f4f4f;
+}
+
 .cg-file-input {
   position: absolute;
   opacity: 0;

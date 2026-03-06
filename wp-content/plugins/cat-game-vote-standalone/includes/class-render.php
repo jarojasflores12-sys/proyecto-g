@@ -147,12 +147,13 @@ class CatGame_Render {
                 ];
             case 'feed':
                 $feed_per_page = 20;
-                $feed_page = $event ? CatGame_Submissions::list_feed_paginated((int) $event['id'], $feed_per_page, 0) : ['items' => [], 'has_more' => false, 'next_offset' => 0];
+                $active_event_id = $event ? (int) ($event['id'] ?? 0) : 0;
+                $feed_page = CatGame_Submissions::list_feed_publications_paginated($active_event_id, $feed_per_page, 0);
 
                 return [
                     'page' => $page,
                     'event' => $event,
-                    'submissions' => $event ? self::with_reaction_payload((array) ($feed_page['items'] ?? []), $current_user_id) : [],
+                    'submissions' => self::with_reaction_payload((array) ($feed_page['items'] ?? []), $current_user_id),
                     'feed_per_page' => $feed_per_page,
                     'feed_has_more' => !empty($feed_page['has_more']),
                     'feed_next_offset' => (int) ($feed_page['next_offset'] ?? 0),

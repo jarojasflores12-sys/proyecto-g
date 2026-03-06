@@ -17,13 +17,14 @@ if ($upload_ban_until_iso !== '') {
         $upload_ban_until = wp_date('d/m/Y H:i', $upload_ban_until_ts);
     }
 }
+$publish_context = $event
+    ? 'Se publicará en: Evento activo — ' . (string) ($event['name'] ?? 'Evento')
+    : 'Se publicará en: Modo libre (no competitivo)';
 ?>
 <section>
     <h2>Subir foto</h2>
     <?php if (!is_user_logged_in()): ?>
         <p>Debes iniciar sesión para subir fotos.</p>
-    <?php elseif (!$event): ?>
-        <p>No hay evento activo para recibir publicaciones.</p>
     <?php elseif ($requires_location): ?>
         <p class="cg-alert cg-alert-error">Completa tu ciudad y país en tu perfil para poder subir fotos.</p>
         <a class="cg-cta" href="<?php echo esc_url(home_url('/catgame/profile?complete_profile=1')); ?>">Ir a mi perfil</a>
@@ -35,6 +36,7 @@ if ($upload_ban_until_iso !== '') {
         </article>
     <?php else: ?>
         <?php if ($upload_error !== ''): ?><p class="cg-alert cg-alert-error"><?php echo esc_html($upload_error); ?></p><?php endif; ?>
+        <p class="cg-upload-context"><?php echo esc_html($publish_context); ?></p>
         <p class="cg-upload-location"><strong>Ubicación:</strong> <?php echo esc_html($location_text); ?></p>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data" class="cg-form">
             <?php wp_nonce_field('catgame_upload'); ?>

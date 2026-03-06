@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.26
+- Upload: ahora permite publicar aunque no exista evento activo; en ese caso la submission se guarda en modo libre con `event_id=0` (sin bloquear el envío).
+- Feed Publicaciones: ahora muestra tanto publicaciones del evento activo como publicaciones en modo libre, incluyendo paginación "Cargar más".
+- Upload UI: se agrega mensaje contextual de destino de publicación ("Evento activo — {nombre}" o "Modo libre (no competitivo)").
+
 ## 0.27.25
 - Feed UX: se agrega badge visual por tipo de publicación sobre la foto en cada card del feed: `🏆 Evento` cuando `event_id` existe y `🐾 Libre` cuando `event_id` está vacío.
 - Estilos del badge: posición absoluta esquina superior izquierda y variantes de color (`#f5b942`/`#6ec7a8`) sin alterar reacciones, acciones de card ni paginación.
