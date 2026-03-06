@@ -450,14 +450,16 @@ class CatGame_Submissions {
     public static function list_review_submissions(string $type_filter = 'all', string $status_filter = 'pending_review', int $limit = 100): array {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
+        $reports_table = CatGame_DB::table('reports');
 
         $allowed_types = ['all', 'event', 'free'];
         $allowed_status = ['pending_review', 'reviewed', 'removed_review', 'appealed_review'];
         $type_filter = in_array($type_filter, $allowed_types, true) ? $type_filter : 'all';
         $status_filter = in_array($status_filter, $allowed_status, true) ? $status_filter : 'pending_review';
 
-        $where = ['1=1'];
+        $where = ['created_at >= DATE_SUB(%s, INTERVAL 24 HOUR)', "NOT EXISTS (SELECT 1 FROM {$reports_table} rep WHERE rep.submission_id = {$table}.id)"];
         $params = [];
+        $params[] = current_time('mysql');
 
         if ($type_filter === 'event') {
             $where[] = 'event_id > 0';

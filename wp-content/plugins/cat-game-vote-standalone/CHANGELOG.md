@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.43
+- Revisión admin: la bandeja ahora muestra solo publicaciones creadas en las últimas 24 horas para evitar acumulación histórica.
+- Revisión admin: publicaciones con al menos un reporte dejan de aparecer en Revisión (quedan para flujo de Moderation).
+
 ## 0.27.42
 - Admin: nuevo submenú **Revisión** separado de **Moderation**, con tabla de publicaciones (miniatura, ID, título, usuario, tipo, fecha, estado) y filtros por tipo (`Todas/Evento/Libre`) y estado (`Pendientes/Revisadas/Eliminadas/Apeladas`).
 - Revisión editorial: nuevo flujo interno en `submissions` con estados `pending_review`, `reviewed`, `removed_review`, `appealed_review` y metadatos de decisión/motivo/revisor/ventana de apelación.
