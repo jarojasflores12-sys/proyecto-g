@@ -78,6 +78,8 @@ class CatGame_Render {
 
     private static function page_data(string $page): array {
 
+        CatGame_Events::finalize_ended_competitive_events();
+
         $event = CatGame_Events::get_active_event();
         $competitive_event = CatGame_Events::get_active_competitive_event();
         $top3_positions = self::top3_positions($competitive_event);
@@ -217,6 +219,8 @@ class CatGame_Render {
                 return [
                     'page' => $page,
                     'event' => $event,
+                    'ranking_event' => $competitive_event,
+                    'has_competitive_event' => (bool) $competitive_event,
                     'scope' => $scope,
                     'country' => $country,
                     'city' => $city,

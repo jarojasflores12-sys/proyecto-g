@@ -917,7 +917,7 @@ class CatGame_Submissions {
             FROM {$table} s
             LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id
             WHERE {$where_sql}
-            ORDER BY COALESCE(r.total_reactions, 0) DESC, COALESCE(r.first_reaction_at, '9999-12-31 23:59:59') ASC, s.created_at DESC, s.id DESC
+            ORDER BY COALESCE(r.total_reactions, 0) DESC, COALESCE(r.first_reaction_at, '9999-12-31 23:59:59') ASC, s.created_at ASC, s.id ASC
             LIMIT %d";
         $prepared = $wpdb->prepare($sql, ...$params);
         $results = $wpdb->get_results($prepared, ARRAY_A);

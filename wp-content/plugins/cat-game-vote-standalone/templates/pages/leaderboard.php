@@ -6,37 +6,45 @@ $countries = isset($data['countries']) && is_array($data['countries']) ? $data['
 $cities_by_country = isset($data['cities_by_country']) && is_array($data['cities_by_country']) ? $data['cities_by_country'] : [];
 $city_options = ($country !== '' && isset($cities_by_country[$country]) && is_array($cities_by_country[$country])) ? $cities_by_country[$country] : [];
 $items = $data['items'] ?? [];
+$ranking_event = is_array($data['ranking_event'] ?? null) ? $data['ranking_event'] : null;
+$has_competitive_event = !empty($data['has_competitive_event']);
 $top3_positions = $data['top3_positions'] ?? [];
 $current_user_id = (int) ($data['current_user_id'] ?? 0);
 ?>
 <section>
     <h2>Ranking</h2>
-    <form method="get" action="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>" class="cg-form-inline">
-        <label>Alcance
-            <select name="scope">
-                <option value="global" <?php selected($scope, 'global'); ?>>Global</option>
-                <option value="country" <?php selected($scope, 'country'); ?>>País</option>
-                <option value="city" <?php selected($scope, 'city'); ?>>Ciudad</option>
-            </select>
-        </label>
-        <label>País
-            <select name="country">
-                <option value="">Todos</option>
-                <?php foreach ($countries as $country_option): ?>
-                    <option value="<?php echo esc_attr($country_option); ?>" <?php selected($country, $country_option); ?>><?php echo esc_html($country_option); ?></option>
-                <?php endforeach; ?>
-            </select>
-        </label>
-        <label>Ciudad
-            <select name="city" <?php echo $country === '' ? 'disabled' : ''; ?>>
-                <option value="">Todas</option>
-                <?php foreach ($city_options as $city_option): ?>
-                    <option value="<?php echo esc_attr($city_option); ?>" <?php selected($city, $city_option); ?>><?php echo esc_html($city_option); ?></option>
-                <?php endforeach; ?>
-            </select>
-        </label>
-        <button type="submit">Filtrar</button>
-    </form>
+    <?php if ($has_competitive_event): ?>
+        <p class="cg-upload-context"><strong>Evento:</strong> <?php echo esc_html((string) ($ranking_event['name'] ?? 'Evento competitivo')); ?></p>
+        <p class="cg-file-picker-text"><strong>Vigencia:</strong> <?php echo esc_html((string) ($ranking_event['starts_at'] ?? '') . ' - ' . (string) ($ranking_event['ends_at'] ?? '')); ?></p>
+        <form method="get" action="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>" class="cg-form-inline">
+            <label>Alcance
+                <select name="scope">
+                    <option value="global" <?php selected($scope, 'global'); ?>>Global</option>
+                    <option value="country" <?php selected($scope, 'country'); ?>>País</option>
+                    <option value="city" <?php selected($scope, 'city'); ?>>Ciudad</option>
+                </select>
+            </label>
+            <label>País
+                <select name="country">
+                    <option value="">Todos</option>
+                    <?php foreach ($countries as $country_option): ?>
+                        <option value="<?php echo esc_attr($country_option); ?>" <?php selected($country, $country_option); ?>><?php echo esc_html($country_option); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label>Ciudad
+                <select name="city" <?php echo $country === '' ? 'disabled' : ''; ?>>
+                    <option value="">Todas</option>
+                    <?php foreach ($city_options as $city_option): ?>
+                        <option value="<?php echo esc_attr($city_option); ?>" <?php selected($city, $city_option); ?>><?php echo esc_html($city_option); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <button type="submit">Filtrar</button>
+        </form>
+    <?php else: ?>
+        <p class="cg-empty-state">No hay un evento competitivo activo en este momento.</p>
+    <?php endif; ?>
 
     <div class="cg-rank-list">
         <?php if (!$items): ?>
@@ -85,6 +93,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
 
                 <div class="cg-rank-meta">
                     <p class="cg-location">📍 <?php echo esc_html($item['city'] . ', ' . $item['country']); ?></p>
+                    <p class="cg-score">Total reacciones: <?php echo (int) ($item['total_reactions'] ?? 0); ?></p>
                     <div class="cg-rank-reactions">
                         <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in(), (array) ($item['reaction_counts'] ?? []) ? ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)] : []); ?>
                     </div>

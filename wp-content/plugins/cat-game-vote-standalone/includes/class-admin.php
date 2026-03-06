@@ -1214,6 +1214,7 @@ class CatGame_Admin {
 
         $popup_view = CatGame_Events::build_rules_popup_view($event);
         $event_type = sanitize_key((string) ($popup_view['event_type'] ?? 'competitive'));
+        $event_winners = CatGame_Events::get_event_winners((int) ($event['id'] ?? 0));
         $mode = sanitize_key((string) ($popup_view['mode'] ?? 'none'));
         $items = isset($popup_view['items']) && is_array($popup_view['items']) ? $popup_view['items'] : [];
         $general = isset($popup_view['general_summary']) && is_array($popup_view['general_summary']) ? $popup_view['general_summary'] : [];
@@ -1263,6 +1264,16 @@ class CatGame_Admin {
                     <?php foreach ($general as $line): ?>
                         <li>• <?php echo esc_html((string) $line); ?></li>
                     <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+
+            <?php if (is_array($event_winners)): ?>
+                <p><strong>Ganadores guardados:</strong></p>
+                <ul class="catgame-preview-rules">
+                    <li>🥇 Submission ID: #<?php echo (int) ($event_winners['first_place_submission_id'] ?? 0); ?></li>
+                    <li>🥈 Submission ID: #<?php echo (int) ($event_winners['second_place_submission_id'] ?? 0); ?></li>
+                    <li>🥉 Submission ID: #<?php echo (int) ($event_winners['third_place_submission_id'] ?? 0); ?></li>
+                    <li>Finalizado: <?php echo esc_html((string) ($event_winners['finalized_at'] ?? '')); ?></li>
                 </ul>
             <?php endif; ?>
         </section>

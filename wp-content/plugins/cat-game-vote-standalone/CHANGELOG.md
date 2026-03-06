@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.32
+- Ranking: ahora usa desempate completo por `total_reactions DESC`, luego `first_reaction_at ASC` y finalmente `created_at ASC` (con `id ASC` como estabilidad).
+- Ranking UX: cuando no hay evento activo competitivo muestra `No hay un evento competitivo activo en este momento.` y header con nombre/vigencia cuando sí existe.
+- Persistencia base de ganadores: nueva tabla `event_winners` y finalización automática de eventos competitivos terminados para guardar top 3 (`event_id`, puestos 1/2/3, `finalized_at`).
+- Admin eventos (detalle/preview): se muestra sección `Ganadores guardados` cuando ya existe finalización persistida.
+
 ## 0.27.31
 - Gestor de eventos: nuevo campo **Tipo de evento** (`competitive` / `thematic`) en creación/edición, persistido en BD con fallback compatible para eventos existentes (`competitive`).
 - Admin preview: ahora muestra etiqueta de tipo (**Competitivo**/**Temático**) y, si es temático, mensaje explícito de que no compite en ranking.

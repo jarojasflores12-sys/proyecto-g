@@ -49,6 +49,77 @@ class CatGame_Events {
         return self::hydrate_event_payload($event);
     }
 
+    public static function get_event_winners(int $event_id): ?array {
+        if ($event_id <= 0) {
+            return null;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('event_winners');
+        $row = $wpdb->get_row(
+            $wpdb->prepare("SELECT * FROM {$table} WHERE event_id = %d LIMIT 1", $event_id),
+            ARRAY_A
+        );
+
+        return is_array($row) ? $row : null;
+    }
+
+    public static function finalize_competitive_event_winners(int $event_id): void {
+        if ($event_id <= 0) {
+            return;
+        }
+
+        $event = self::get_event($event_id);
+        if (!$event || (($event['event_type'] ?? 'competitive') !== 'competitive')) {
+            return;
+        }
+
+        if (self::get_event_winners($event_id)) {
+            return;
+        }
+
+        $top = class_exists('CatGame_Submissions')
+            ? CatGame_Submissions::leaderboard($event_id, 'global', '', '', 3, [])
+            : [];
+
+        global $wpdb;
+        $table = CatGame_DB::table('event_winners');
+        $wpdb->insert(
+            $table,
+            [
+                'event_id' => $event_id,
+                'first_place_submission_id' => isset($top[0]['id']) ? (int) $top[0]['id'] : null,
+                'second_place_submission_id' => isset($top[1]['id']) ? (int) $top[1]['id'] : null,
+                'third_place_submission_id' => isset($top[2]['id']) ? (int) $top[2]['id'] : null,
+                'finalized_at' => current_time('mysql'),
+            ],
+            ['%d', '%d', '%d', '%d', '%s']
+        );
+    }
+
+    public static function finalize_ended_competitive_events(): void {
+        global $wpdb;
+        $events_table = CatGame_DB::table('events');
+        $winners_table = CatGame_DB::table('event_winners');
+        $now = current_time('mysql');
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT e.id
+                 FROM {$events_table} e
+                 LEFT JOIN {$winners_table} w ON w.event_id = e.id
+                 WHERE e.event_type = %s AND e.ends_at < %s AND w.id IS NULL",
+                'competitive',
+                $now
+            ),
+            ARRAY_A
+        );
+
+        foreach ($rows as $row) {
+            self::finalize_competitive_event_winners((int) ($row['id'] ?? 0));
+        }
+    }
+
 
     public static function normalize_rules_payload(?string $rules_json): array {
         $normalized_items = [];
