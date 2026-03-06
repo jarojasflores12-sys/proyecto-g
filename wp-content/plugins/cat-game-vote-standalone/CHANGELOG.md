@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.38
+- Detalle de publicación: imagen principal ahora respeta proporción y viewport (`max-height` con `object-fit: contain`) para mejor visual en móvil/escritorio.
+- Detalle de publicación: se ocultan el mensaje de apelación sin moderación activa y el bloque de tamaño de imagen para una vista más limpia.
+
 ## 0.27.37
 - Inicio / Últimas publicaciones: ahora usa feed cronológico mixto (`all`) con publicaciones de evento + libre (solo activas/no ocultas), orden `created_at DESC, id DESC`.
 - Inicio / cards recientes: click en foto abre detalle reutilizando `/catgame/submission/{id}`, mantiene badges `🏆 Evento` / `🐾 Libre` y widget de reacciones.

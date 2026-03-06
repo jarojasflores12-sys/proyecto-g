@@ -1933,3 +1933,18 @@ body.cg-has-custom-bg .cg-main {
 .cg-home-latest-image-link .cg-home-latest-image {
   width: 100%;
 }
+
+
+.cg-detail-image {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto 12px;
+}
+
+.cg-detail-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 72vh;
+  object-fit: contain;
+}

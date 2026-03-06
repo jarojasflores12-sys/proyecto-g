@@ -28,10 +28,7 @@ $current_user_id = is_user_logged_in() ? get_current_user_id() : 0;
     <p>Ubicación: <?php echo esc_html(CatGame_Submissions::visual_label((string) ($submission['city'] ?? '')) . ', ' . CatGame_Submissions::visual_label((string) ($submission['country'] ?? ''))); ?></p>
     <?php CatGame_Reactions::render_widget((int) ($submission['id'] ?? 0), is_user_logged_in(), ['reaction_counts' => (array) ($submission['reaction_counts'] ?? []), 'my_reaction' => ($submission['my_reaction'] ?? null)]); ?>
     <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::report_button_html($submission, $current_user_id) : ''; ?>
-    <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::appeal_button_html($submission, $current_user_id) : ''; ?>
 
-    <?php $size_bytes = isset($submission['image_size_bytes']) ? (int) $submission['image_size_bytes'] : 0; ?>
-    <p>Tamaño imagen: <?php echo $size_bytes > 0 ? esc_html(number_format($size_bytes / 1024, 2)) . ' KB' : 'N/D'; ?></p>
 
     <h3>Etiquetas</h3>
     <?php if (empty($tags)): ?>
