@@ -452,7 +452,7 @@ class CatGame_Submissions {
         ];
     }
 
-    public static function list_feed_publications_paginated(int $active_event_id = 0, int $per_page = 20, int $offset = 0, string $filter = 'all', string $tag = ''): array {
+    public static function list_feed_publications_paginated(int $active_event_id = 0, int $per_page = 20, int $offset = 0, string $filter = 'all'): array {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
 
@@ -469,19 +469,6 @@ class CatGame_Submissions {
             $where[] = 'event_id IS NOT NULL AND event_id != 0';
         } elseif ($filter === 'free') {
             $where[] = '(event_id IS NULL OR event_id = 0)';
-        }
-
-        if ($tag !== '') {
-            $search_tags = self::tag_storage_variants($tag);
-            if (!empty($search_tags)) {
-                $tag_clauses = [];
-                foreach ($search_tags as $search_tag) {
-                    $tag_clauses[] = '(tags_text LIKE %s OR tags_json LIKE %s)';
-                    $params[] = '%,' . $wpdb->esc_like($search_tag) . ',%';
-                    $params[] = '%"' . $wpdb->esc_like($search_tag) . '"%';
-                }
-                $where[] = '(' . implode(' OR ', $tag_clauses) . ')';
-            }
         }
 
         $limit_plus_one = $per_page + 1;

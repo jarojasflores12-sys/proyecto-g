@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.29
+- Feed/Publicaciones (regla de alcance): se elimina el filtrado por etiquetas residual en la query del feed filtrado (`all/event/free`) para mantener el comportamiento exclusivamente por `event_id`.
+- Se conserva orden único `created_at DESC, id DESC` y paginación `Cargar más` por filtro sin prioridad especial a publicaciones de evento.
+
 ## 0.27.28
 - Feed filtro `Evento`: se corrige para incluir cualquier publicación con `event_id IS NOT NULL AND event_id != 0` (no solo del evento activo), manteniendo orden `created_at DESC, id DESC`.
 - Estado vacío `Evento`: se unifica a `No hay publicaciones de evento disponibles.` para alinearse con la lógica del filtro.
