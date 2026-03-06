@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.27.36
+- Perfil: se corrige apertura del modal de `Ver normas` en la sección de aceptación de normas/sanciones (ya no depende de la inicialización del formulario de Subir).
+
 ## 0.27.35
 - Perfil: la aceptación de normas/sanciones pasa a ser requisito único y persistente (`catgame_terms_accepted`, `catgame_terms_accepted_at`) junto a ciudad/país para completar perfil.
 - Subir: se elimina checkbox de aceptación; queda solo botón `Ver normas` y bloqueo con CTA a perfil cuando falta completar perfil + aceptar normas.

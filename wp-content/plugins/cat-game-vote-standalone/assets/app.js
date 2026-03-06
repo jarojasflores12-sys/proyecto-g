@@ -446,33 +446,44 @@
     }
   });
 
+})();
 
+
+(function () {
   const uploadRulesModal = document.getElementById('catgame-upload-rules-modal');
   const openUploadRulesButtons = Array.from(document.querySelectorAll('[data-open-upload-rules="1"]'));
-  if (uploadRulesModal && openUploadRulesButtons.length) {
-    const acknowledgeButton = uploadRulesModal.querySelector('[data-upload-rules-close="1"]:not(.cg-modal__backdrop)');
-
-    const setUploadRulesOpen = (open) => {
-      uploadRulesModal.classList.toggle('is-open', open);
-      uploadRulesModal.setAttribute('aria-hidden', open ? 'false' : 'true');
-
-      if (open && acknowledgeButton instanceof HTMLElement) {
-        window.setTimeout(() => acknowledgeButton.focus(), 0);
-      }
-    };
-
-    openUploadRulesButtons.forEach((btn) => {
-      btn.addEventListener('click', () => setUploadRulesOpen(true));
-    });
-
-    uploadRulesModal.addEventListener('click', (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (target.closest('[data-upload-rules-close="1"]')) {
-        setUploadRulesOpen(false);
-      }
-    });
+  if (!uploadRulesModal || !openUploadRulesButtons.length) {
+    return;
   }
+
+  const acknowledgeButton = uploadRulesModal.querySelector('[data-upload-rules-close="1"]:not(.cg-modal__backdrop)');
+
+  const setUploadRulesOpen = (open) => {
+    uploadRulesModal.classList.toggle('is-open', open);
+    uploadRulesModal.setAttribute('aria-hidden', open ? 'false' : 'true');
+
+    if (open && acknowledgeButton instanceof HTMLElement) {
+      window.setTimeout(() => acknowledgeButton.focus(), 0);
+    }
+  };
+
+  openUploadRulesButtons.forEach((btn) => {
+    btn.addEventListener('click', () => setUploadRulesOpen(true));
+  });
+
+  uploadRulesModal.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest('[data-upload-rules-close="1"]')) {
+      setUploadRulesOpen(false);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && uploadRulesModal.classList.contains('is-open')) {
+      setUploadRulesOpen(false);
+    }
+  });
 })();
 
 (function () {
