@@ -74,6 +74,7 @@
   const deleted = params.get('deleted');
   const profileSaved = params.get('profile_saved');
   const completeProfile = params.get('complete_profile');
+  const publishModeAdjusted = params.get('publish_mode_adjusted');
   const error = params.get('catgame_error');
 
   if (voted === '1') {
@@ -96,6 +97,10 @@
     window.catgameToast('Completa tu ciudad y país para continuar', 'info');
   }
 
+  if (publishModeAdjusted === '1') {
+    window.catgameToast('El evento dejó de estar activo. Tu foto se publicó en modo libre.', 'info', 3200);
+  }
+
   if (error) {
     console.warn('CatGame warning:', error);
     const errorMessages = {
@@ -104,7 +109,7 @@
     window.catgameToast(errorMessages[error] || 'Ocurrió un error. Intenta nuevamente.', 'error');
   }
 
-  const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || profileSaved === '1' || completeProfile === '1' || !!error;
+  const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || profileSaved === '1' || completeProfile === '1' || publishModeAdjusted === '1' || !!error;
   if (shouldClean && window.history && typeof window.history.replaceState === 'function') {
     params.delete('voted');
     params.delete('uploaded');
@@ -112,6 +117,7 @@
     params.delete('deleted');
     params.delete('profile_saved');
     params.delete('complete_profile');
+    params.delete('publish_mode_adjusted');
     const nextQuery = params.toString();
     const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
     window.history.replaceState({}, '', nextUrl);
@@ -136,6 +142,10 @@
   const cameraProxyInput = document.getElementById('catgame-cat-image-camera');
   const titleInput = form.querySelector('input[name="title"]');
   const submitButton = form.querySelector('button[type="submit"]');
+  const uploadModeWrap = form.querySelector('[data-upload-mode="1"]');
+  const uploadModeInput = form.querySelector('[data-upload-mode-input="1"]');
+  const uploadModeOptions = uploadModeWrap ? Array.from(uploadModeWrap.querySelectorAll('[data-upload-mode-option]')) : [];
+  const uploadModeHelp = uploadModeWrap ? uploadModeWrap.querySelector('[data-upload-mode-help="1"]') : null;
 
   const TARGET_MAX_SIDE = 1280;
   const TARGET_MAX_BYTES = 900 * 1024;
@@ -146,6 +156,49 @@
   let compressedFile = null;
   let compressing = false;
   let previewObjectUrl = null;
+  let selectedUploadMode = uploadModeInput ? String(uploadModeInput.value || '') : '';
+  const hasEventOption = uploadModeWrap ? uploadModeWrap.getAttribute('data-has-event') === '1' : false;
+
+  const modeHelpText = {
+    event: 'Tu foto participará en el evento activo.',
+    free: 'Tu foto se publicará sin competir en el ranking.',
+    none: 'Elige un modo para continuar.',
+  };
+
+  const syncUploadModeUi = () => {
+    if (!uploadModeInput) {
+      return;
+    }
+
+    uploadModeInput.value = selectedUploadMode;
+    uploadModeOptions.forEach((option) => {
+      const mode = String(option.getAttribute('data-upload-mode-option') || '');
+      option.classList.toggle('is-active', mode === selectedUploadMode);
+      option.setAttribute('aria-pressed', mode === selectedUploadMode ? 'true' : 'false');
+    });
+
+    if (uploadModeHelp) {
+      const key = selectedUploadMode === 'event' || selectedUploadMode === 'free' ? selectedUploadMode : 'none';
+      uploadModeHelp.textContent = modeHelpText[key];
+    }
+  };
+
+  if (uploadModeWrap && !hasEventOption && selectedUploadMode !== 'free') {
+    selectedUploadMode = 'free';
+  }
+
+  uploadModeOptions.forEach((option) => {
+    option.addEventListener('click', () => {
+      const mode = String(option.getAttribute('data-upload-mode-option') || '');
+      if (mode !== 'event' && mode !== 'free') {
+        return;
+      }
+      selectedUploadMode = mode;
+      syncUploadModeUi();
+    });
+  });
+
+  syncUploadModeUi();
 
   const syncFileToMainInput = (sourceInput) => {
     if (!sourceInput || typeof DataTransfer !== 'function') {
@@ -357,6 +410,13 @@
   });
 
   form.addEventListener('submit', (event) => {
+    if (uploadModeWrap && hasEventOption && selectedUploadMode !== 'event' && selectedUploadMode !== 'free') {
+      event.preventDefault();
+      window.catgameToast?.('Elige si quieres publicar en Evento o en modo Libre.', 'error');
+      syncUploadModeUi();
+      return;
+    }
+
     if (compressing) {
       event.preventDefault();
       return;

@@ -1624,6 +1624,51 @@ body.cg-has-custom-bg .cg-main {
   color: #4f4f4f;
 }
 
+.cg-upload-mode {
+  margin: 0 0 12px;
+  border: 1px solid var(--cg-border);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.cg-upload-mode legend {
+  font-weight: 700;
+  font-size: 15px;
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.cg-upload-mode__options {
+  display: grid;
+  gap: 8px;
+}
+
+.cg-upload-mode__option {
+  width: 100%;
+  text-align: left;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #f8fafc;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.cg-upload-mode__option.is-active {
+  border-color: rgba(76, 29, 149, 0.28);
+  background: #ede9fe;
+  color: #4c1d95;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.14);
+}
+
+.cg-upload-mode__help {
+  margin: 8px 2px 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
 .cg-file-input {
   position: absolute;
   opacity: 0;

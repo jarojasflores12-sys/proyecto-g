@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.30
+- Upload UX: nueva selección explícita de destino con 2 botones grandes (`🏆 Participar en el evento` / `🐾 Publicar en modo libre`) antes del selector de foto.
+- Con evento activo: se exige elegir modo antes de publicar; sin evento activo: se preselecciona automáticamente modo libre y se oculta la opción de evento.
+- Upload backend: nuevo campo `publish_mode` para resolver `event_id` al guardar (`event` => id evento activo, `free` => `event_id=0`) con fallback seguro a libre si el evento deja de estar activo al enviar.
+
 ## 0.27.29
 - Feed/Publicaciones (regla de alcance): se elimina el filtrado por etiquetas residual en la query del feed filtrado (`all/event/free`) para mantener el comportamiento exclusivamente por `event_id`.
 - Se conserva orden único `created_at DESC, id DESC` y paginación `Cargar más` por filtro sin prioridad especial a publicaciones de evento.

@@ -114,6 +114,7 @@ class CatGame_Render {
                     'custom_tags' => sanitize_textarea_field(wp_unslash($_GET['upload_custom_tags'] ?? '')),
                     'selected_tags' => array_values(array_unique($selected_tags)),
                     'confirm_no_people' => (int) ($_GET['upload_confirm_no_people'] ?? 0) === 1,
+                    'publish_mode' => sanitize_key(wp_unslash($_GET['upload_publish_mode'] ?? ($event ? '' : 'free'))),
                 ];
 
                 $upload_error_key = sanitize_key(wp_unslash($_GET['catgame_error'] ?? ''));

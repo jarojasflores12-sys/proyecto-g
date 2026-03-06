@@ -20,6 +20,11 @@ if ($upload_ban_until_iso !== '') {
 $publish_context = $event
     ? 'Se publicará en: Evento activo — ' . (string) ($event['name'] ?? 'Evento')
     : 'Se publicará en: Modo libre (no competitivo)';
+$has_active_event = !empty($event['id']);
+$selected_publish_mode = (string) ($upload_state['publish_mode'] ?? ($has_active_event ? '' : 'free'));
+if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
+    $selected_publish_mode = $has_active_event ? '' : 'free';
+}
 ?>
 <section>
     <h2>Subir foto</h2>
@@ -41,6 +46,25 @@ $publish_context = $event
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data" class="cg-form">
             <?php wp_nonce_field('catgame_upload'); ?>
             <input type="hidden" name="action" value="catgame_upload">
+            <fieldset class="cg-upload-mode" data-upload-mode="1" data-has-event="<?php echo $has_active_event ? '1' : '0'; ?>">
+                <legend>¿Dónde quieres publicar tu foto?</legend>
+                <input type="hidden" name="publish_mode" value="<?php echo esc_attr($selected_publish_mode); ?>" data-upload-mode-input="1">
+                <div class="cg-upload-mode__options">
+                    <?php if ($has_active_event): ?>
+                        <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'event' ? 'is-active' : ''; ?>" data-upload-mode-option="event">🏆 Participar en el evento</button>
+                    <?php endif; ?>
+                    <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'free' ? 'is-active' : ''; ?>" data-upload-mode-option="free">🐾 Publicar en modo libre</button>
+                </div>
+                <p class="cg-upload-mode__help" data-upload-mode-help="1">
+                    <?php if ($selected_publish_mode === 'event'): ?>
+                        Tu foto participará en el evento activo.
+                    <?php elseif ($selected_publish_mode === 'free'): ?>
+                        Tu foto se publicará sin competir en el ranking.
+                    <?php else: ?>
+                        Elige un modo para continuar.
+                    <?php endif; ?>
+                </p>
+            </fieldset>
             <label>
                 Título
                 <input
