@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.53
+- Inicio: nueva card informativa **Cómo funciona el juego** con pasos breves mobile-first para usuarios nuevos, usando narrativa `La Arena` / `El Parque`.
+- Inicio: nuevo resumen corto de moderación para contextualizar reglas sin reemplazar el popup de reglas completo.
+- Inicio: nuevos botones `📜 Ver reglas completas` (abre el modal existente de reglas) y `ℹ️ Acerca de nosotros` (enlace preparado a `/catgame/about`).
+
 ## 0.27.52
 - UX copy de modos de publicación unificado para usuario final: `event` ahora se muestra como **La Arena** y `free` como **El Parque**, sin cambios en lógica interna ni base de datos.
 - Feed, cards, perfil y home: badges y etiquetas visibles actualizadas a `🏆 La Arena` y `🐾 El Parque`.

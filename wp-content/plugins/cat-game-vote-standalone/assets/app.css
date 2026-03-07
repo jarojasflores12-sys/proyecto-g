@@ -962,6 +962,68 @@ body.cg-has-custom-bg .cg-main {
   margin: 0;
 }
 
+.cg-home-guide {
+  gap: 12px;
+}
+
+.cg-home-guide h3 {
+  margin: 0;
+}
+
+.cg-home-guide-steps {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.cg-home-guide-steps li {
+  display: grid;
+  gap: 3px;
+}
+
+.cg-home-guide-steps li span {
+  color: var(--cg-muted);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.cg-home-guide-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--cg-muted);
+  line-height: 1.4;
+}
+
+.cg-home-guide-actions {
+  display: grid;
+  gap: 8px;
+}
+
+a.cg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  background: var(--cg-primary);
+  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+
+a.cg-btn:hover {
+  filter: brightness(0.95);
+}
+
+a.cg-btn--ghost {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--cg-text);
+  border-color: var(--cg-border);
+}
+
 
 .cg-stars .cg-star {
   color: rgba(0, 0, 0, 0.18);

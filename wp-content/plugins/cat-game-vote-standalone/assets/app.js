@@ -23,6 +23,14 @@
 
   trigger.addEventListener('click', openModal);
 
+  const inlineRuleLinks = document.querySelectorAll('[data-open-event-rules="1"]');
+  inlineRuleLinks.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      openModal();
+    });
+  });
+
   modal.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) {
