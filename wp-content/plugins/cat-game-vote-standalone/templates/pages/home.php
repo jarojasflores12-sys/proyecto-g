@@ -13,6 +13,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
 
 <section class="cg-home-section">
     <h3>Cómo funciona</h3>
+    <p><strong>La Arena</strong>: espacio competitivo con eventos y ranking. <strong>El Parque</strong>: espacio libre para compartir mascotas.</p>
     <div class="cg-home-steps">
         <a class="cg-card cg-home-step-link" href="<?php echo esc_url(home_url('/catgame/upload')); ?>" aria-label="Ir a Subir"><strong>📷 Sube</strong><p>Publica la mejor foto de tu gato.</p></a>
         <a class="cg-card cg-home-step-link" href="<?php echo esc_url(home_url('/catgame/feed')); ?>" aria-label="Ir a Publicaciones"><strong>😻 Reacciona</strong><p>La comunidad reacciona a las publicaciones.</p></a>
@@ -59,7 +60,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                 $author = get_userdata((int) ($item['user_id'] ?? 0));
                 $author_name = $author ? (string) $author->user_login : 'usuario';
                 $is_event_publication = !empty($item['event_id']);
-                $post_type_badge = $is_event_publication ? '🏆 Evento' : '🐾 Libre';
+                $post_type_badge = $is_event_publication ? '🏆 La Arena' : '🐾 El Parque';
                 $submission_url = home_url('/catgame/submission/' . (int) ($item['id'] ?? 0));
                 ?>
                 <article class="cg-card cg-home-latest-item" role="listitem">

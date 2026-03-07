@@ -11,7 +11,7 @@ $position = isset($top3_positions[(int) $item['id']]) ? (int) $top3_positions[(i
 $is_mine = $current_user_id > 0 && (int) ($item['user_id'] ?? 0) === $current_user_id;
 $has_event = !empty($item['event_id']);
 $post_type_badge_class = $has_event ? 'cg-post-type-badge cg-badge-event' : 'cg-post-type-badge cg-badge-free';
-$post_type_badge_label = $has_event ? '🏆 Evento' : '🐾 Libre';
+$post_type_badge_label = $has_event ? '🏆 La Arena' : '🐾 El Parque';
 ?>
 <article class="cg-card <?php echo ($is_mine || $position > 0) ? 'cg-is-mine' : ''; ?>">
     <div class="cg-img-wrap">

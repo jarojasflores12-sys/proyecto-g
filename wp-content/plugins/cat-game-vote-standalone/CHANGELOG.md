@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.52
+- UX copy de modos de publicación unificado para usuario final: `event` ahora se muestra como **La Arena** y `free` como **El Parque**, sin cambios en lógica interna ni base de datos.
+- Feed, cards, perfil y home: badges y etiquetas visibles actualizadas a `🏆 La Arena` y `🐾 El Parque`.
+- Subir publicación: botones y ayudas renovados a `🏆 Entrar a La Arena` y `🐾 Publicar en El Parque` con narrativa clara de ambos espacios.
+- Ranking y mensajes contextuales: lenguaje orientado a **La Arena** en la experiencia competitiva.
+
 ## 0.27.51
 - Ranking / Ganadores anteriores: rediseño visual de cada evento histórico con cabecera dedicada (nombre + período) y podio móvil-first de jerarquía clara.
 - Ranking / Ganadores anteriores: el 1° lugar ahora destaca en bloque principal, y 2°/3° se presentan en bloques secundarios compactos.

@@ -343,13 +343,13 @@ if ($upload_banned_until_iso !== '') {
     </article>
 
     <?php if (!empty($top_position_for_user)): ?>
-        <p class="cg-alert cg-alert-success">🏆 Estás en el Top 3 del evento: #<?php echo (int) $top_position_for_user; ?>. <a href="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>">Ver ranking</a></p>
+        <p class="cg-alert cg-alert-success">🏆 Estás en el Top 3 de La Arena: #<?php echo (int) $top_position_for_user; ?>. <a href="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>">Ver ranking</a></p>
     <?php endif; ?>
 
     <form method="get" action="<?php echo esc_url(home_url('/catgame/profile')); ?>" class="cg-form-inline">
         <label>Alcance
             <select name="scope">
-                <option value="event" <?php selected($scope, 'event'); ?>>Evento activo</option>
+                <option value="event" <?php selected($scope, 'event'); ?>>La Arena activa</option>
                 <option value="global" <?php selected($scope, 'global'); ?>>Global</option>
             </select>
         </label>
@@ -460,7 +460,7 @@ if ($upload_banned_until_iso !== '') {
                     <div class="cg-profile-item__title-wrap">
                         <p class="cg-profile-item__title"><span class="cg-badge">#<?php echo (int) ($item['id'] ?? 0); ?></span> <?php echo esc_html($item_title); ?></p>
                         <small class="cg-profile-item__badge-line">
-                            <span class="cg-inline-badge"><?php echo $item_is_event ? '🏆 Evento' : '🐾 Libre'; ?></span>
+                            <span class="cg-inline-badge"><?php echo $item_is_event ? '🏆 La Arena' : '🐾 El Parque'; ?></span>
                         </small>
                     </div>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-inline-delete-form" data-cg-confirm="1" data-cg-confirm-title="Eliminar publicación" data-cg-confirm-text="Esta acción no se puede deshacer. ¿Eliminar esta publicación?">

@@ -21,10 +21,10 @@ $location_text = trim($location_text, ' ,');
             <p class="cg-location">📍 <?php echo esc_html($location_text !== '' ? $location_text : 'Ubicación no disponible'); ?></p>
         </div>
 
-        <h3>Evento activo</h3>
+        <h3>La Arena activa</h3>
         <div class="cg-grid">
             <?php if (empty($active_items)): ?>
-                <p class="cg-empty-state">Aún no ha publicado en el evento activo.</p>
+                <p class="cg-empty-state">Aún no ha publicado en La Arena activa.</p>
             <?php endif; ?>
 
             <?php foreach ($active_items as $item): ?>
@@ -98,7 +98,7 @@ $location_text = trim($location_text, ' ,');
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
-                    <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), $viewer_logged_in, ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)], ['readonly' => true, 'readonly_reason' => 'Evento finalizado']); ?>
+                    <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), $viewer_logged_in, ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)], ['readonly' => true, 'readonly_reason' => 'La Arena finalizada']); ?>
                 </article>
             <?php endforeach; ?>
         </div>

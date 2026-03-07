@@ -9,7 +9,7 @@ $feed_filter = (string) ($data['feed_filter'] ?? 'all');
 $empty_messages = [
     'all' => 'Aún no hay publicaciones disponibles.',
     'event' => 'No hay publicaciones de evento disponibles.',
-    'free' => 'Aún no hay publicaciones en modo libre.',
+    'free' => 'Aún no hay publicaciones en El Parque.',
 ];
 $empty_message = $empty_messages[$feed_filter] ?? $empty_messages['all'];
 ?>
@@ -18,8 +18,8 @@ $empty_message = $empty_messages[$feed_filter] ?? $empty_messages['all'];
 
     <div class="cg-feed-tabs" data-feed-tabs="1" role="tablist" aria-label="Filtrar publicaciones">
         <button type="button" class="cg-feed-tab <?php echo $feed_filter === 'all' ? 'is-active' : ''; ?>" data-filter="all" role="tab" aria-selected="<?php echo $feed_filter === 'all' ? 'true' : 'false'; ?>">Todo</button>
-        <button type="button" class="cg-feed-tab <?php echo $feed_filter === 'event' ? 'is-active' : ''; ?>" data-filter="event" role="tab" aria-selected="<?php echo $feed_filter === 'event' ? 'true' : 'false'; ?>">🏆 Evento</button>
-        <button type="button" class="cg-feed-tab <?php echo $feed_filter === 'free' ? 'is-active' : ''; ?>" data-filter="free" role="tab" aria-selected="<?php echo $feed_filter === 'free' ? 'true' : 'false'; ?>">🐾 Libre</button>
+        <button type="button" class="cg-feed-tab <?php echo $feed_filter === 'event' ? 'is-active' : ''; ?>" data-filter="event" role="tab" aria-selected="<?php echo $feed_filter === 'event' ? 'true' : 'false'; ?>">🏆 La Arena</button>
+        <button type="button" class="cg-feed-tab <?php echo $feed_filter === 'free' ? 'is-active' : ''; ?>" data-filter="free" role="tab" aria-selected="<?php echo $feed_filter === 'free' ? 'true' : 'false'; ?>">🐾 El Parque</button>
     </div>
 
     <div class="cg-grid" id="catgame-feed-list">

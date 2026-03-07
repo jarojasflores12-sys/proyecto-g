@@ -98,7 +98,7 @@
   }
 
   if (publishModeAdjusted === '1') {
-    window.catgameToast('El evento dejó de estar activo. Tu foto se publicó en modo libre.', 'info', 3200);
+    window.catgameToast('La Arena dejó de estar activa. Tu foto se publicó en El Parque.', 'info', 3200);
   }
 
   if (error) {
@@ -160,9 +160,9 @@
   const hasEventOption = uploadModeWrap ? uploadModeWrap.getAttribute('data-has-event') === '1' : false;
 
   const modeHelpText = {
-    event: 'Tu foto participará en el evento activo.',
-    free: 'Tu foto se publicará sin competir en el ranking.',
-    none: 'Elige un modo para continuar.',
+    event: 'Participa en el evento activo de La Arena.',
+    free: 'Comparte tu mascota libremente en El Parque.',
+    none: 'Elige entre La Arena o El Parque para continuar.',
   };
 
   const syncUploadModeUi = () => {
@@ -412,7 +412,7 @@
   form.addEventListener('submit', (event) => {
     if (uploadModeWrap && hasEventOption && selectedUploadMode !== 'event' && selectedUploadMode !== 'free') {
       event.preventDefault();
-      window.catgameToast?.('Elige si quieres publicar en Evento o en modo Libre.', 'error');
+      window.catgameToast?.('Elige si quieres publicar en La Arena o en El Parque.', 'error');
       syncUploadModeUi();
       return;
     }
@@ -1387,7 +1387,7 @@
   const emptyMessages = {
     all: String(container.dataset.emptyAll || 'Aún no hay publicaciones disponibles.'),
     event: String(container.dataset.emptyEvent || 'No hay publicaciones de evento disponibles.'),
-    free: String(container.dataset.emptyFree || 'Aún no hay publicaciones en modo libre.'),
+    free: String(container.dataset.emptyFree || 'Aún no hay publicaciones en El Parque.'),
   };
 
   const removeEmptyState = () => {

@@ -20,10 +20,10 @@ if ($upload_ban_until_iso !== '') {
 $event_type = sanitize_key((string) ($event['event_type'] ?? 'competitive'));
 $is_thematic_event = !empty($event['id']) && $event_type === 'thematic';
 $publish_context = $is_thematic_event
-    ? 'Tema actual: ' . (string) ($event['name'] ?? 'Evento')
+    ? 'Tema actual: ' . (string) ($event['name'] ?? 'Tema')
     : ($event
-        ? 'Se publicará en: Evento activo — ' . (string) ($event['name'] ?? 'Evento')
-        : 'Se publicará en: Modo libre (no competitivo)');
+        ? 'Se publicará en: La Arena activa — ' . (string) ($event['name'] ?? 'La Arena')
+        : 'Se publicará en: El Parque (espacio libre)');
 $has_active_event = !empty($event['id']) && !$is_thematic_event;
 $selected_publish_mode = (string) ($upload_state['publish_mode'] ?? ($has_active_event ? '' : 'free'));
 if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
@@ -55,17 +55,17 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
                 <input type="hidden" name="publish_mode" value="<?php echo esc_attr($selected_publish_mode); ?>" data-upload-mode-input="1">
                 <div class="cg-upload-mode__options">
                     <?php if ($has_active_event): ?>
-                        <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'event' ? 'is-active' : ''; ?>" data-upload-mode-option="event">🏆 Participar en el evento</button>
+                        <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'event' ? 'is-active' : ''; ?>" data-upload-mode-option="event">🏆 Entrar a La Arena</button>
                     <?php endif; ?>
-                    <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'free' ? 'is-active' : ''; ?>" data-upload-mode-option="free">🐾 Publicar en modo libre</button>
+                    <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'free' ? 'is-active' : ''; ?>" data-upload-mode-option="free">🐾 Publicar en El Parque</button>
                 </div>
                 <p class="cg-upload-mode__help" data-upload-mode-help="1">
                     <?php if ($selected_publish_mode === 'event'): ?>
-                        Tu foto participará en el evento activo.
+                        Participa en el evento activo de La Arena.
                     <?php elseif ($selected_publish_mode === 'free'): ?>
-                        Tu foto se publicará sin competir en el ranking.
+                        Comparte tu mascota libremente en El Parque.
                     <?php else: ?>
-                        Elige un modo para continuar.
+                        Elige entre La Arena o El Parque para continuar.
                     <?php endif; ?>
                 </p>
             </fieldset>

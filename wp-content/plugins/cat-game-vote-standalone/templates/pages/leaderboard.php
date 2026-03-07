@@ -15,7 +15,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
 <section>
     <h2>Ranking</h2>
     <?php if ($has_competitive_event): ?>
-        <p class="cg-upload-context"><strong>Evento:</strong> <?php echo esc_html((string) ($ranking_event['name'] ?? 'Evento competitivo')); ?></p>
+        <p class="cg-upload-context"><strong>La Arena:</strong> <?php echo esc_html((string) ($ranking_event['name'] ?? 'La Arena competitiva')); ?></p>
         <p class="cg-file-picker-text"><strong>Vigencia:</strong> <?php echo esc_html((string) ($ranking_event['starts_at'] ?? '') . ' - ' . (string) ($ranking_event['ends_at'] ?? '')); ?></p>
         <form method="get" action="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>" class="cg-form-inline">
             <label>Alcance
@@ -44,7 +44,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
             <button type="submit">Filtrar</button>
         </form>
     <?php else: ?>
-        <p class="cg-empty-state">No hay un evento competitivo activo en este momento.</p>
+        <p class="cg-empty-state">No hay una Arena competitiva activa en este momento.</p>
     <?php endif; ?>
 
     <div class="cg-rank-list">
@@ -112,7 +112,7 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
             <div class="cg-history-list">
                 <?php foreach ($historical_winners as $history): ?>
                     <?php
-                    $event_name = (string) ($history['event_name'] ?? 'Evento');
+                    $event_name = (string) ($history['event_name'] ?? 'La Arena');
                     $period = trim((string) ($history['starts_at'] ?? '') . ' - ' . (string) ($history['ends_at'] ?? ''));
                     $slots = ['first', 'second', 'third'];
                     $medals = ['first' => '🥇', 'second' => '🥈', 'third' => '🥉'];
