@@ -1,5 +1,157 @@
 # Changelog
 
+## 0.27.55
+- Perfil: nueva sección **Comentarios y sugerencias** con formulario para enviar comentario, sugerencia, error técnico o reporte de bug.
+- Feedback backend: nuevo handler `catgame_submit_feedback` para guardar mensajes del usuario autenticado en tabla dedicada `catgame_feedback` con tipo, contenido, fecha, estado y origen.
+- Admin: nuevo menú **Feedback** en Cat Game con listado de mensajes y acciones `Marcar revisado`, `Eliminar` y `Agradecer` (envía notificación al usuario).
+- DB: versión de esquema `14` con nueva tabla `catgame_feedback`.
+
+## 0.27.54
+- Nueva página del juego **Acerca de nosotros** accesible en `/catgame/about` con contenido breve: qué es el juego, misión, visión, valores y futuro del proyecto.
+- Inicio: el botón `ℹ️ Acerca de nosotros` ahora abre una vista real dentro del juego (no placeholder), manteniendo navegación simple con `← Volver al inicio`.
+- Router/render: soporte de ruta pública `about` sin tocar lógica de eventos, ranking, publicaciones o moderación.
+
+## 0.27.53
+- Inicio: nueva card informativa **Cómo funciona el juego** con pasos breves mobile-first para usuarios nuevos, usando narrativa `La Arena` / `El Parque`.
+- Inicio: nuevo resumen corto de moderación para contextualizar reglas sin reemplazar el popup de reglas completo.
+- Inicio: nuevos botones `📜 Ver reglas completas` (abre el modal existente de reglas) y `ℹ️ Acerca de nosotros` (enlace preparado a `/catgame/about`).
+
+## 0.27.52
+- UX copy de modos de publicación unificado para usuario final: `event` ahora se muestra como **La Arena** y `free` como **El Parque**, sin cambios en lógica interna ni base de datos.
+- Feed, cards, perfil y home: badges y etiquetas visibles actualizadas a `🏆 La Arena` y `🐾 El Parque`.
+- Subir publicación: botones y ayudas renovados a `🏆 Entrar a La Arena` y `🐾 Publicar en El Parque` con narrativa clara de ambos espacios.
+- Ranking y mensajes contextuales: lenguaje orientado a **La Arena** en la experiencia competitiva.
+
+## 0.27.51
+- Ranking / Ganadores anteriores: rediseño visual de cada evento histórico con cabecera dedicada (nombre + período) y podio móvil-first de jerarquía clara.
+- Ranking / Ganadores anteriores: el 1° lugar ahora destaca en bloque principal, y 2°/3° se presentan en bloques secundarios compactos.
+- Ranking / Ganadores anteriores: miniaturas más grandes, medallas más visibles y fallback `Sin título` en estilo secundario, manteniendo enlaces al detalle de publicación.
+
+## 0.27.50
+- Perfil / Mis publicaciones: se elimina duplicación visual de reacciones, dejando un único bloque reactivo (emoji+conteo) por publicación.
+- Perfil / Mis publicaciones: se mantiene ubicación + total `Reacciones: X` y acciones existentes sin romper reacciones clickeables.
+- Perfil / Mis publicaciones: se oculta el mensaje `No existe una moderación activa para esta publicación.` en esta vista para reducir ruido.
+
+## 0.27.49
+- Perfil / Mis publicaciones: rediseño de cards para orden visual consistente con Publicaciones (header compacto con `#ID + título` y acción `Eliminar`, foto, ubicación, total de reacciones y resumen por emoji+conteo).
+- Perfil / Mis publicaciones: reducción de espaciados verticales y alineación compacta de elementos en la card.
+- iPhone/Safari: prevención de auto-zoom en formularios del juego estableciendo `font-size: 16px` para `input`, `textarea` y `select` en móvil.
+
+## 0.27.48
+- Subir / iPhone (Safari): compatibilidad mejorada en render de etiquetas guardadas reemplazando `replaceAll()` por `replace(.../g)` en `escapeHtml` para evitar fallas en versiones iOS con soporte parcial.
+- Subir / chips: se fuerza `-webkit-text-fill-color: currentColor` en botones de etiquetas para asegurar texto visible en Safari iOS.
+
+## 0.27.47
+- Subir / Mis etiquetas guardadas: corrección de chips sin texto visible en sugerencias guardadas (se fuerza color de texto y fallback de label en render).
+- Subir / etiquetas: se mantiene la selección integrada al mismo input de tags, sin duplicados y sin cambiar fuente de datos personal del usuario.
+
+## 0.27.46
+- Subir: nueva sección desplegable **Mis etiquetas guardadas** (cerrada por defecto) que muestra solo etiquetas personales del usuario actual cuando existen.
+- Subir / etiquetas: chips seleccionables reutilizables integrados al mismo input/payload de tags del formulario (compatible con tags manuales), sin duplicados.
+- Subir / etiquetas: mejoras visuales del bloque desplegable y estado activo de chips seleccionados.
+
+## 0.27.45
+- Perfil: corrección de desfase horario en "Normas aceptadas" para usar timezone de WordPress al renderizar `catgame_terms_accepted_at`, evitando mostrar +3h por doble conversión.
+- Perfil: formato de fecha/hora actualizado a `d/m/Y a las H:i` (sin segundos) para mayor claridad.
+
+## 0.27.44
+- Compartir perfil: `Mi perfil` ahora comparte la URL pública real (`/catgame/user/{username}`) en lugar de la vista privada de perfil.
+- Compartir publicación destacada: ahora comparte el detalle exacto de la destacada (`/catgame/submission/{id}`) y no el feed general.
+- Publicaciones (cards): nueva acción `Compartir` por publicación (evento/libre) apuntando al detalle exacto.
+- Share unificado: para perfil/destacada/publicación se usa Web Share API cuando está disponible; fallback a copiado de enlace con toast `Enlace copiado`.
+
+## 0.27.43
+- Revisión admin: la bandeja ahora muestra solo publicaciones creadas en las últimas 24 horas para evitar acumulación histórica.
+- Revisión admin: publicaciones con al menos un reporte dejan de aparecer en Revisión (quedan para flujo de Moderation).
+
+## 0.27.42
+- Admin: nuevo submenú **Revisión** separado de **Moderation**, con tabla de publicaciones (miniatura, ID, título, usuario, tipo, fecha, estado) y filtros por tipo (`Todas/Evento/Libre`) y estado (`Pendientes/Revisadas/Eliminadas/Apeladas`).
+- Revisión editorial: nuevo flujo interno en `submissions` con estados `pending_review`, `reviewed`, `removed_review`, `appealed_review` y metadatos de decisión/motivo/revisor/ventana de apelación.
+- Upload: cada publicación nueva entra automáticamente en `pending_review` sin alterar su visibilidad pública inicial.
+- Revisión admin: acciones **Mantener** y **Eliminar publicación** (con motivo y detalle), notificación al usuario y ventana de apelación de 24h.
+- Perfil usuario: nueva apelación de revisión (24h) para publicaciones eliminadas por revisión editorial, separada de apelaciones de Moderation.
+- Revisión admin (apeladas): aceptar apelación restaura publicación; rechazar apelación mantiene eliminación y borra adjunto de medios.
+- Limpieza 24h: rutina automática que purga adjuntos vencidos sin apelación en eliminaciones por revisión, conservando registro mínimo interno.
+- DB: versión de esquema `13` con columnas e índices editoriales de revisión en `catgame_submissions`.
+
+## 0.27.41
+- Moderación admin (`Resueltos`): ajuste visual del cuadro **Editar acción** para mostrarse horizontal en una sola franja bajo la información del caso, con scroll horizontal cuando falta ancho.
+
+## 0.27.40
+- Moderación admin: nueva acción directa **Eliminar publicación** con modal de motivo (`Incumple normas` / `Imagen repetida en el evento` / `Otro`) y notificación automática al usuario afectado.
+- Moderación `Resueltos`: redistribución del bloque `Editar acción` en una fila horizontal de ancho completo, más legible en móvil y escritorio.
+- Panel técnico: renombres UX (`Revisar sanciones pendientes`, `Copiar informe técnico`, `Historial de revisiones automáticas`) y uso de acordeones para reducir ruido visual.
+
+## 0.27.39
+- Capitalización visual: nuevo helper reutilizable `format_first_capital()` (sin tocar BD), usado en render para ciudad/país/título/tags con primera letra en mayúscula y resto intacto.
+- Ranking filtros/histórico: labels de país/ciudad en selects y títulos de ganadores históricos ahora se muestran capitalizados en frontend.
+- Detalle alterno (`detail.php`): título/ubicación alineados a capitalización visual estándar.
+
+## 0.27.38
+- Detalle de publicación: imagen principal ahora respeta proporción y viewport (`max-height` con `object-fit: contain`) para mejor visual en móvil/escritorio.
+- Detalle de publicación: se ocultan el mensaje de apelación sin moderación activa y el bloque de tamaño de imagen para una vista más limpia.
+
+## 0.27.37
+- Inicio / Últimas publicaciones: ahora usa feed cronológico mixto (`all`) con publicaciones de evento + libre (solo activas/no ocultas), orden `created_at DESC, id DESC`.
+- Inicio / cards recientes: click en foto abre detalle reutilizando `/catgame/submission/{id}`, mantiene badges `🏆 Evento` / `🐾 Libre` y widget de reacciones.
+
+## 0.27.36
+- Perfil: se corrige apertura del modal de `Ver normas` en la sección de aceptación de normas/sanciones (ya no depende de la inicialización del formulario de Subir).
+
+## 0.27.35
+- Perfil: la aceptación de normas/sanciones pasa a ser requisito único y persistente (`catgame_terms_accepted`, `catgame_terms_accepted_at`) junto a ciudad/país para completar perfil.
+- Subir: se elimina checkbox de aceptación; queda solo botón `Ver normas` y bloqueo con CTA a perfil cuando falta completar perfil + aceptar normas.
+- Modal `Normas y sanciones`: contenido reordenado en secciones claras (permitido, no permitido, sanciones y apelaciones) con mejor spacing visual.
+- Capitalización visual: ciudad, país, títulos y etiquetas se muestran con mayúscula inicial en frontend sin migrar datos históricos.
+
+## 0.27.34
+- Historial de ganadores: el listado ahora filtra estrictamente eventos de tipo `competitive` para evitar incluir eventos heredados sin tipo explícito.
+
+## 0.27.33
+- Ranking: nueva sección **Ganadores anteriores** debajo del ranking actual, mostrando historial de eventos competitivos finalizados con top 3 (🥇🥈🥉, imagen, título y usuario).
+- Historial de ganadores: nuevo helper backend para listar snapshots persistidos de `event_winners` (solo eventos competitivos finalizados), ordenados por más reciente.
+- UX vacío de históricos: mensaje `Aún no hay eventos finalizados con ganadores.` cuando no hay snapshots.
+
+## 0.27.32
+- Ranking: ahora usa desempate completo por `total_reactions DESC`, luego `first_reaction_at ASC` y finalmente `created_at ASC` (con `id ASC` como estabilidad).
+- Ranking UX: cuando no hay evento activo competitivo muestra `No hay un evento competitivo activo en este momento.` y header con nombre/vigencia cuando sí existe.
+- Persistencia base de ganadores: nueva tabla `event_winners` y finalización automática de eventos competitivos terminados para guardar top 3 (`event_id`, puestos 1/2/3, `finalized_at`).
+- Admin eventos (detalle/preview): se muestra sección `Ganadores guardados` cuando ya existe finalización persistida.
+
+## 0.27.31
+- Gestor de eventos: nuevo campo **Tipo de evento** (`competitive` / `thematic`) en creación/edición, persistido en BD con fallback compatible para eventos existentes (`competitive`).
+- Admin preview: ahora muestra etiqueta de tipo (**Competitivo**/**Temático**) y, si es temático, mensaje explícito de que no compite en ranking.
+- Juego / Subir: si el evento activo es **competitivo** se mantienen ambos modos (evento/libre); si es **temático** se oculta participar en evento y queda solo modo libre con mensaje `Tema actual: {nombre}`.
+- Juego / Ranking: usa únicamente el evento activo **competitivo** (si el activo es temático, no se cargan publicaciones competitivas).
+- Popup Reglas del evento: siempre muestra nombre+vigencia y, cuando el evento es temático, muestra aviso de no-competencia en ranking.
+
+## 0.27.30
+- Upload UX: nueva selección explícita de destino con 2 botones grandes (`🏆 Participar en el evento` / `🐾 Publicar en modo libre`) antes del selector de foto.
+- Con evento activo: se exige elegir modo antes de publicar; sin evento activo: se preselecciona automáticamente modo libre y se oculta la opción de evento.
+- Upload backend: nuevo campo `publish_mode` para resolver `event_id` al guardar (`event` => id evento activo, `free` => `event_id=0`) con fallback seguro a libre si el evento deja de estar activo al enviar.
+
+## 0.27.29
+- Feed/Publicaciones (regla de alcance): se elimina el filtrado por etiquetas residual en la query del feed filtrado (`all/event/free`) para mantener el comportamiento exclusivamente por `event_id`.
+- Se conserva orden único `created_at DESC, id DESC` y paginación `Cargar más` por filtro sin prioridad especial a publicaciones de evento.
+
+## 0.27.28
+- Feed filtro `Evento`: se corrige para incluir cualquier publicación con `event_id IS NOT NULL AND event_id != 0` (no solo del evento activo), manteniendo orden `created_at DESC, id DESC`.
+- Estado vacío `Evento`: se unifica a `No hay publicaciones de evento disponibles.` para alinearse con la lógica del filtro.
+
+## 0.27.27
+- Feed Publicaciones: nuevo filtro visual por pestañas `Todo`, `🏆 Evento`, `🐾 Libre` sin cambiar estructura de cards ni reacciones.
+- Feed backend/paginación: el endpoint `catgame_feed_more` ahora acepta `filter` (`all/event/free`) y `Cargar más` respeta el filtro activo.
+- Estado vacío contextual por filtro: evento sin activo (`No hay evento activo en este momento.`), evento sin items (`No hay publicaciones de evento disponibles.`) y libre sin items (`Aún no hay publicaciones en modo libre.`).
+
+## 0.27.26
+- Upload: ahora permite publicar aunque no exista evento activo; en ese caso la submission se guarda en modo libre con `event_id=0` (sin bloquear el envío).
+- Feed Publicaciones: ahora muestra tanto publicaciones del evento activo como publicaciones en modo libre, incluyendo paginación "Cargar más".
+- Upload UI: se agrega mensaje contextual de destino de publicación ("Evento activo — {nombre}" o "Modo libre (no competitivo)").
+
+## 0.27.25
+- Feed UX: se agrega badge visual por tipo de publicación sobre la foto en cada card del feed: `🏆 Evento` cuando `event_id` existe y `🐾 Libre` cuando `event_id` está vacío.
+- Estilos del badge: posición absoluta esquina superior izquierda y variantes de color (`#f5b942`/`#6ec7a8`) sin alterar reacciones, acciones de card ni paginación.
+
 ## 0.27.24
 - Ranking UX: filtros de ubicación ahora usan valores guiados con `select` para País/Ciudad (catálogo real del evento activo) en lugar de texto libre.
 - Ranking robustez: si `country/city` de querystring no existen en catálogo del evento, se normalizan a vacío para evitar filtros inválidos por typo/manual URL.

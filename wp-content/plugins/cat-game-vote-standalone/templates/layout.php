@@ -10,6 +10,7 @@ $event_date_range = '';
 $event_rules_mode = 'none';
 $event_rules_items = [];
 $event_general_rules = [];
+$event_type = 'competitive';
 $event_revision = '';
 
 if (is_array($event) && !empty($event['id'])) {
@@ -19,7 +20,8 @@ if (is_array($event) && !empty($event['id'])) {
     $event_rules_mode = sanitize_key((string) ($event_rules_view['mode'] ?? 'none'));
     $event_rules_items = is_array($event_rules_view['items'] ?? null) ? $event_rules_view['items'] : [];
     $event_general_rules = is_array($event_rules_view['general_summary'] ?? null) ? $event_rules_view['general_summary'] : [];
-    $event_revision = md5((string) ($event['id'] ?? 0) . '|' . (string) ($event['name'] ?? '') . '|' . (string) ($event['starts_at'] ?? '') . '|' . (string) ($event['ends_at'] ?? '') . '|' . (string) ($event['rules_json'] ?? '') . '|' . (string) ($event['is_active'] ?? 0));
+    $event_type = sanitize_key((string) ($event_rules_view['event_type'] ?? 'competitive'));
+    $event_revision = md5((string) ($event['id'] ?? 0) . '|' . (string) ($event['name'] ?? '') . '|' . (string) ($event['starts_at'] ?? '') . '|' . (string) ($event['ends_at'] ?? '') . '|' . (string) ($event['rules_json'] ?? '') . '|' . (string) ($event['event_type'] ?? 'competitive') . '|' . (string) ($event['is_active'] ?? 0));
 }
 $background_style = '';
 $has_background = !empty($background_url) && is_string($background_url);
@@ -87,7 +89,15 @@ if ($has_background) {
             <?php if ($event_date_range !== ''): ?>
                 <p class="cg-modal__dates"><strong>Vigencia:</strong> <?php echo esc_html($event_date_range); ?></p>
             <?php endif; ?>
-            <?php if ($event_rules_mode === 'none'): ?>
+            <?php if ($event_type === 'thematic'): ?>
+                <p class="cg-modal__intro">Este evento es temático. Las publicaciones relacionadas no compiten en ranking.</p>
+                <p class="cg-modal__intro">Reglas generales (resumen):</p>
+                <ul class="cg-modal__rules">
+                    <?php foreach ($event_general_rules as $line): ?>
+                        <li><?php echo esc_html((string) $line); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php elseif ($event_rules_mode === 'none'): ?>
                 <p class="cg-modal__intro">Reglas generales (resumen):</p>
                 <ul class="cg-modal__rules">
                     <?php foreach ($event_general_rules as $line): ?>
