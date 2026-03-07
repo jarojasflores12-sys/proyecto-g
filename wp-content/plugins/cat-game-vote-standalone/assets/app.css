@@ -1050,7 +1050,18 @@ body.cg-has-custom-bg .cg-main {
 
 .cg-history-card {
   display: grid;
-  gap: 8px;
+  gap: 12px;
+}
+
+.cg-history-card__header {
+  display: grid;
+  gap: 4px;
+}
+
+.cg-history-period {
+  margin: 0;
+  font-size: 12px;
+  color: var(--cg-muted);
 }
 
 .cg-history-podium {
@@ -1058,32 +1069,60 @@ body.cg-has-custom-bg .cg-main {
   gap: 10px;
 }
 
+.cg-history-podium-secondary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .cg-history-slot {
   display: grid;
-  gap: 4px;
-  padding: 8px;
+  gap: 6px;
+  padding: 10px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.75);
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
+.cg-history-slot--first {
+  padding: 12px;
+  border-color: rgba(255, 193, 7, 0.35);
+  background: linear-gradient(180deg, rgba(255, 248, 215, 0.55), rgba(255, 255, 255, 0.85));
+}
+
 .cg-history-medal {
   margin: 0;
-  font-size: 15px;
+  font-size: 18px;
 }
 
 .cg-history-thumb img {
-  width: 64px;
-  height: 64px;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: 12px;
+  display: block;
+}
+
+.cg-history-slot--first .cg-history-thumb img {
+  max-height: 260px;
 }
 
 .cg-history-link {
   margin: 0;
   font-weight: 700;
+  font-size: 14px;
   color: #2f2f46;
   text-decoration: none;
+}
+
+.cg-history-link--fallback {
+  color: var(--cg-muted);
+  font-weight: 600;
+}
+
+.cg-history-slot .cg-author {
+  margin-top: -2px;
 }
 
 .cg-history-link:hover {

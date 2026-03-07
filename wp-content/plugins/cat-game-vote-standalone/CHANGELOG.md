@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.51
+- Ranking / Ganadores anteriores: rediseño visual de cada evento histórico con cabecera dedicada (nombre + período) y podio móvil-first de jerarquía clara.
+- Ranking / Ganadores anteriores: el 1° lugar ahora destaca en bloque principal, y 2°/3° se presentan en bloques secundarios compactos.
+- Ranking / Ganadores anteriores: miniaturas más grandes, medallas más visibles y fallback `Sin título` en estilo secundario, manteniendo enlaces al detalle de publicación.
+
 ## 0.27.50
 - Perfil / Mis publicaciones: se elimina duplicación visual de reacciones, dejando un único bloque reactivo (emoji+conteo) por publicación.
 - Perfil / Mis publicaciones: se mantiene ubicación + total `Reacciones: X` y acciones existentes sin romper reacciones clickeables.

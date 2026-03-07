@@ -114,43 +114,61 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                     <?php
                     $event_name = (string) ($history['event_name'] ?? 'Evento');
                     $period = trim((string) ($history['starts_at'] ?? '') . ' - ' . (string) ($history['ends_at'] ?? ''));
-                    $slots = [
-                        'first' => '🥇',
-                        'second' => '🥈',
-                        'third' => '🥉',
-                    ];
+                    $slots = ['first', 'second', 'third'];
+                    $medals = ['first' => '🥇', 'second' => '🥈', 'third' => '🥉'];
                     ?>
                     <article class="cg-card cg-history-card">
-                        <p class="cg-rank-title"><?php echo esc_html($event_name); ?></p>
-                        <?php if ($period !== '-'): ?><p class="cg-file-picker-text"><?php echo esc_html($period); ?></p><?php endif; ?>
-                        <div class="cg-history-podium">
-                            <?php foreach ($slots as $slot => $medal): ?>
-                                <?php
-                                $winner = is_array($history['winners'][$slot] ?? null) ? $history['winners'][$slot] : [];
-                                $submission_id = (int) ($winner['submission_id'] ?? 0);
-                                $title = trim((string) ($winner['title'] ?? ''));
-                                $title = $title !== '' ? CatGame_Submissions::visual_label($title) : 'Sin título';
-                                $attachment_id = (int) ($winner['attachment_id'] ?? 0);
-                                $user_id = (int) ($winner['user_id'] ?? 0);
-                                $author = $user_id > 0 ? get_userdata($user_id) : null;
-                                $username = $author ? (string) $author->user_login : 'usuario';
-                                $submission_url = $submission_id > 0 ? home_url('/catgame/submission/' . $submission_id) : '';
-                                ?>
-                                <div class="cg-history-slot">
-                                    <p class="cg-history-medal"><?php echo esc_html($medal); ?></p>
-                                    <?php if ($attachment_id > 0): ?>
+                        <header class="cg-history-card__header">
+                            <p class="cg-rank-title"><?php echo esc_html($event_name); ?></p>
+                            <?php if ($period !== '-'): ?><p class="cg-history-period"><?php echo esc_html($period); ?></p><?php endif; ?>
+                        </header>
+
+                        <?php
+                        $first_winner = is_array($history['winners']['first'] ?? null) ? $history['winners']['first'] : [];
+                        $second_winner = is_array($history['winners']['second'] ?? null) ? $history['winners']['second'] : [];
+                        $third_winner = is_array($history['winners']['third'] ?? null) ? $history['winners']['third'] : [];
+
+                        $render_winner = static function (array $winner, string $slot, array $medals): void {
+                            $submission_id = (int) ($winner['submission_id'] ?? 0);
+                            $raw_title = trim((string) ($winner['title'] ?? ''));
+                            $title = $raw_title !== '' ? CatGame_Submissions::visual_label($raw_title) : 'Sin título';
+                            $title_class = $raw_title !== '' ? 'cg-history-link' : 'cg-history-link cg-history-link--fallback';
+                            $attachment_id = (int) ($winner['attachment_id'] ?? 0);
+                            $user_id = (int) ($winner['user_id'] ?? 0);
+                            $author = $user_id > 0 ? get_userdata($user_id) : null;
+                            $username = $author ? (string) $author->user_login : 'usuario';
+                            $submission_url = $submission_id > 0 ? home_url('/catgame/submission/' . $submission_id) : '';
+                            ?>
+                            <article class="cg-history-slot cg-history-slot--<?php echo esc_attr($slot); ?>">
+                                <p class="cg-history-medal"><?php echo esc_html($medals[$slot] ?? '🏅'); ?></p>
+                                <?php if ($attachment_id > 0): ?>
+                                    <?php if ($submission_url !== ''): ?>
+                                        <a class="cg-history-thumb" href="<?php echo esc_url($submission_url); ?>">
+                                            <?php echo wp_get_attachment_image($attachment_id, 'medium', false, ['loading' => 'lazy']); ?>
+                                        </a>
+                                    <?php else: ?>
                                         <div class="cg-history-thumb">
-                                            <?php echo wp_get_attachment_image($attachment_id, 'thumbnail', false, ['loading' => 'lazy']); ?>
+                                            <?php echo wp_get_attachment_image($attachment_id, 'medium', false, ['loading' => 'lazy']); ?>
                                         </div>
                                     <?php endif; ?>
-                                    <?php if ($submission_url !== ''): ?>
-                                        <a class="cg-history-link" href="<?php echo esc_url($submission_url); ?>"><?php echo esc_html($title); ?></a>
-                                    <?php else: ?>
-                                        <p class="cg-history-link"><?php echo esc_html($title); ?></p>
-                                    <?php endif; ?>
-                                    <small class="cg-author">@<?php echo esc_html($username); ?></small>
-                                </div>
-                            <?php endforeach; ?>
+                                <?php endif; ?>
+                                <?php if ($submission_url !== ''): ?>
+                                    <a class="<?php echo esc_attr($title_class); ?>" href="<?php echo esc_url($submission_url); ?>"><?php echo esc_html($title); ?></a>
+                                <?php else: ?>
+                                    <p class="<?php echo esc_attr($title_class); ?>"><?php echo esc_html($title); ?></p>
+                                <?php endif; ?>
+                                <small class="cg-author">@<?php echo esc_html($username); ?></small>
+                            </article>
+                            <?php
+                        };
+                        ?>
+
+                        <div class="cg-history-podium">
+                            <?php $render_winner($first_winner, 'first', $medals); ?>
+                            <div class="cg-history-podium-secondary">
+                                <?php $render_winner($second_winner, 'second', $medals); ?>
+                                <?php $render_winner($third_winner, 'third', $medals); ?>
+                            </div>
                         </div>
                     </article>
                 <?php endforeach; ?>
