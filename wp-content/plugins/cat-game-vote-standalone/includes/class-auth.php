@@ -20,6 +20,7 @@ class CatGame_Auth {
         add_action('admin_post_catgame_reset_password', [__CLASS__, 'handle_reset_password']);
         add_action('admin_post_catgame_logout', [__CLASS__, 'handle_logout']);
         add_action('admin_post_catgame_profile_update', [__CLASS__, 'handle_profile_update']);
+        add_action('admin_post_catgame_submit_feedback', [__CLASS__, 'handle_submit_feedback']);
         add_filter('retrieve_password_message', [__CLASS__, 'filter_retrieve_password_message'], 10, 4);
     }
 
@@ -289,6 +290,67 @@ class CatGame_Auth {
         }
 
         wp_safe_redirect(add_query_arg('profile_saved', '1', home_url('/catgame/profile')));
+        exit;
+    }
+
+
+    public static function handle_submit_feedback(): void {
+        if (!is_user_logged_in()) {
+            wp_safe_redirect(home_url('/catgame/profile'));
+            exit;
+        }
+
+        check_admin_referer('catgame_submit_feedback');
+
+        $user_id = get_current_user_id();
+        $type = sanitize_key(wp_unslash($_POST['feedback_type'] ?? ''));
+        $message = trim(sanitize_textarea_field(wp_unslash($_POST['feedback_message'] ?? '')));
+        $source_page = trim(sanitize_text_field(wp_unslash($_POST['feedback_source_page'] ?? 'profile')));
+
+        $allowed_types = ['comment', 'suggestion', 'technical_error', 'bug_report'];
+        if (!in_array($type, $allowed_types, true)) {
+            $type = 'comment';
+        }
+
+        if ($message === '') {
+            wp_safe_redirect(add_query_arg('feedback_error', 'empty', home_url('/catgame/profile')));
+            exit;
+        }
+
+        if (function_exists('mb_substr')) {
+            $message = mb_substr($message, 0, 1200);
+        } else {
+            $message = substr($message, 0, 1200);
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('feedback');
+        $user = wp_get_current_user();
+        $username = sanitize_user((string) ($user->user_login ?? ''), true);
+        if ($username === '') {
+            $username = 'usuario';
+        }
+
+        $wpdb->insert(
+            $table,
+            [
+                'user_id' => $user_id,
+                'username' => $username,
+                'type' => $type,
+                'message' => $message,
+                'source_page' => $source_page,
+                'status' => 'nuevo',
+                'created_at' => current_time('mysql'),
+            ],
+            ['%d', '%s', '%s', '%s', '%s', '%s', '%s']
+        );
+
+        if ($wpdb->last_error) {
+            wp_safe_redirect(add_query_arg('feedback_error', 'save_failed', home_url('/catgame/profile')));
+            exit;
+        }
+
+        wp_safe_redirect(add_query_arg('feedback_sent', '1', home_url('/catgame/profile')));
         exit;
     }
 

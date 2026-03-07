@@ -83,6 +83,8 @@
   const profileSaved = params.get('profile_saved');
   const completeProfile = params.get('complete_profile');
   const publishModeAdjusted = params.get('publish_mode_adjusted');
+  const feedbackSent = params.get('feedback_sent');
+  const feedbackError = params.get('feedback_error');
   const error = params.get('catgame_error');
 
   if (voted === '1') {
@@ -109,6 +111,18 @@
     window.catgameToast('La Arena dejó de estar activa. Tu foto se publicó en El Parque.', 'info', 3200);
   }
 
+  if (feedbackSent === '1') {
+    window.catgameToast('Comentario enviado. ¡Gracias por ayudarnos a mejorar!', 'success', 2600);
+  }
+
+  if (feedbackError === 'empty') {
+    window.catgameToast('Escribe un mensaje antes de enviar tu comentario.', 'error', 2800);
+  }
+
+  if (feedbackError === 'save_failed') {
+    window.catgameToast('No se pudo guardar tu mensaje. Intenta nuevamente.', 'error', 2800);
+  }
+
   if (error) {
     console.warn('CatGame warning:', error);
     const errorMessages = {
@@ -117,7 +131,7 @@
     window.catgameToast(errorMessages[error] || 'Ocurrió un error. Intenta nuevamente.', 'error');
   }
 
-  const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || profileSaved === '1' || completeProfile === '1' || publishModeAdjusted === '1' || !!error;
+  const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || profileSaved === '1' || completeProfile === '1' || publishModeAdjusted === '1' || feedbackSent === '1' || !!feedbackError || !!error;
   if (shouldClean && window.history && typeof window.history.replaceState === 'function') {
     params.delete('voted');
     params.delete('uploaded');
@@ -126,6 +140,8 @@
     params.delete('profile_saved');
     params.delete('complete_profile');
     params.delete('publish_mode_adjusted');
+    params.delete('feedback_sent');
+    params.delete('feedback_error');
     const nextQuery = params.toString();
     const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
     window.history.replaceState({}, '', nextUrl);

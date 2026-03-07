@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.55
+- Perfil: nueva sección **Comentarios y sugerencias** con formulario para enviar comentario, sugerencia, error técnico o reporte de bug.
+- Feedback backend: nuevo handler `catgame_submit_feedback` para guardar mensajes del usuario autenticado en tabla dedicada `catgame_feedback` con tipo, contenido, fecha, estado y origen.
+- Admin: nuevo menú **Feedback** en Cat Game con listado de mensajes y acciones `Marcar revisado`, `Eliminar` y `Agradecer` (envía notificación al usuario).
+- DB: versión de esquema `14` con nueva tabla `catgame_feedback`.
+
 ## 0.27.54
 - Nueva página del juego **Acerca de nosotros** accesible en `/catgame/about` con contenido breve: qué es el juego, misión, visión, valores y futuro del proyecto.
 - Inicio: el botón `ℹ️ Acerca de nosotros` ahora abre una vista real dentro del juego (no placeholder), manteniendo navegación simple con `← Volver al inicio`.

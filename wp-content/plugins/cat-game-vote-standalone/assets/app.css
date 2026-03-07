@@ -2172,3 +2172,19 @@ a.cg-btn--ghost {
   max-height: 72vh;
   object-fit: contain;
 }
+
+
+.cg-feedback-card {
+  display: grid;
+  gap: 10px;
+}
+
+.cg-feedback-card h3,
+.cg-feedback-card p {
+  margin: 0;
+}
+
+.cg-feedback-form {
+  display: grid;
+  gap: 10px;
+}

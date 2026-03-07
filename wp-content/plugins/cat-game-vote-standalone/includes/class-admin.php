@@ -18,6 +18,9 @@ class CatGame_Admin {
         add_action('admin_post_catgame_review_keep_submission', [__CLASS__, 'review_keep_submission']);
         add_action('admin_post_catgame_review_remove_submission', [__CLASS__, 'review_remove_submission']);
         add_action('admin_post_catgame_review_decide_appeal', [__CLASS__, 'review_decide_appeal']);
+        add_action('admin_post_catgame_feedback_mark_reviewed', [__CLASS__, 'feedback_mark_reviewed']);
+        add_action('admin_post_catgame_feedback_delete', [__CLASS__, 'feedback_delete']);
+        add_action('admin_post_catgame_feedback_thank_user', [__CLASS__, 'feedback_thank_user']);
         add_action('admin_post_catgame_save_settings', [__CLASS__, 'save_settings']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_assets']);
         add_action('admin_notices', [__CLASS__, 'permalink_notice']);
@@ -28,13 +31,14 @@ class CatGame_Admin {
         add_submenu_page('catgame-events', 'Events', 'Events', 'manage_options', 'catgame-events', [__CLASS__, 'events_page']);
         add_submenu_page('catgame-events', 'Moderation', 'Moderation', 'manage_options', 'catgame-moderation', [__CLASS__, 'moderation_page']);
         add_submenu_page('catgame-events', 'Revisión', 'Revisión', 'manage_options', 'catgame-review', [__CLASS__, 'review_page']);
+        add_submenu_page('catgame-events', 'Feedback', 'Feedback', 'manage_options', 'catgame-feedback', [__CLASS__, 'feedback_page']);
         add_submenu_page('catgame-events', 'Ajustes', 'Ajustes', 'manage_options', 'catgame-settings', [__CLASS__, 'settings_page']);
     }
 
     public static function enqueue_admin_assets(): void {
         $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
 
-        if (!in_array($page, ['catgame-events', 'catgame-settings', 'catgame-moderation', 'catgame-review'], true)) {
+        if (!in_array($page, ['catgame-events', 'catgame-settings', 'catgame-moderation', 'catgame-review', 'catgame-feedback'], true)) {
             return;
         }
 
@@ -1276,6 +1280,205 @@ class CatGame_Admin {
 
         wp_safe_redirect(admin_url('admin.php?page=catgame-moderation'));
         exit;
+    }
+
+
+    public static function feedback_page(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('feedback');
+        $status_filter = isset($_GET['feedback_status']) ? sanitize_key(wp_unslash($_GET['feedback_status'])) : 'all';
+        $allowed_status = ['all', 'nuevo', 'revisado'];
+        if (!in_array($status_filter, $allowed_status, true)) {
+            $status_filter = 'all';
+        }
+
+        $where_sql = '';
+        $params = [];
+        if ($status_filter !== 'all') {
+            $where_sql = 'WHERE status = %s';
+            $params[] = $status_filter;
+        }
+
+        if (!empty($params)) {
+            $sql = $wpdb->prepare("SELECT * FROM {$table} {$where_sql} ORDER BY created_at DESC, id DESC LIMIT 200", ...$params);
+        } else {
+            $sql = "SELECT * FROM {$table} {$where_sql} ORDER BY created_at DESC, id DESC LIMIT 200";
+        }
+
+        $items = $wpdb->get_results($sql, ARRAY_A);
+        $notice = isset($_GET['feedback_notice']) ? sanitize_key(wp_unslash($_GET['feedback_notice'])) : '';
+        ?>
+        <div class="wrap catgame-admin-page">
+            <h1>Cat Game - Feedback</h1>
+
+            <?php if ($notice === 'reviewed'): ?>
+                <div class="notice notice-success is-dismissible"><p>Feedback marcado como revisado.</p></div>
+            <?php elseif ($notice === 'deleted'): ?>
+                <div class="notice notice-success is-dismissible"><p>Feedback eliminado.</p></div>
+            <?php elseif ($notice === 'thanked'): ?>
+                <div class="notice notice-success is-dismissible"><p>Mensaje de agradecimiento enviado.</p></div>
+            <?php elseif ($notice === 'invalid'): ?>
+                <div class="notice notice-error is-dismissible"><p>No se pudo procesar la acción solicitada.</p></div>
+            <?php endif; ?>
+
+            <p>
+                <a class="button <?php echo $status_filter === 'all' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-feedback&feedback_status=all')); ?>">Todos</a>
+                <a class="button <?php echo $status_filter === 'nuevo' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-feedback&feedback_status=nuevo')); ?>">Nuevos</a>
+                <a class="button <?php echo $status_filter === 'revisado' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-feedback&feedback_status=revisado')); ?>">Revisados</a>
+            </p>
+
+            <?php if (empty($items)): ?>
+                <p class="description">Aún no hay mensajes de feedback.</p>
+            <?php else: ?>
+                <table class="widefat striped">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Tipo</th>
+                        <th>Mensaje</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($items as $item): ?>
+                        <?php
+                        $feedback_id = (int) ($item['id'] ?? 0);
+                        $user_id = (int) ($item['user_id'] ?? 0);
+                        $username = (string) ($item['username'] ?? 'usuario');
+                        $type = (string) ($item['type'] ?? 'comment');
+                        $message = (string) ($item['message'] ?? '');
+                        $created_at = (string) ($item['created_at'] ?? '');
+                        $status = (string) ($item['status'] ?? 'nuevo');
+                        ?>
+                        <tr>
+                            <td>#<?php echo $feedback_id; ?></td>
+                            <td>@<?php echo esc_html($username); ?> <small>(ID <?php echo $user_id; ?>)</small></td>
+                            <td><?php echo esc_html(self::feedback_type_label($type)); ?></td>
+                            <td><?php echo esc_html($message); ?></td>
+                            <td><?php echo esc_html($created_at); ?></td>
+                            <td><span class="catgame-pill"><?php echo esc_html($status); ?></span></td>
+                            <td class="catgame-table-actions">
+                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                    <?php wp_nonce_field('catgame_feedback_mark_reviewed'); ?>
+                                    <input type="hidden" name="action" value="catgame_feedback_mark_reviewed" />
+                                    <input type="hidden" name="feedback_id" value="<?php echo $feedback_id; ?>" />
+                                    <?php submit_button('Marcar revisado', 'secondary small', 'submit', false); ?>
+                                </form>
+                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                    <?php wp_nonce_field('catgame_feedback_thank_user'); ?>
+                                    <input type="hidden" name="action" value="catgame_feedback_thank_user" />
+                                    <input type="hidden" name="feedback_id" value="<?php echo $feedback_id; ?>" />
+                                    <?php submit_button('Agradecer', 'secondary small', 'submit', false); ?>
+                                </form>
+                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('¿Eliminar este mensaje de feedback?');">
+                                    <?php wp_nonce_field('catgame_feedback_delete'); ?>
+                                    <input type="hidden" name="action" value="catgame_feedback_delete" />
+                                    <input type="hidden" name="feedback_id" value="<?php echo $feedback_id; ?>" />
+                                    <?php submit_button('Eliminar', 'delete small', 'submit', false); ?>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    public static function feedback_mark_reviewed(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        check_admin_referer('catgame_feedback_mark_reviewed');
+        $feedback_id = isset($_POST['feedback_id']) ? (int) $_POST['feedback_id'] : 0;
+        if ($feedback_id <= 0) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-feedback&feedback_notice=invalid'));
+            exit;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('feedback');
+        $wpdb->update($table, ['status' => 'revisado'], ['id' => $feedback_id], ['%s'], ['%d']);
+
+        wp_safe_redirect(admin_url('admin.php?page=catgame-feedback&feedback_notice=reviewed'));
+        exit;
+    }
+
+    public static function feedback_delete(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        check_admin_referer('catgame_feedback_delete');
+        $feedback_id = isset($_POST['feedback_id']) ? (int) $_POST['feedback_id'] : 0;
+        if ($feedback_id <= 0) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-feedback&feedback_notice=invalid'));
+            exit;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('feedback');
+        $wpdb->delete($table, ['id' => $feedback_id], ['%d']);
+
+        wp_safe_redirect(admin_url('admin.php?page=catgame-feedback&feedback_notice=deleted'));
+        exit;
+    }
+
+    public static function feedback_thank_user(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        check_admin_referer('catgame_feedback_thank_user');
+        $feedback_id = isset($_POST['feedback_id']) ? (int) $_POST['feedback_id'] : 0;
+        if ($feedback_id <= 0) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-feedback&feedback_notice=invalid'));
+            exit;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('feedback');
+        $feedback = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE id = %d", $feedback_id), ARRAY_A);
+        if (!$feedback) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-feedback&feedback_notice=invalid'));
+            exit;
+        }
+
+        $user_id = (int) ($feedback['user_id'] ?? 0);
+        if ($user_id > 0 && class_exists('CatGame_Reports')) {
+            CatGame_Reports::add_notification(
+                $user_id,
+                'system',
+                'Gracias por tu mensaje',
+                'Gracias por ayudarnos a mejorar Cat Game. Revisamos tu comentario con atención.',
+                'feedback_thanks_' . $feedback_id
+            );
+        }
+
+        $wpdb->update($table, ['status' => 'revisado'], ['id' => $feedback_id], ['%s'], ['%d']);
+
+        wp_safe_redirect(admin_url('admin.php?page=catgame-feedback&feedback_notice=thanked'));
+        exit;
+    }
+
+    private static function feedback_type_label(string $type): string {
+        $map = [
+            'comment' => 'Comentario',
+            'suggestion' => 'Sugerencia',
+            'technical_error' => 'Error técnico',
+            'bug_report' => 'Reporte de bug',
+        ];
+
+        return $map[$type] ?? 'Comentario';
     }
 
     public static function settings_page(): void {

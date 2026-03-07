@@ -212,12 +212,23 @@ if ($upload_banned_until_iso !== '') {
         <p class="cg-alert cg-alert-error">Debes aceptar las normas y sanciones para guardar.</p>
     <?php endif; ?>
     <?php $review_appeal_status = sanitize_key(wp_unslash($_GET['review_appeal'] ?? '')); ?>
+    <?php $feedback_status = sanitize_key(wp_unslash($_GET['feedback_sent'] ?? '')); ?>
+    <?php $feedback_error = sanitize_key(wp_unslash($_GET['feedback_error'] ?? '')); ?>
     <?php if ($review_appeal_status === 'sent'): ?>
         <p class="cg-alert cg-alert-success">Apelación de revisión enviada.</p>
     <?php elseif ($review_appeal_status === 'expired'): ?>
         <p class="cg-alert cg-alert-error">La ventana de apelación de revisión (24h) expiró.</p>
     <?php elseif ($review_appeal_status === 'invalid'): ?>
         <p class="cg-alert cg-alert-error">No se pudo procesar la apelación solicitada.</p>
+    <?php endif; ?>
+
+    <?php if ($feedback_status === '1'): ?>
+        <p class="cg-alert cg-alert-success">Gracias. Tu mensaje fue enviado correctamente.</p>
+    <?php endif; ?>
+    <?php if ($feedback_error === 'empty'): ?>
+        <p class="cg-alert cg-alert-error">Escribe un mensaje antes de enviar tu comentario.</p>
+    <?php elseif ($feedback_error === 'save_failed'): ?>
+        <p class="cg-alert cg-alert-error">No se pudo guardar tu mensaje. Intenta nuevamente.</p>
     <?php endif; ?>
 
     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form" id="catgame-profile-form">
@@ -418,6 +429,32 @@ if ($upload_banned_until_iso !== '') {
         <h3>Comunidad</h3>
         <p>¿Ideas para eventos futuros? Escríbenos en Instagram.</p>
         <a class="cg-cta" href="<?php echo esc_url(CATGAME_INSTAGRAM_URL); ?>" target="_blank" rel="noopener noreferrer">Ir a Instagram</a>
+    </section>
+
+
+    <section class="cg-card cg-feedback-card">
+        <h3>Ayúdanos a mejorar</h3>
+        <p>Puedes enviarnos comentarios, sugerencias o reportar errores que encuentres en el juego.</p>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form cg-feedback-form">
+            <?php wp_nonce_field('catgame_submit_feedback'); ?>
+            <input type="hidden" name="action" value="catgame_submit_feedback">
+            <input type="hidden" name="feedback_source_page" value="profile">
+
+            <label>Tipo de mensaje
+                <select name="feedback_type" required>
+                    <option value="comment">Comentario</option>
+                    <option value="suggestion">Sugerencia</option>
+                    <option value="technical_error">Error técnico</option>
+                    <option value="bug_report">Reporte de bug</option>
+                </select>
+            </label>
+
+            <label>Mensaje
+                <textarea name="feedback_message" rows="4" maxlength="1200" placeholder="Escribe aquí tu comentario, sugerencia o describe el error que encontraste." required></textarea>
+            </label>
+
+            <button type="submit">Enviar comentario</button>
+        </form>
     </section>
 
     <h3>Mis etiquetas</h3>
