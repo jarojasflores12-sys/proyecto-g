@@ -450,8 +450,10 @@ if ($upload_banned_until_iso !== '') {
                 $item_reactions = (int) ($item['total_reactions'] ?? 0);
                 $item_is_event = (int) ($item['event_id'] ?? 0) > 0;
                 $item_location = CatGame_Submissions::visual_label((string) ($item['city'] ?? '')) . ', ' . CatGame_Submissions::visual_label((string) ($item['country'] ?? ''));
-                $item_reaction_counts = is_array($item['reaction_counts'] ?? null) ? (array) $item['reaction_counts'] : [];
-                $reaction_labels = CatGame_Reactions::reaction_labels();
+                $appeal_html = class_exists('CatGame_Reports') ? CatGame_Reports::appeal_button_html((array) $item, (int) get_current_user_id()) : '';
+                if (is_string($appeal_html) && strpos($appeal_html, 'No existe una moderación activa para esta publicación.') !== false) {
+                    $appeal_html = '';
+                }
                 ?>
             <article class="cg-card cg-profile-item">
                 <header class="cg-profile-item__header">
@@ -473,13 +475,8 @@ if ($upload_banned_until_iso !== '') {
 
                 <p class="cg-profile-item__location">📍 <?php echo esc_html($item_location); ?></p>
                 <p class="cg-profile-item__total">Reacciones: <?php echo (int) $item_reactions; ?></p>
-                <div class="cg-profile-item__reaction-summary" aria-label="Resumen de reacciones">
-                    <?php foreach ($reaction_labels as $slug => $meta): ?>
-                        <span class="cg-profile-item__reaction-chip"><?php echo esc_html((string) ($meta['emoji'] ?? '')); ?> <?php echo (int) ($item_reaction_counts[$slug] ?? 0); ?></span>
-                    <?php endforeach; ?>
-                </div>
 
-                <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::appeal_button_html((array) $item, (int) get_current_user_id()) : ''; ?>
+                <?php echo $appeal_html; ?>
                 <?php echo CatGame_Submissions::review_appeal_button_html((array) $item, (int) get_current_user_id()); ?>
                 <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in(), (array) ($item['reaction_counts'] ?? []) ? ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)] : []); ?>
             </article>

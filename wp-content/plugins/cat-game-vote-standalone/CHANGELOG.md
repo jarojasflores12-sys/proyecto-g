@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.50
+- Perfil / Mis publicaciones: se elimina duplicación visual de reacciones, dejando un único bloque reactivo (emoji+conteo) por publicación.
+- Perfil / Mis publicaciones: se mantiene ubicación + total `Reacciones: X` y acciones existentes sin romper reacciones clickeables.
+- Perfil / Mis publicaciones: se oculta el mensaje `No existe una moderación activa para esta publicación.` en esta vista para reducir ruido.
+
 ## 0.27.49
 - Perfil / Mis publicaciones: rediseño de cards para orden visual consistente con Publicaciones (header compacto con `#ID + título` y acción `Eliminar`, foto, ubicación, total de reacciones y resumen por emoji+conteo).
 - Perfil / Mis publicaciones: reducción de espaciados verticales y alineación compacta de elementos en la card.
