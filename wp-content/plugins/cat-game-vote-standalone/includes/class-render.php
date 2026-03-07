@@ -444,6 +444,12 @@ class CatGame_Render {
                     'public_profile_url' => self::public_profile_url((string) $public_user->user_login),
                 ];
 
+
+            case 'about':
+                return [
+                    'page' => 'about',
+                    'event' => $event,
+                ];
             case 'home':
                 $top_items = $event ? self::with_reaction_payload(CatGame_Submissions::leaderboard((int) $event['id'], 'global', '', '', 3), $current_user_id) : [];
                 $latest_page = CatGame_Submissions::list_feed_publications_paginated($event ? (int) ($event['id'] ?? 0) : 0, 5, 0, 'all');

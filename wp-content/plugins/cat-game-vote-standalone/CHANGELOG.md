@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.54
+- Nueva página del juego **Acerca de nosotros** accesible en `/catgame/about` con contenido breve: qué es el juego, misión, visión, valores y futuro del proyecto.
+- Inicio: el botón `ℹ️ Acerca de nosotros` ahora abre una vista real dentro del juego (no placeholder), manteniendo navegación simple con `← Volver al inicio`.
+- Router/render: soporte de ruta pública `about` sin tocar lógica de eventos, ranking, publicaciones o moderación.
+
 ## 0.27.53
 - Inicio: nueva card informativa **Cómo funciona el juego** con pasos breves mobile-first para usuarios nuevos, usando narrativa `La Arena` / `El Parque`.
 - Inicio: nuevo resumen corto de moderación para contextualizar reglas sin reemplazar el popup de reglas completo.

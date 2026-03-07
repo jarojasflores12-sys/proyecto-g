@@ -1025,6 +1025,43 @@ a.cg-btn--ghost {
 }
 
 
+.cg-about-page {
+  display: grid;
+  gap: 12px;
+}
+
+.cg-about-hero {
+  gap: 6px;
+}
+
+.cg-about-hero h2,
+.cg-about-block h3 {
+  margin: 0;
+}
+
+.cg-about-hero p,
+.cg-about-block p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.cg-about-block {
+  gap: 8px;
+}
+
+.cg-about-values {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.cg-about-back {
+  margin-top: 4px;
+}
+
+
 .cg-stars .cg-star {
   color: rgba(0, 0, 0, 0.18);
   font-size: 18px;

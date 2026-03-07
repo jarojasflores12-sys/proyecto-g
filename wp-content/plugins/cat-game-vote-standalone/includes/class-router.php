@@ -17,6 +17,7 @@ class CatGame_Router {
         add_rewrite_rule('^catgame/feed/?$', 'index.php?catgame_page=feed', 'top');
         add_rewrite_rule('^catgame/leaderboard/?$', 'index.php?catgame_page=leaderboard', 'top');
         add_rewrite_rule('^catgame/profile/?$', 'index.php?catgame_page=profile', 'top');
+        add_rewrite_rule('^catgame/about/?$', 'index.php?catgame_page=about', 'top');
         add_rewrite_rule('^catgame/user/([^/]+)/?$', 'index.php?catgame_page=user&catgame_username=$matches[1]', 'top');
         add_rewrite_rule('^catgame/submission/([0-9]+)/?$', 'index.php?catgame_page=submission&submission_id=$matches[1]', 'top');
     }
@@ -91,6 +92,10 @@ class CatGame_Router {
 
         if ($normalized_path === 'catgame/profile') {
             return 'profile';
+        }
+
+        if ($normalized_path === 'catgame/about') {
+            return 'about';
         }
 
         if (preg_match('#^catgame/user/([^/]+)$#', $normalized_path, $matches)) {
