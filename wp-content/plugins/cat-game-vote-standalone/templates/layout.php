@@ -28,7 +28,7 @@ $background_style = '';
 $has_background = !empty($background_url) && is_string($background_url);
 $bottom_nav_items = [
     ['page' => 'feed', 'label' => 'Publicaciones', 'icon' => '🐱', 'url' => home_url('/catgame/feed')],
-    ['page' => 'adoptions', 'label' => 'Adopciones', 'icon' => '🏡', 'url' => home_url('/catgame/adoptions')],
+    ['page' => 'leaderboard', 'label' => 'Ranking', 'icon' => '🏆', 'url' => home_url('/catgame/leaderboard')],
     ['page' => 'home', 'label' => 'Inicio', 'icon' => '🏠', 'url' => home_url('/catgame/')],
     ['page' => 'upload', 'label' => 'Subir', 'icon' => '📷', 'url' => home_url('/catgame/upload')],
     ['page' => 'profile', 'label' => 'Perfil', 'icon' => '👤', 'url' => home_url('/catgame/profile')],

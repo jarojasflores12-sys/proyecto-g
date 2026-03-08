@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.57
+- Navegación principal (tab bar inferior): se restaura el acceso visible a **Ranking** (`/catgame/leaderboard`) que había sido reemplazado por Adopciones.
+- Adopciones se mantiene como sección adicional (accesible desde navegación superior y rutas propias) sin reemplazar Ranking.
+
 ## 0.27.56
 - Nueva sección separada **Adopciones** con rutas públicas `/catgame/adoptions`, `/catgame/adoptions/new` y detalle `/catgame/adoptions/{id}`, aislada del feed/ranking/eventos del juego.
 - Adopciones: formulario específico con campos obligatorios (foto, nombre, sexo, edad, ciudad, país, tipo, descripción y contacto) para publicar `En adopción` o `Hogar temporal`.
