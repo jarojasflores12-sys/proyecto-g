@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.27.56
+- Nueva sección separada **Adopciones** con rutas públicas `/catgame/adoptions`, `/catgame/adoptions/new` y detalle `/catgame/adoptions/{id}`, aislada del feed/ranking/eventos del juego.
+- Adopciones: formulario específico con campos obligatorios (foto, nombre, sexo, edad, ciudad, país, tipo, descripción y contacto) para publicar `En adopción` o `Hogar temporal`.
+- Adopciones frontend: listado propio (orden reciente) y detalle con badge de tipo, datos completos y contacto; imagen grande optimizada en móvil con `max-height` + `object-fit: contain`.
+- Admin: nuevo panel `Cat Game > Adopciones` para revisar publicaciones y aplicar acciones `Marcar resuelta` o `Eliminar` sin mezclar con Moderation/Revisión.
+- DB: esquema `15` con nueva tabla `catgame_adoptions`.
+
 ## 0.27.55
 - Perfil: nueva sección **Comentarios y sugerencias** con formulario para enviar comentario, sugerencia, error técnico o reporte de bug.
 - Feedback backend: nuevo handler `catgame_submit_feedback` para guardar mensajes del usuario autenticado en tabla dedicada `catgame_feedback` con tipo, contenido, fecha, estado y origen.

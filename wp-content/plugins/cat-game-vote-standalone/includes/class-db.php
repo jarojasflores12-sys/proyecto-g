@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_DB {
-    private const SCHEMA_VERSION = '14';
+    private const SCHEMA_VERSION = '15';
     private const SCHEMA_OPTION_KEY = 'catgame_schema_version';
 
     public static function init(): void {
@@ -52,6 +52,7 @@ class CatGame_DB {
         $infractions = self::table('infractions');
         $event_winners = self::table('event_winners');
         $feedback = self::table('feedback');
+        $adoptions = self::table('adoptions');
 
         $sql = [];
         $sql[] = "CREATE TABLE {$events} (
@@ -288,6 +289,29 @@ class CatGame_DB {
             PRIMARY KEY (id),
             KEY user_id (user_id),
             KEY status_created_at (status, created_at)
+        ) {$charset};";
+
+
+        $sql[] = "CREATE TABLE {$adoptions} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            user_id BIGINT UNSIGNED NOT NULL,
+            pet_name VARCHAR(120) NOT NULL,
+            pet_type VARCHAR(120) NULL,
+            pet_gender VARCHAR(12) NOT NULL,
+            pet_age VARCHAR(40) NOT NULL,
+            city VARCHAR(120) NOT NULL,
+            country VARCHAR(120) NOT NULL,
+            adoption_type VARCHAR(24) NOT NULL,
+            description TEXT NOT NULL,
+            contact TEXT NOT NULL,
+            attachment_id BIGINT UNSIGNED NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NULL,
+            PRIMARY KEY (id),
+            KEY status_created_at (status, created_at),
+            KEY user_id (user_id),
+            KEY adoption_type (adoption_type)
         ) {$charset};";
 
         foreach ($sql as $statement) {

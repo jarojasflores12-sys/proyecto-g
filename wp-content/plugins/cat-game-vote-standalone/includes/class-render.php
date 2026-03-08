@@ -445,6 +445,57 @@ class CatGame_Render {
                 ];
 
 
+
+            case 'adoptions':
+                return [
+                    'page' => 'adoptions',
+                    'event' => $event,
+                    'adoptions' => CatGame_Submissions::list_adoptions('active', 60, 0),
+                    'adoption_created' => sanitize_key(wp_unslash($_GET['adoption_created'] ?? '')) === '1',
+                ];
+
+            case 'adoption-new':
+                $user_location = ['city' => '', 'country' => ''];
+                if (is_user_logged_in()) {
+                    $user_location = CatGame_Auth::get_user_default_location(get_current_user_id());
+                }
+                return [
+                    'page' => 'adoption-new',
+                    'event' => $event,
+                    'requires_login' => !is_user_logged_in(),
+                    'defaults' => [
+                        'city' => sanitize_text_field(wp_unslash($_GET['city'] ?? $user_location['city'] ?? '')),
+                        'country' => sanitize_text_field(wp_unslash($_GET['country'] ?? $user_location['country'] ?? '')),
+                        'pet_name' => sanitize_text_field(wp_unslash($_GET['pet_name'] ?? '')),
+                        'pet_type' => sanitize_text_field(wp_unslash($_GET['pet_type'] ?? '')),
+                        'pet_gender' => sanitize_key(wp_unslash($_GET['pet_gender'] ?? '')),
+                        'pet_age' => sanitize_text_field(wp_unslash($_GET['pet_age'] ?? '')),
+                        'adoption_type' => sanitize_key(wp_unslash($_GET['adoption_type'] ?? 'adoption')),
+                        'description' => sanitize_textarea_field(wp_unslash($_GET['description'] ?? '')),
+                        'contact' => sanitize_textarea_field(wp_unslash($_GET['contact'] ?? '')),
+                    ],
+                    'form_error_key' => sanitize_key(wp_unslash($_GET['catgame_error'] ?? '')),
+                ];
+
+            case 'adoption-detail':
+                $adoption_id = (int) get_query_var('adoption_id');
+                $adoption = CatGame_Submissions::get_adoption($adoption_id);
+                if (!$adoption || (string) ($adoption['status'] ?? 'active') !== 'active') {
+                    return [
+                        'page' => 'adoption-detail',
+                        'event' => $event,
+                        'adoption_not_found' => true,
+                        'adoption' => null,
+                    ];
+                }
+
+                return [
+                    'page' => 'adoption-detail',
+                    'event' => $event,
+                    'adoption_not_found' => false,
+                    'adoption' => $adoption,
+                ];
+
             case 'about':
                 return [
                     'page' => 'about',
@@ -482,6 +533,7 @@ class CatGame_Render {
             ['label' => 'Inicio', 'url' => home_url('/catgame/'), 'page' => 'home'],
             ['label' => 'Subir', 'url' => home_url('/catgame/upload'), 'page' => 'upload'],
             ['label' => 'Publicaciones', 'url' => home_url('/catgame/feed'), 'page' => 'feed'],
+            ['label' => 'Adopciones', 'url' => home_url('/catgame/adoptions'), 'page' => 'adoptions'],
             ['label' => 'Clasificación', 'url' => home_url('/catgame/leaderboard'), 'page' => 'leaderboard'],
             ['label' => 'Mi perfil', 'url' => home_url('/catgame/profile'), 'page' => 'profile'],
         ];

@@ -3,6 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 $current_page = $data['page'] ?? 'home';
+$nav_current_page = in_array($current_page, ['adoption-new', 'adoption-detail'], true) ? 'adoptions' : $current_page;
 $event = $data['event'] ?? null;
 $event_rules_view = [];
 $event_name = '';
@@ -27,7 +28,7 @@ $background_style = '';
 $has_background = !empty($background_url) && is_string($background_url);
 $bottom_nav_items = [
     ['page' => 'feed', 'label' => 'Publicaciones', 'icon' => '🐱', 'url' => home_url('/catgame/feed')],
-    ['page' => 'leaderboard', 'label' => 'Ranking', 'icon' => '🏆', 'url' => home_url('/catgame/leaderboard')],
+    ['page' => 'adoptions', 'label' => 'Adopciones', 'icon' => '🏡', 'url' => home_url('/catgame/adoptions')],
     ['page' => 'home', 'label' => 'Inicio', 'icon' => '🏠', 'url' => home_url('/catgame/')],
     ['page' => 'upload', 'label' => 'Subir', 'icon' => '📷', 'url' => home_url('/catgame/upload')],
     ['page' => 'profile', 'label' => 'Perfil', 'icon' => '👤', 'url' => home_url('/catgame/profile')],
@@ -50,7 +51,7 @@ if ($has_background) {
         <h1>🐱 Cat Game Vote</h1>
         <nav class="cg-nav" aria-label="Navegación principal">
             <?php foreach (CatGame_Render::nav_items() as $item): ?>
-                <?php $is_active = ($current_page === ($item['page'] ?? '')); ?>
+                <?php $is_active = ($nav_current_page === ($item['page'] ?? '')); ?>
                 <a class="<?php echo $is_active ? 'is-active' : ''; ?>" href="<?php echo esc_url($item['url']); ?>"><?php echo esc_html($item['label']); ?></a>
             <?php endforeach; ?>
         </nav>
@@ -134,7 +135,7 @@ if ($has_background) {
 
     <nav class="catgame-bottom-nav" aria-label="Navegación inferior">
         <?php foreach ($bottom_nav_items as $item): ?>
-            <?php $is_bottom_active = ($current_page === $item['page']); ?>
+            <?php $is_bottom_active = ($nav_current_page === $item['page']); ?>
             <a href="<?php echo esc_url($item['url']); ?>" class="nav-item <?php echo $is_bottom_active ? 'active' : ''; ?> <?php echo $item['page'] === 'home' ? 'is-home' : ''; ?>" data-page="<?php echo esc_attr($item['page']); ?>" aria-current="<?php echo $is_bottom_active ? 'page' : 'false'; ?>">
                 <span class="icon" aria-hidden="true"><?php echo esc_html($item['icon']); ?></span>
                 <span><?php echo esc_html($item['label']); ?></span>

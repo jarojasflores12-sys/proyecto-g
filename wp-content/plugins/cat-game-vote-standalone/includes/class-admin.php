@@ -21,6 +21,8 @@ class CatGame_Admin {
         add_action('admin_post_catgame_feedback_mark_reviewed', [__CLASS__, 'feedback_mark_reviewed']);
         add_action('admin_post_catgame_feedback_delete', [__CLASS__, 'feedback_delete']);
         add_action('admin_post_catgame_feedback_thank_user', [__CLASS__, 'feedback_thank_user']);
+        add_action('admin_post_catgame_adoption_mark_resolved', [__CLASS__, 'adoption_mark_resolved']);
+        add_action('admin_post_catgame_adoption_remove', [__CLASS__, 'adoption_remove']);
         add_action('admin_post_catgame_save_settings', [__CLASS__, 'save_settings']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_assets']);
         add_action('admin_notices', [__CLASS__, 'permalink_notice']);
@@ -31,6 +33,7 @@ class CatGame_Admin {
         add_submenu_page('catgame-events', 'Events', 'Events', 'manage_options', 'catgame-events', [__CLASS__, 'events_page']);
         add_submenu_page('catgame-events', 'Moderation', 'Moderation', 'manage_options', 'catgame-moderation', [__CLASS__, 'moderation_page']);
         add_submenu_page('catgame-events', 'Revisión', 'Revisión', 'manage_options', 'catgame-review', [__CLASS__, 'review_page']);
+        add_submenu_page('catgame-events', 'Adopciones', 'Adopciones', 'manage_options', 'catgame-adoptions', [__CLASS__, 'adoptions_page']);
         add_submenu_page('catgame-events', 'Feedback', 'Feedback', 'manage_options', 'catgame-feedback', [__CLASS__, 'feedback_page']);
         add_submenu_page('catgame-events', 'Ajustes', 'Ajustes', 'manage_options', 'catgame-settings', [__CLASS__, 'settings_page']);
     }
@@ -38,7 +41,7 @@ class CatGame_Admin {
     public static function enqueue_admin_assets(): void {
         $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
 
-        if (!in_array($page, ['catgame-events', 'catgame-settings', 'catgame-moderation', 'catgame-review', 'catgame-feedback'], true)) {
+        if (!in_array($page, ['catgame-events', 'catgame-settings', 'catgame-moderation', 'catgame-review', 'catgame-feedback', 'catgame-adoptions'], true)) {
             return;
         }
 
@@ -1479,6 +1482,147 @@ class CatGame_Admin {
         ];
 
         return $map[$type] ?? 'Comentario';
+    }
+
+
+
+    public static function adoptions_page(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('adoptions');
+        $status_filter = isset($_GET['adoption_status']) ? sanitize_key(wp_unslash($_GET['adoption_status'])) : 'active';
+        $allowed_status = ['active', 'resolved', 'removed', 'all'];
+        if (!in_array($status_filter, $allowed_status, true)) {
+            $status_filter = 'active';
+        }
+
+        if ($status_filter === 'all') {
+            $sql = "SELECT * FROM {$table} ORDER BY created_at DESC, id DESC LIMIT 300";
+        } else {
+            $sql = $wpdb->prepare("SELECT * FROM {$table} WHERE status = %s ORDER BY created_at DESC, id DESC LIMIT 300", $status_filter);
+        }
+        $items = $wpdb->get_results($sql, ARRAY_A);
+        $notice = isset($_GET['adoption_notice']) ? sanitize_key(wp_unslash($_GET['adoption_notice'])) : '';
+        ?>
+        <div class="wrap catgame-admin-page">
+            <h1>Cat Game - Adopciones</h1>
+
+            <?php if ($notice === 'resolved'): ?>
+                <div class="notice notice-success is-dismissible"><p>Publicación marcada como resuelta.</p></div>
+            <?php elseif ($notice === 'removed'): ?>
+                <div class="notice notice-success is-dismissible"><p>Publicación eliminada del listado de adopciones.</p></div>
+            <?php elseif ($notice === 'invalid'): ?>
+                <div class="notice notice-error is-dismissible"><p>No se pudo procesar la acción solicitada.</p></div>
+            <?php endif; ?>
+
+            <p>
+                <a class="button <?php echo $status_filter === 'active' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-adoptions&adoption_status=active')); ?>">Activas</a>
+                <a class="button <?php echo $status_filter === 'resolved' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-adoptions&adoption_status=resolved')); ?>">Resueltas</a>
+                <a class="button <?php echo $status_filter === 'removed' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-adoptions&adoption_status=removed')); ?>">Eliminadas</a>
+                <a class="button <?php echo $status_filter === 'all' ? 'button-primary' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=catgame-adoptions&adoption_status=all')); ?>">Todas</a>
+            </p>
+
+            <?php if (empty($items)): ?>
+                <p class="description">No hay publicaciones de adopciones para este filtro.</p>
+            <?php else: ?>
+                <table class="widefat striped">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Foto</th>
+                        <th>Mascota</th>
+                        <th>Tipo</th>
+                        <th>Sexo / Edad</th>
+                        <th>Ubicación</th>
+                        <th>Contacto</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($items as $item): ?>
+                        <?php
+                        $id = (int) ($item['id'] ?? 0);
+                        $thumb = wp_get_attachment_image((int) ($item['attachment_id'] ?? 0), 'thumbnail', false, ['style' => 'max-width:64px;height:auto;border-radius:8px;']);
+                        $pet_name = (string) ($item['pet_name'] ?? '');
+                        $pet_type = (string) ($item['pet_type'] ?? '');
+                        $type_label = CatGame_Submissions::adoption_type_label((string) ($item['adoption_type'] ?? 'adoption'));
+                        $gender_label = CatGame_Submissions::adoption_gender_label((string) ($item['pet_gender'] ?? 'male'));
+                        $pet_age = (string) ($item['pet_age'] ?? '');
+                        $location = trim((string) ($item['city'] ?? '') . ', ' . (string) ($item['country'] ?? ''), ', ');
+                        $contact = (string) ($item['contact'] ?? '');
+                        $status = (string) ($item['status'] ?? 'active');
+                        $created_at = (string) ($item['created_at'] ?? '');
+                        ?>
+                        <tr>
+                            <td>#<?php echo $id; ?></td>
+                            <td><?php echo $thumb ?: '—'; ?></td>
+                            <td><strong><?php echo esc_html($pet_name); ?></strong><br><small><?php echo esc_html($pet_type); ?></small></td>
+                            <td><?php echo esc_html($type_label); ?></td>
+                            <td><?php echo esc_html($gender_label); ?> · <?php echo esc_html($pet_age); ?></td>
+                            <td><?php echo esc_html($location); ?></td>
+                            <td><?php echo esc_html($contact); ?></td>
+                            <td><?php echo esc_html($created_at); ?></td>
+                            <td><span class="catgame-pill"><?php echo esc_html($status); ?></span></td>
+                            <td class="catgame-table-actions">
+                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                    <?php wp_nonce_field('catgame_adoption_mark_resolved'); ?>
+                                    <input type="hidden" name="action" value="catgame_adoption_mark_resolved" />
+                                    <input type="hidden" name="adoption_id" value="<?php echo $id; ?>" />
+                                    <?php submit_button('Marcar resuelta', 'secondary small', 'submit', false); ?>
+                                </form>
+                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('¿Eliminar esta publicación de adopciones?');">
+                                    <?php wp_nonce_field('catgame_adoption_remove'); ?>
+                                    <input type="hidden" name="action" value="catgame_adoption_remove" />
+                                    <input type="hidden" name="adoption_id" value="<?php echo $id; ?>" />
+                                    <?php submit_button('Eliminar', 'delete small', 'submit', false); ?>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    public static function adoption_mark_resolved(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        check_admin_referer('catgame_adoption_mark_resolved');
+        $adoption_id = isset($_POST['adoption_id']) ? (int) $_POST['adoption_id'] : 0;
+        if ($adoption_id <= 0) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-adoptions&adoption_notice=invalid'));
+            exit;
+        }
+
+        CatGame_Submissions::update_adoption_status($adoption_id, 'resolved');
+        wp_safe_redirect(admin_url('admin.php?page=catgame-adoptions&adoption_notice=resolved'));
+        exit;
+    }
+
+    public static function adoption_remove(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('No autorizado');
+        }
+
+        check_admin_referer('catgame_adoption_remove');
+        $adoption_id = isset($_POST['adoption_id']) ? (int) $_POST['adoption_id'] : 0;
+        if ($adoption_id <= 0) {
+            wp_safe_redirect(admin_url('admin.php?page=catgame-adoptions&adoption_notice=invalid'));
+            exit;
+        }
+
+        CatGame_Submissions::update_adoption_status($adoption_id, 'removed');
+        wp_safe_redirect(admin_url('admin.php?page=catgame-adoptions&adoption_notice=removed'));
+        exit;
     }
 
     public static function settings_page(): void {

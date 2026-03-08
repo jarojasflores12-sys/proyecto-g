@@ -15,6 +15,7 @@ class CatGame_Submissions {
         add_action('admin_post_catgame_submit_review_appeal', [__CLASS__, 'handle_submit_review_appeal']);
         add_action('admin_post_catgame_delete_custom_tag', [__CLASS__, 'handle_delete_custom_tag']);
         add_action('admin_post_catgame_delete_submission', [__CLASS__, 'handle_delete_submission']);
+        add_action('admin_post_catgame_create_adoption', [__CLASS__, 'handle_create_adoption']);
         add_action('admin_post_catgame_feed_more', [__CLASS__, 'handle_feed_more']);
         add_action('admin_post_nopriv_catgame_feed_more', [__CLASS__, 'handle_feed_more']);
         add_action('wp_ajax_catgame_tag_suggestions', [__CLASS__, 'handle_tag_suggestions']);
@@ -360,6 +361,196 @@ class CatGame_Submissions {
         exit;
     }
 
+
+
+
+    public static function adoption_error_message(string $error): string {
+        $messages = [
+            'adoption_missing_required' => 'Completa todos los campos obligatorios de la publicación de adopción.',
+            'adoption_missing_file' => 'Debes seleccionar una foto de la mascota.',
+            'adoption_file_too_large' => 'La imagen supera el máximo permitido (3MB).',
+            'adoption_invalid_type' => 'El archivo seleccionado no es una imagen válida.',
+            'adoption_upload_failed' => 'No se pudo subir la imagen de adopción. Intenta nuevamente.',
+            'adoption_create_failed' => 'No se pudo guardar la publicación de adopción. Intenta nuevamente.',
+            'adoption_login_required' => 'Debes iniciar sesión para publicar en Adopciones.',
+            'adoption_not_found' => 'La publicación de adopción no está disponible.',
+        ];
+
+        return $messages[$error] ?? 'No se pudo procesar la publicación de adopción.';
+    }
+
+    public static function handle_create_adoption(): void {
+        if (!is_user_logged_in()) {
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_login_required', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        check_admin_referer('catgame_create_adoption');
+
+        $user_id = get_current_user_id();
+        $pet_name = trim(sanitize_text_field(wp_unslash($_POST['pet_name'] ?? '')));
+        $pet_type = trim(sanitize_text_field(wp_unslash($_POST['pet_type'] ?? '')));
+        $pet_gender = sanitize_key(wp_unslash($_POST['pet_gender'] ?? ''));
+        $pet_age = trim(sanitize_text_field(wp_unslash($_POST['pet_age'] ?? '')));
+        $city = trim(sanitize_text_field(wp_unslash($_POST['city'] ?? '')));
+        $country = trim(sanitize_text_field(wp_unslash($_POST['country'] ?? '')));
+        $adoption_type = sanitize_key(wp_unslash($_POST['adoption_type'] ?? ''));
+        $description = trim(sanitize_textarea_field(wp_unslash($_POST['description'] ?? '')));
+        $contact = trim(sanitize_textarea_field(wp_unslash($_POST['contact'] ?? '')));
+
+        if (!in_array($pet_gender, ['male', 'female'], true)) {
+            $pet_gender = '';
+        }
+
+        if (!in_array($adoption_type, ['adoption', 'temporary'], true)) {
+            $adoption_type = '';
+        }
+
+        if ($pet_name === '' || $pet_gender === '' || $pet_age === '' || $city === '' || $country === '' || $adoption_type === '' || $description === '' || $contact === '') {
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_missing_required', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        if (empty($_FILES['adoption_image']['tmp_name'])) {
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_missing_file', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        $file = $_FILES['adoption_image'];
+        if ((int) ($file['size'] ?? 0) > 3 * 1024 * 1024) {
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_file_too_large', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        $type = wp_check_filetype_and_ext($file['tmp_name'], $file['name']);
+        if (empty($type['type']) || strpos((string) $type['type'], 'image/') !== 0) {
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_invalid_type', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+
+        $attachment_id = media_handle_upload('adoption_image', 0);
+        if (is_wp_error($attachment_id)) {
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_upload_failed', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        $final_size = self::compress_uploaded_image_backup((int) $attachment_id);
+
+        global $wpdb;
+        $table = CatGame_DB::table('adoptions');
+        $ok = $wpdb->insert(
+            $table,
+            [
+                'user_id' => $user_id,
+                'pet_name' => $pet_name,
+                'pet_type' => $pet_type,
+                'pet_gender' => $pet_gender,
+                'pet_age' => $pet_age,
+                'city' => $city,
+                'country' => $country,
+                'adoption_type' => $adoption_type,
+                'description' => $description,
+                'contact' => $contact,
+                'attachment_id' => (int) $attachment_id,
+                'status' => 'active',
+                'created_at' => current_time('mysql'),
+                'updated_at' => current_time('mysql'),
+            ],
+            ['%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s']
+        );
+
+        if (!$ok) {
+            wp_delete_attachment((int) $attachment_id, true);
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_create_failed', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        if ($final_size > 0) {
+            update_post_meta((int) $attachment_id, 'catgv_image_size_bytes', $final_size);
+        }
+
+        wp_safe_redirect(add_query_arg('adoption_created', '1', home_url('/catgame/adoptions')));
+        exit;
+    }
+
+    public static function list_adoptions(string $status = 'active', int $limit = 30, int $offset = 0): array {
+        global $wpdb;
+        $table = CatGame_DB::table('adoptions');
+
+        $status = sanitize_key($status);
+        if (!in_array($status, ['active', 'resolved', 'removed', 'all'], true)) {
+            $status = 'active';
+        }
+
+        $limit = max(1, min(100, (int) $limit));
+        $offset = max(0, (int) $offset);
+
+        if ($status === 'all') {
+            $sql = $wpdb->prepare("SELECT * FROM {$table} ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d", $limit, $offset);
+        } else {
+            $sql = $wpdb->prepare("SELECT * FROM {$table} WHERE status = %s ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d", $status, $limit, $offset);
+        }
+
+        $rows = $wpdb->get_results($sql, ARRAY_A);
+        return is_array($rows) ? $rows : [];
+    }
+
+    public static function get_adoption(int $id): ?array {
+        if ($id <= 0) {
+            return null;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('adoptions');
+        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE id = %d", $id), ARRAY_A);
+        return is_array($row) ? $row : null;
+    }
+
+    public static function update_adoption_status(int $id, string $status): void {
+        if ($id <= 0) {
+            return;
+        }
+
+        $status = sanitize_key($status);
+        if (!in_array($status, ['active', 'resolved', 'removed'], true)) {
+            return;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('adoptions');
+        $wpdb->update(
+            $table,
+            [
+                'status' => $status,
+                'updated_at' => current_time('mysql'),
+            ],
+            ['id' => $id],
+            ['%s', '%s'],
+            ['%d']
+        );
+    }
+
+    public static function adoption_type_label(string $type): string {
+        $type = sanitize_key($type);
+        if ($type === 'temporary') {
+            return '🛏 Hogar temporal';
+        }
+
+        return '🏡 En adopción';
+    }
+
+    public static function adoption_gender_label(string $gender): string {
+        $gender = sanitize_key($gender);
+        if ($gender === 'female') {
+            return 'Hembra';
+        }
+
+        return 'Macho';
+    }
 
     public static function handle_delete_submission(): void {
         if (!is_user_logged_in()) {

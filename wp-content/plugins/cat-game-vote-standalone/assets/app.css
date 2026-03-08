@@ -2188,3 +2188,82 @@ a.cg-btn--ghost {
   display: grid;
   gap: 10px;
 }
+
+
+.cg-adoptions-page {
+  display: grid;
+  gap: 12px;
+}
+
+.cg-adoptions-head {
+  display: grid;
+  gap: 8px;
+}
+
+.cg-adoptions-head h2,
+.cg-adoptions-head p {
+  margin: 0;
+}
+
+.cg-adoptions-grid {
+  gap: 12px;
+}
+
+.cg-adoption-card {
+  display: grid;
+  gap: 8px;
+}
+
+.cg-adoption-image-link {
+  display: block;
+}
+
+.cg-adoption-image,
+.cg-adoption-detail-image {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+
+.cg-adoption-meta,
+.cg-adoption-location,
+.cg-adoption-desc {
+  margin: 0;
+}
+
+.cg-adoption-form {
+  display: grid;
+  gap: 10px;
+}
+
+.cg-adoption-inline-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.cg-adoption-detail {
+  display: grid;
+  gap: 10px;
+}
+
+.cg-adoption-detail h2,
+.cg-adoption-detail h3,
+.cg-adoption-detail p {
+  margin: 0;
+}
+
+.cg-adoption-detail-image-wrap {
+  width: 100%;
+}
+
+.cg-adoption-detail-image {
+  max-height: 62vh;
+  object-fit: contain;
+}
+
+@media (min-width: 768px) {
+  .cg-adoption-inline-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+}
