@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.58
+- Navegación móvil: tab bar inferior actualizada para mostrar los **6 accesos** solicitados: Publicaciones, Ranking, Adopciones, Inicio, Subir y Perfil.
+- Se ajusta el layout de la tab bar móvil (`flex: 1` por item, iconos/texto compactos) para evitar que desaparezcan tabs por espacio en pantallas pequeñas.
+- Ranking y Adopciones quedan visibles a la vez; Adopciones no reemplaza Ranking.
+
 ## 0.27.57
 - Navegación principal (tab bar inferior): se restaura el acceso visible a **Ranking** (`/catgame/leaderboard`) que había sido reemplazado por Adopciones.
 - Adopciones se mantiene como sección adicional (accesible desde navegación superior y rutas propias) sin reemplazar Ranking.

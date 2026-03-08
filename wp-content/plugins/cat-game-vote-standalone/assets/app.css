@@ -466,24 +466,35 @@ body.cg-has-custom-bg .cg-main {
 .catgame-bottom-nav .nav-item {
   text-decoration: none;
   color: #777;
-  font-size: 12px;
+  font-size: 11px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
   transition: all 0.2s ease;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 2px;
 }
 
 .catgame-bottom-nav .nav-item .icon {
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   border-radius: 999px;
   transition: all 0.2s ease;
+}
+
+.catgame-bottom-nav .nav-item span:last-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .catgame-bottom-nav .nav-item.active {
