@@ -23,6 +23,14 @@
 
   trigger.addEventListener('click', openModal);
 
+  const inlineRuleLinks = document.querySelectorAll('[data-open-event-rules="1"]');
+  inlineRuleLinks.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      openModal();
+    });
+  });
+
   modal.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) {
@@ -74,6 +82,9 @@
   const deleted = params.get('deleted');
   const profileSaved = params.get('profile_saved');
   const completeProfile = params.get('complete_profile');
+  const publishModeAdjusted = params.get('publish_mode_adjusted');
+  const feedbackSent = params.get('feedback_sent');
+  const feedbackError = params.get('feedback_error');
   const error = params.get('catgame_error');
 
   if (voted === '1') {
@@ -96,6 +107,22 @@
     window.catgameToast('Completa tu ciudad y país para continuar', 'info');
   }
 
+  if (publishModeAdjusted === '1') {
+    window.catgameToast('La Arena dejó de estar activa. Tu foto se publicó en El Parque.', 'info', 3200);
+  }
+
+  if (feedbackSent === '1') {
+    window.catgameToast('Comentario enviado. ¡Gracias por ayudarnos a mejorar!', 'success', 2600);
+  }
+
+  if (feedbackError === 'empty') {
+    window.catgameToast('Escribe un mensaje antes de enviar tu comentario.', 'error', 2800);
+  }
+
+  if (feedbackError === 'save_failed') {
+    window.catgameToast('No se pudo guardar tu mensaje. Intenta nuevamente.', 'error', 2800);
+  }
+
   if (error) {
     console.warn('CatGame warning:', error);
     const errorMessages = {
@@ -104,7 +131,7 @@
     window.catgameToast(errorMessages[error] || 'Ocurrió un error. Intenta nuevamente.', 'error');
   }
 
-  const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || profileSaved === '1' || completeProfile === '1' || !!error;
+  const shouldClean = voted === '1' || uploaded === '1' || deleted === '1' || profileSaved === '1' || completeProfile === '1' || publishModeAdjusted === '1' || feedbackSent === '1' || !!feedbackError || !!error;
   if (shouldClean && window.history && typeof window.history.replaceState === 'function') {
     params.delete('voted');
     params.delete('uploaded');
@@ -112,6 +139,9 @@
     params.delete('deleted');
     params.delete('profile_saved');
     params.delete('complete_profile');
+    params.delete('publish_mode_adjusted');
+    params.delete('feedback_sent');
+    params.delete('feedback_error');
     const nextQuery = params.toString();
     const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
     window.history.replaceState({}, '', nextUrl);
@@ -136,6 +166,10 @@
   const cameraProxyInput = document.getElementById('catgame-cat-image-camera');
   const titleInput = form.querySelector('input[name="title"]');
   const submitButton = form.querySelector('button[type="submit"]');
+  const uploadModeWrap = form.querySelector('[data-upload-mode="1"]');
+  const uploadModeInput = form.querySelector('[data-upload-mode-input="1"]');
+  const uploadModeOptions = uploadModeWrap ? Array.from(uploadModeWrap.querySelectorAll('[data-upload-mode-option]')) : [];
+  const uploadModeHelp = uploadModeWrap ? uploadModeWrap.querySelector('[data-upload-mode-help="1"]') : null;
 
   const TARGET_MAX_SIDE = 1280;
   const TARGET_MAX_BYTES = 900 * 1024;
@@ -146,6 +180,49 @@
   let compressedFile = null;
   let compressing = false;
   let previewObjectUrl = null;
+  let selectedUploadMode = uploadModeInput ? String(uploadModeInput.value || '') : '';
+  const hasEventOption = uploadModeWrap ? uploadModeWrap.getAttribute('data-has-event') === '1' : false;
+
+  const modeHelpText = {
+    event: 'Participa en el evento activo de La Arena.',
+    free: 'Comparte tu mascota libremente en El Parque.',
+    none: 'Elige entre La Arena o El Parque para continuar.',
+  };
+
+  const syncUploadModeUi = () => {
+    if (!uploadModeInput) {
+      return;
+    }
+
+    uploadModeInput.value = selectedUploadMode;
+    uploadModeOptions.forEach((option) => {
+      const mode = String(option.getAttribute('data-upload-mode-option') || '');
+      option.classList.toggle('is-active', mode === selectedUploadMode);
+      option.setAttribute('aria-pressed', mode === selectedUploadMode ? 'true' : 'false');
+    });
+
+    if (uploadModeHelp) {
+      const key = selectedUploadMode === 'event' || selectedUploadMode === 'free' ? selectedUploadMode : 'none';
+      uploadModeHelp.textContent = modeHelpText[key];
+    }
+  };
+
+  if (uploadModeWrap && !hasEventOption && selectedUploadMode !== 'free') {
+    selectedUploadMode = 'free';
+  }
+
+  uploadModeOptions.forEach((option) => {
+    option.addEventListener('click', () => {
+      const mode = String(option.getAttribute('data-upload-mode-option') || '');
+      if (mode !== 'event' && mode !== 'free') {
+        return;
+      }
+      selectedUploadMode = mode;
+      syncUploadModeUi();
+    });
+  });
+
+  syncUploadModeUi();
 
   const syncFileToMainInput = (sourceInput) => {
     if (!sourceInput || typeof DataTransfer !== 'function') {
@@ -357,6 +434,13 @@
   });
 
   form.addEventListener('submit', (event) => {
+    if (uploadModeWrap && hasEventOption && selectedUploadMode !== 'event' && selectedUploadMode !== 'free') {
+      event.preventDefault();
+      window.catgameToast?.('Elige si quieres publicar en La Arena o en El Parque.', 'error');
+      syncUploadModeUi();
+      return;
+    }
+
     if (compressing) {
       event.preventDefault();
       return;
@@ -386,38 +470,44 @@
     }
   });
 
+})();
 
+
+(function () {
   const uploadRulesModal = document.getElementById('catgame-upload-rules-modal');
   const openUploadRulesButtons = Array.from(document.querySelectorAll('[data-open-upload-rules="1"]'));
-  const confirmTermsCheckbox = document.getElementById('catgame-confirm-terms');
-  if (uploadRulesModal && openUploadRulesButtons.length) {
-    const acknowledgeButton = uploadRulesModal.querySelector('[data-upload-rules-close="1"]:not(.cg-modal__backdrop)');
-
-    const setUploadRulesOpen = (open) => {
-      uploadRulesModal.classList.toggle('is-open', open);
-      uploadRulesModal.setAttribute('aria-hidden', open ? 'false' : 'true');
-
-      if (open && acknowledgeButton instanceof HTMLElement) {
-        window.setTimeout(() => acknowledgeButton.focus(), 0);
-      }
-    };
-
-    openUploadRulesButtons.forEach((btn) => {
-      btn.addEventListener('click', () => setUploadRulesOpen(true));
-    });
-
-    if (confirmTermsCheckbox) {
-      confirmTermsCheckbox.addEventListener('click', () => setUploadRulesOpen(true));
-    }
-
-    uploadRulesModal.addEventListener('click', (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (target.closest('[data-upload-rules-close="1"]')) {
-        setUploadRulesOpen(false);
-      }
-    });
+  if (!uploadRulesModal || !openUploadRulesButtons.length) {
+    return;
   }
+
+  const acknowledgeButton = uploadRulesModal.querySelector('[data-upload-rules-close="1"]:not(.cg-modal__backdrop)');
+
+  const setUploadRulesOpen = (open) => {
+    uploadRulesModal.classList.toggle('is-open', open);
+    uploadRulesModal.setAttribute('aria-hidden', open ? 'false' : 'true');
+
+    if (open && acknowledgeButton instanceof HTMLElement) {
+      window.setTimeout(() => acknowledgeButton.focus(), 0);
+    }
+  };
+
+  openUploadRulesButtons.forEach((btn) => {
+    btn.addEventListener('click', () => setUploadRulesOpen(true));
+  });
+
+  uploadRulesModal.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest('[data-upload-rules-close="1"]')) {
+      setUploadRulesOpen(false);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && uploadRulesModal.classList.contains('is-open')) {
+      setUploadRulesOpen(false);
+    }
+  });
 })();
 
 (function () {
@@ -434,13 +524,13 @@
   let userTags = [];
 
   const escapeHtml = (value) => String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
-  const splitTags = (value) => value.split(/[\n,]+/).map((item) => item.trim().toLowerCase()).filter(Boolean);
+  const splitTags = (value) => value.split(/[\n,]+/).map((item) => normalizeTag(item)).filter(Boolean);
 
   const normalizeTag = (value) => {
     const stripped = String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -453,37 +543,50 @@
       .slice(0, 20);
   };
 
-  const activeToken = () => {
-    const value = input.value || '';
-    const parts = value.split(/[\n,]/);
-    return normalizeTag(parts[parts.length - 1] || '');
+  const visualLabel = (value) => {
+    const normalized = normalizeTag(value).replace(/_/g, ' ').trim();
+    if (!normalized) {
+      return '';
+    }
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
   };
 
   const renderSuggestions = () => {
-    const token = activeToken();
-    if (!token || !Array.isArray(userTags) || userTags.length === 0) {
-      root.innerHTML = '';
+    if (!Array.isArray(userTags) || userTags.length === 0) {
+      root.hidden = true;
       return;
     }
+
+    root.hidden = false;
 
     const selected = new Set(splitTags(input.value || ''));
-    const items = userTags
-      .filter((tag) => tag.includes(token) && !selected.has(tag))
-      .slice(0, 8);
-
-    if (!items.length) {
-      root.innerHTML = '';
+    const list = root.querySelector('[data-tag-saved-list="1"]');
+    if (!(list instanceof HTMLElement)) {
       return;
     }
 
-    root.innerHTML = `<p class="cg-tag-suggest__title">Mis etiquetas sugeridas</p><div class="cg-tag-suggest__list">${items.map((tag) => `<button type="button" class="cg-tag-suggest__btn" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`).join('')}</div>`;
+    list.innerHTML = userTags
+      .map((tag) => {
+        const isActive = selected.has(tag);
+        const activeClass = isActive ? ' is-active' : '';
+        const fallbackLabel = String(tag || '').replace(/_/g, ' ').trim();
+        const label = visualLabel(tag) || fallbackLabel;
+        return `<button type="button" class="cg-tag-suggest__btn${activeClass}" data-tag="${escapeHtml(tag)}" aria-pressed="${isActive ? 'true' : 'false'}">${escapeHtml(label)}</button>`;
+      })
+      .join('');
   };
 
   const applySuggestion = (tag) => {
-    const parts = (input.value || '').split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
-    parts.pop();
-    parts.push(tag);
-    input.value = `${parts.join(', ')}, `;
+    const current = splitTags(input.value || '');
+    const next = new Set(current);
+
+    if (next.has(tag)) {
+      next.delete(tag);
+    } else {
+      next.add(tag);
+    }
+
+    input.value = Array.from(next).join(', ');
     input.focus();
     renderSuggestions();
   };
@@ -540,6 +643,7 @@
       const payload = await response.json();
       const tags = payload?.success && Array.isArray(payload?.data?.tags) ? payload.data.tags : [];
       userTags = tags.map((tag) => normalizeTag(String(tag || ''))).filter(Boolean);
+      userTags = Array.from(new Set(userTags));
       renderSuggestions();
     } catch (_) {
       bootstrapFromDataset();
@@ -663,42 +767,77 @@
 })();
 
 (function () {
-  const profileButton = document.querySelector('.js-share-profile');
-  const bestButton = document.querySelector('.js-share-best');
-
   const copyText = async (text) => {
     if (!text) return false;
+
+    const legacyCopy = () => {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', 'readonly');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const copied = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        return copied;
+      } catch (_) {
+        return false;
+      }
+    };
+
     try {
-      await navigator.clipboard.writeText(text);
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(text);
+      } else if (!legacyCopy()) {
+        throw new Error('clipboard_unavailable');
+      }
       window.catgameToast?.('Enlace copiado', 'success');
       return true;
     } catch (_) {
+      if (legacyCopy()) {
+        window.catgameToast?.('Enlace copiado', 'success');
+        return true;
+      }
+
       window.catgameToast?.('No se pudo copiar', 'error');
       return false;
     }
   };
 
-  if (profileButton) {
-    profileButton.addEventListener('click', async () => {
-      const url = profileButton.getAttribute('data-url') || window.location.href;
-      await copyText(url);
-    });
-  }
+  const shareLink = async (button) => {
+    const url = button?.getAttribute('data-url') || window.location.href;
+    const title = button?.getAttribute('data-share-title') || 'Cat Game Vote';
+    const text = button?.getAttribute('data-share-text') || 'Mira esta publicación en Cat Game Vote';
 
-  if (bestButton) {
-    bestButton.addEventListener('click', async () => {
-      const url = bestButton.getAttribute('data-url') || window.location.href;
-      if (navigator.share) {
-        try {
-          await navigator.share({ title: 'Cat Game Vote', text: 'Mira esta publicación', url });
-          return;
-        } catch (_) {
-          // fallback copy
-        }
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch (_) {
+        // fallback copy
       }
-      await copyText(url);
-    });
-  }
+    }
+
+    await copyText(url);
+  };
+
+  document.addEventListener('click', async (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    const button = target.closest('.js-share-link');
+    if (!button) {
+      return;
+    }
+
+    event.preventDefault();
+    await shareLink(button);
+  });
 })();
 
 
@@ -713,6 +852,7 @@
   const saveButton = profileForm.querySelector('.js-profile-save');
   const cityInput = profileForm.querySelector('input[name="default_city"]');
   const countryInput = profileForm.querySelector('input[name="default_country"]');
+  const termsInput = profileForm.querySelector('input[name="accept_terms"]');
   if (!toggleButton || !colorsPanel || !saveButton) {
     return;
   }
@@ -740,7 +880,7 @@
     radio.addEventListener('change', showSave);
   });
 
-  [cityInput, countryInput].forEach((input) => {
+  [cityInput, countryInput, termsInput].forEach((input) => {
     if (!input) return;
     input.addEventListener('input', showSave);
   });
@@ -1248,6 +1388,8 @@
 (function () {
   const config = window.CATGAME_FEED;
   const container = document.querySelector('[data-feed-more="1"]');
+  const tabsWrap = document.querySelector('[data-feed-tabs="1"]');
+  const tabs = tabsWrap ? Array.from(tabsWrap.querySelectorAll('.cg-feed-tab[data-filter]')) : [];
   const list = document.getElementById('catgame-feed-list');
   const button = container ? container.querySelector('[data-feed-more-btn="1"]') : null;
   const end = container ? container.querySelector('[data-feed-end="1"]') : null;
@@ -1258,25 +1400,72 @@
   const perPage = Number(container.dataset.perPage || '20');
   let nextOffset = Number(container.dataset.nextOffset || '0');
   let hasMore = container.dataset.hasMore === '1';
+  let currentFilter = String(container.dataset.currentFilter || 'all');
   let isLoading = false;
+
+  const validFilters = new Set(['all', 'event', 'free']);
+  if (!validFilters.has(currentFilter)) {
+    currentFilter = 'all';
+  }
+
+  const emptyMessages = {
+    all: String(container.dataset.emptyAll || 'Aún no hay publicaciones disponibles.'),
+    event: String(container.dataset.emptyEvent || 'No hay publicaciones de evento disponibles.'),
+    free: String(container.dataset.emptyFree || 'Aún no hay publicaciones en El Parque.'),
+  };
+
+  const removeEmptyState = () => {
+    const existing = list.querySelector('[data-feed-empty="1"]');
+    if (existing) {
+      existing.remove();
+    }
+  };
+
+  const ensureEmptyState = () => {
+    if (list.querySelector('.cg-card')) {
+      removeEmptyState();
+      return;
+    }
+
+    let empty = list.querySelector('[data-feed-empty="1"]');
+    if (!empty) {
+      empty = document.createElement('p');
+      empty.className = 'cg-empty-state';
+      empty.setAttribute('data-feed-empty', '1');
+      list.appendChild(empty);
+    }
+    empty.textContent = emptyMessages[currentFilter] || emptyMessages.all;
+  };
+
+  const syncTabs = () => {
+    tabs.forEach((tab) => {
+      const isActive = String(tab.dataset.filter || '') === currentFilter;
+      tab.classList.toggle('is-active', isActive);
+      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+  };
 
   const syncUi = () => {
     button.hidden = !hasMore;
     button.disabled = isLoading;
     button.textContent = isLoading ? 'Cargando…' : 'Cargar más';
     end.hidden = hasMore;
+    ensureEmptyState();
+    syncTabs();
   };
 
-  const loadMore = async () => {
-    if (!hasMore || isLoading) return;
+  const loadPage = async (mode = 'append') => {
+    const shouldAppend = mode === 'append';
+    if (shouldAppend && (!hasMore || isLoading)) return;
     isLoading = true;
     syncUi();
 
     try {
       const url = new URL(config.moreUrl, window.location.origin);
       url.searchParams.set('_wpnonce', config.nonce || '');
-      url.searchParams.set('offset', String(nextOffset));
+      url.searchParams.set('offset', shouldAppend ? String(nextOffset) : '0');
       url.searchParams.set('per_page', String(perPage));
+      url.searchParams.set('filter', currentFilter);
       const response = await fetch(url.toString(), { credentials: 'same-origin' });
       if (!response.ok) {
         throw new Error('http_error');
@@ -1287,7 +1476,12 @@
       }
 
       const html = String(payload.data.html || '');
+      if (!shouldAppend) {
+        list.innerHTML = '';
+      }
+
       if (html !== '') {
+        removeEmptyState();
         const fragment = document.createRange().createContextualFragment(html);
         list.appendChild(fragment);
         window.catgameInitReactions?.(list);
@@ -1305,7 +1499,25 @@
     }
   };
 
-  button.addEventListener('click', loadMore);
+  const setFilter = async (filter) => {
+    if (!validFilters.has(filter) || isLoading || filter === currentFilter) {
+      return;
+    }
+    currentFilter = filter;
+    container.dataset.currentFilter = currentFilter;
+    nextOffset = 0;
+    hasMore = true;
+    await loadPage('replace');
+  };
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const nextFilter = String(tab.dataset.filter || 'all');
+      setFilter(nextFilter);
+    });
+  });
+
+  button.addEventListener('click', () => loadPage('append'));
   syncUi();
 })();
 

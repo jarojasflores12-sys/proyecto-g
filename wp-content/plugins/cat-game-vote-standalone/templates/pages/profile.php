@@ -14,6 +14,8 @@ $auth_view = (string) ($data['auth_view'] ?? 'login');
 $login_identifier = (string) ($data['login_identifier'] ?? '');
 $reg_username = (string) ($data['reg_username'] ?? '');
 $reg_email = (string) ($data['reg_email'] ?? '');
+$brand = CatGame_Admin::get_frontend_branding();
+$brand_name = sanitize_text_field((string) ($brand['name'] ?? 'PetUnity'));
 $lost_identifier = (string) ($data['lost_identifier'] ?? '');
 $rp_login = (string) ($data['rp_login'] ?? '');
 $rp_key = (string) ($data['rp_key'] ?? '');
@@ -149,11 +151,14 @@ $most_voted = is_array($stats['most_voted'] ?? null) ? $stats['most_voted'] : nu
 $best_ranked = is_array($stats['best_ranked'] ?? null) ? $stats['best_ranked'] : null;
 $best_photo = is_array($data['best_photo'] ?? null) ? $data['best_photo'] : null;
 
-$profile_link = home_url('/catgame/profile');
-$best_photo_link = $best_photo ? home_url('/catgame/feed') : '';
-$default_city = trim((string) ($prefs['default_city'] ?? ''));
-$default_country = trim((string) ($prefs['default_country'] ?? ''));
+$profile_link = home_url('/catgame/user/' . rawurlencode(sanitize_user($username, true)));
+$best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) ($best_photo['id'] ?? 0)) : '';
+$default_city = CatGame_Submissions::visual_label(trim((string) ($prefs['default_city'] ?? '')));
+$default_country = CatGame_Submissions::visual_label(trim((string) ($prefs['default_country'] ?? '')));
+$terms_accepted = !empty($prefs['terms_accepted']);
+$terms_accepted_at = trim((string) ($prefs['terms_accepted_at'] ?? ''));
 $location_missing = $default_city === '' || $default_country === '';
+$profile_incomplete = $location_missing || !$terms_accepted;
 
 $account_status = (array) ($data['account_status'] ?? []);
 $strikes_status = (array) ($account_status['strikes'] ?? []);
@@ -192,19 +197,40 @@ if ($upload_banned_until_iso !== '') {
         <p class="cg-alert cg-alert-success">¡Cuenta creada! Ya estás dentro.</p>
     <?php endif; ?>
     <?php if ($complete_profile): ?>
-        <p class="cg-alert cg-alert-error">Completa tu ciudad y país para continuar.</p>
+        <p class="cg-alert cg-alert-error">Completa ciudad, país y aceptación de normas para continuar.</p>
     <?php endif; ?>
-    <?php if ($location_missing): ?>
-        <p class="cg-alert cg-alert-error">Completa tu ciudad y país para poder subir fotos.</p>
+    <?php if ($profile_incomplete): ?>
+        <p class="cg-alert cg-alert-error">Debes completar ciudad, país y aceptar las normas para poder subir fotos.</p>
     <?php endif; ?>
     <?php if ($tag_deleted): ?>
         <p class="cg-alert cg-alert-success">Etiqueta eliminada del catálogo personal.</p>
     <?php endif; ?>
     <?php if ($profile_saved): ?>
-        <p class="cg-alert cg-alert-success">Ubicación guardada.</p>
+        <p class="cg-alert cg-alert-success">Perfil guardado.</p>
     <?php endif; ?>
     <?php if ($profile_error === 'missing_location'): ?>
         <p class="cg-alert cg-alert-error">Debes completar ciudad y país para guardar.</p>
+    <?php elseif ($profile_error === 'missing_terms'): ?>
+        <p class="cg-alert cg-alert-error">Debes aceptar las normas y sanciones para guardar.</p>
+    <?php endif; ?>
+    <?php $review_appeal_status = sanitize_key(wp_unslash($_GET['review_appeal'] ?? '')); ?>
+    <?php $feedback_status = sanitize_key(wp_unslash($_GET['feedback_sent'] ?? '')); ?>
+    <?php $feedback_error = sanitize_key(wp_unslash($_GET['feedback_error'] ?? '')); ?>
+    <?php if ($review_appeal_status === 'sent'): ?>
+        <p class="cg-alert cg-alert-success">Apelación de revisión enviada.</p>
+    <?php elseif ($review_appeal_status === 'expired'): ?>
+        <p class="cg-alert cg-alert-error">La ventana de apelación de revisión (24h) expiró.</p>
+    <?php elseif ($review_appeal_status === 'invalid'): ?>
+        <p class="cg-alert cg-alert-error">No se pudo procesar la apelación solicitada.</p>
+    <?php endif; ?>
+
+    <?php if ($feedback_status === '1'): ?>
+        <p class="cg-alert cg-alert-success">Gracias. Tu mensaje fue enviado correctamente.</p>
+    <?php endif; ?>
+    <?php if ($feedback_error === 'empty'): ?>
+        <p class="cg-alert cg-alert-error">Escribe un mensaje antes de enviar tu comentario.</p>
+    <?php elseif ($feedback_error === 'save_failed'): ?>
+        <p class="cg-alert cg-alert-error">No se pudo guardar tu mensaje. Intenta nuevamente.</p>
     <?php endif; ?>
 
     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form" id="catgame-profile-form">
@@ -241,7 +267,79 @@ if ($upload_banned_until_iso !== '') {
                 <input type="text" name="default_country" value="<?php echo esc_attr($default_country); ?>" placeholder="Ej: Chile" required>
             </label>
         </div>
+
+        <div class="cg-profile-terms">
+            <?php if ($terms_accepted): ?>
+                <?php
+                $terms_accepted_label = '';
+                if ($terms_accepted_at !== '') {
+                    $wp_timezone = wp_timezone();
+                    $accepted_dt = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $terms_accepted_at, $wp_timezone);
+                    if ($accepted_dt instanceof DateTimeImmutable) {
+                        $terms_accepted_label = wp_date('d/m/Y \a \l\a\s H:i', $accepted_dt->getTimestamp(), $wp_timezone);
+                    } else {
+                        $terms_accepted_ts = strtotime($terms_accepted_at);
+                        if ($terms_accepted_ts) {
+                            $terms_accepted_label = wp_date('d/m/Y \a \l\a\s H:i', $terms_accepted_ts, $wp_timezone);
+                        }
+                    }
+                }
+                ?>
+                <p class="cg-alert cg-alert-success">✅ Normas aceptadas<?php echo $terms_accepted_label !== '' ? ' el ' . esc_html($terms_accepted_label) : ''; ?>.</p>
+            <?php else: ?>
+                <label class="cg-terms-checkbox">
+                    <input type="checkbox" name="accept_terms" value="1">
+                    Acepto las normas y sanciones del juego
+                </label>
+                <button type="button" class="secondary" data-open-upload-rules="1">Ver normas</button>
+            <?php endif; ?>
+        </div>
     </form>
+
+    <div class="cg-modal" id="catgame-upload-rules-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-upload-rules-title">
+        <div class="cg-modal__backdrop" data-upload-rules-close="1"></div>
+        <div class="cg-modal__content" role="document">
+            <button type="button" class="cg-modal__close" data-upload-rules-close="1" aria-label="Cerrar normas">✕</button>
+            <h2 id="catgame-upload-rules-title">Normas y sanciones</h2>
+            <div class="cg-modal__rules">
+                <section class="cg-modal__rules-section">
+                    <h3>Qué sí está permitido</h3>
+                    <ul>
+                        <li>Mascotas domésticas.</li>
+                        <li>Ejemplos: perro, gato, conejo, gallina, pez, etc.</li>
+                    </ul>
+                </section>
+                <section class="cg-modal__rules-section">
+                    <h3>Qué no se permite</h3>
+                    <ul>
+                        <li>Fauna silvestre o exótica.</li>
+                        <li>Personas.</li>
+                        <li>Contenido sexual, explícito o violento.</li>
+                        <li>Maltrato animal.</li>
+                        <li>Spam o imágenes que no correspondan.</li>
+                    </ul>
+                </section>
+                <section class="cg-modal__rules-section">
+                    <h3>Sanciones</h3>
+                    <ul>
+                        <li><strong>Leve:</strong> se elimina la publicación.</li>
+                        <li><strong>Moderada:</strong> se elimina la publicación + no puede subir por 3 días.</li>
+                        <li><strong>Grave:</strong> se elimina la publicación + no puede subir ni reaccionar + apelación 24h; si no apela o se rechaza, cuenta eliminada y ban permanente.</li>
+                    </ul>
+                </section>
+                <section class="cg-modal__rules-section">
+                    <h3>Apelaciones</h3>
+                    <ul>
+                        <li>Leve y moderada: 72 horas.</li>
+                        <li>Grave: 24 horas.</li>
+                    </ul>
+                </section>
+            </div>
+            <div class="cg-confirm-actions">
+                <button type="button" data-upload-rules-close="1">Entendido</button>
+            </div>
+        </div>
+    </div>
 
 
     <article class="cg-card cg-account-status-card">
@@ -258,13 +356,13 @@ if ($upload_banned_until_iso !== '') {
     </article>
 
     <?php if (!empty($top_position_for_user)): ?>
-        <p class="cg-alert cg-alert-success">🏆 Estás en el Top 3 del evento: #<?php echo (int) $top_position_for_user; ?>. <a href="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>">Ver ranking</a></p>
+        <p class="cg-alert cg-alert-success">🏆 Estás en el Top 3 de La Arena: #<?php echo (int) $top_position_for_user; ?>. <a href="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>">Ver ranking</a></p>
     <?php endif; ?>
 
     <form method="get" action="<?php echo esc_url(home_url('/catgame/profile')); ?>" class="cg-form-inline">
         <label>Alcance
             <select name="scope">
-                <option value="event" <?php selected($scope, 'event'); ?>>Evento activo</option>
+                <option value="event" <?php selected($scope, 'event'); ?>>La Arena activa</option>
                 <option value="global" <?php selected($scope, 'global'); ?>>Global</option>
             </select>
         </label>
@@ -325,14 +423,40 @@ if ($upload_banned_until_iso !== '') {
     <?php endif; ?>
 
     <div class="cg-profile-share">
-        <button type="button" class="secondary js-share-profile" data-url="<?php echo esc_url($profile_link); ?>">Compartir mi perfil</button>
-        <button type="button" class="secondary js-share-best" data-url="<?php echo esc_url($best_photo_link ?: $profile_link); ?>">Compartir mi publicación destacada</button>
+        <button type="button" class="secondary js-share-link" data-url="<?php echo esc_url($profile_link); ?>" data-share-title="<?php echo esc_attr($brand_name); ?>" data-share-text="Mira el perfil de esta mascota en <?php echo esc_attr($brand_name); ?>">Compartir mi perfil</button>
+        <button type="button" class="secondary js-share-link" data-url="<?php echo esc_url($best_photo_link ?: $profile_link); ?>" data-share-title="<?php echo esc_attr($brand_name); ?>" data-share-text="Mira esta publicación destacada en <?php echo esc_attr($brand_name); ?>">Compartir mi publicación destacada</button>
     </div>
 
     <section class="cg-card">
         <h3>Comunidad</h3>
         <p>¿Ideas para eventos futuros? Escríbenos en Instagram.</p>
         <a class="cg-cta" href="<?php echo esc_url(CATGAME_INSTAGRAM_URL); ?>" target="_blank" rel="noopener noreferrer">Ir a Instagram</a>
+    </section>
+
+
+    <section class="cg-card cg-feedback-card">
+        <h3>Ayúdanos a mejorar</h3>
+        <p>Puedes enviarnos comentarios, sugerencias o reportar errores que encuentres en el juego.</p>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form cg-feedback-form">
+            <?php wp_nonce_field('catgame_submit_feedback'); ?>
+            <input type="hidden" name="action" value="catgame_submit_feedback">
+            <input type="hidden" name="feedback_source_page" value="profile">
+
+            <label>Tipo de mensaje
+                <select name="feedback_type" required>
+                    <option value="comment">Comentario</option>
+                    <option value="suggestion">Sugerencia</option>
+                    <option value="technical_error">Error técnico</option>
+                    <option value="bug_report">Reporte de bug</option>
+                </select>
+            </label>
+
+            <label>Mensaje
+                <textarea name="feedback_message" rows="4" maxlength="1200" placeholder="Escribe aquí tu comentario, sugerencia o describe el error que encontraste." required></textarea>
+            </label>
+
+            <button type="submit">Enviar comentario</button>
+        </form>
     </section>
 
     <h3>Mis etiquetas</h3>
@@ -361,25 +485,38 @@ if ($upload_banned_until_iso !== '') {
         <?php endif; ?>
         <?php foreach ($items as $item): ?>
             <?php
-            ?>
-            <article class="cg-card cg-profile-item">
-                <?php
                 $item_title = CatGame_Submissions::title_label($item);
-                $item_author = get_userdata((int) ($item['user_id'] ?? 0));
-                $item_author_name = $item_author ? (string) $item_author->user_login : 'usuario';
                 $item_reactions = (int) ($item['total_reactions'] ?? 0);
+                $item_is_event = (int) ($item['event_id'] ?? 0) > 0;
+                $item_location = CatGame_Submissions::visual_label((string) ($item['city'] ?? '')) . ', ' . CatGame_Submissions::visual_label((string) ($item['country'] ?? ''));
+                $appeal_html = class_exists('CatGame_Reports') ? CatGame_Reports::appeal_button_html((array) $item, (int) get_current_user_id()) : '';
+                if (is_string($appeal_html) && strpos($appeal_html, 'No existe una moderación activa para esta publicación.') !== false) {
+                    $appeal_html = '';
+                }
                 ?>
+            <article class="cg-card cg-profile-item">
+                <header class="cg-profile-item__header">
+                    <div class="cg-profile-item__title-wrap">
+                        <p class="cg-profile-item__title"><span class="cg-badge">#<?php echo (int) ($item['id'] ?? 0); ?></span> <?php echo esc_html($item_title); ?></p>
+                        <small class="cg-profile-item__badge-line">
+                            <span class="cg-inline-badge"><?php echo $item_is_event ? '🏆 La Arena' : '🐾 El Parque'; ?></span>
+                        </small>
+                    </div>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-inline-delete-form" data-cg-confirm="1" data-cg-confirm-title="Eliminar publicación" data-cg-confirm-text="Esta acción no se puede deshacer. ¿Eliminar esta publicación?">
+                        <?php wp_nonce_field('catgame_delete_submission'); ?>
+                        <input type="hidden" name="action" value="catgame_delete_submission">
+                        <input type="hidden" name="submission_id" value="<?php echo (int) ($item['id'] ?? 0); ?>">
+                        <button type="submit" class="cg-tag-delete cg-profile-item__delete">Eliminar</button>
+                    </form>
+                </header>
+
                 <?php echo wp_get_attachment_image((int) $item['attachment_id'], 'medium_large', false, ['loading' => 'lazy', 'class' => 'cg-profile-thumb']); ?>
-                <p><span class="cg-badge">#<?php echo (int) $item['id']; ?></span> <?php echo esc_html($item_title); ?></p>
-                <small class="cg-author">por @<?php echo esc_html($item_author_name); ?></small>
-                <p><?php echo $item_reactions > 0 ? esc_html($item_reactions . ' reacciones') : 'Sin reacciones'; ?></p>
-                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-inline-delete-form" data-cg-confirm="1" data-cg-confirm-title="Eliminar publicación" data-cg-confirm-text="Esta acción no se puede deshacer. ¿Eliminar esta publicación?">
-                    <?php wp_nonce_field('catgame_delete_submission'); ?>
-                    <input type="hidden" name="action" value="catgame_delete_submission">
-                    <input type="hidden" name="submission_id" value="<?php echo (int) ($item['id'] ?? 0); ?>">
-                    <button type="submit" class="cg-tag-delete">Eliminar mi publicación</button>
-                </form>
-                <?php echo class_exists('CatGame_Reports') ? CatGame_Reports::appeal_button_html((array) $item, (int) get_current_user_id()) : ''; ?>
+
+                <p class="cg-profile-item__location">📍 <?php echo esc_html($item_location); ?></p>
+                <p class="cg-profile-item__total">Reacciones: <?php echo (int) $item_reactions; ?></p>
+
+                <?php echo $appeal_html; ?>
+                <?php echo CatGame_Submissions::review_appeal_button_html((array) $item, (int) get_current_user_id()); ?>
                 <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), is_user_logged_in(), (array) ($item['reaction_counts'] ?? []) ? ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)] : []); ?>
             </article>
         <?php endforeach; ?>
