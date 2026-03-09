@@ -12,8 +12,11 @@ class CatGame_Submissions {
 
     public static function init(): void {
         add_action('admin_post_catgame_upload', [__CLASS__, 'handle_upload']);
+        add_action('admin_post_catgame_submit_review_appeal', [__CLASS__, 'handle_submit_review_appeal']);
         add_action('admin_post_catgame_delete_custom_tag', [__CLASS__, 'handle_delete_custom_tag']);
         add_action('admin_post_catgame_delete_submission', [__CLASS__, 'handle_delete_submission']);
+        add_action('admin_post_catgame_create_adoption', [__CLASS__, 'handle_create_adoption']);
+        add_action('admin_post_catgame_mark_adoption_resolved', [__CLASS__, 'handle_mark_adoption_resolved']);
         add_action('admin_post_catgame_feed_more', [__CLASS__, 'handle_feed_more']);
         add_action('admin_post_nopriv_catgame_feed_more', [__CLASS__, 'handle_feed_more']);
         add_action('wp_ajax_catgame_tag_suggestions', [__CLASS__, 'handle_tag_suggestions']);
@@ -45,7 +48,7 @@ class CatGame_Submissions {
             return '';
         }
 
-        return ucwords(str_replace('_', ' ', $normalized));
+        return self::visual_label(str_replace('_', ' ', $normalized));
     }
 
     private static function clean_tag_label(string $label): string {
@@ -53,6 +56,25 @@ class CatGame_Submissions {
         $clean = preg_replace('/^(tag[\s:_-]+)+/i', '', $clean);
         $clean = is_string($clean) ? trim($clean) : '';
         return $clean;
+    }
+
+    public static function format_first_capital(string $text): string {
+        $text = trim((string) $text);
+        if ($text === '') {
+            return '';
+        }
+
+        if (function_exists('mb_substr') && function_exists('mb_strtoupper')) {
+            $first = mb_substr($text, 0, 1);
+            $rest = mb_substr($text, 1);
+            return mb_strtoupper($first) . $rest;
+        }
+
+        return strtoupper(substr($text, 0, 1)) . substr($text, 1);
+    }
+
+    public static function visual_label(string $text): string {
+        return self::format_first_capital($text);
     }
 
     public static function user_custom_tag_map(int $user_id): array {
@@ -143,16 +165,16 @@ class CatGame_Submissions {
 
     public static function title_label(array $submission): string {
         $title = trim((string) ($submission['title'] ?? ''));
-        return $title !== '' ? $title : 'Sin título';
+        return $title !== '' ? self::visual_label($title) : 'Sin título';
     }
 
     public static function upload_error_message(string $error): string {
         $map = [
-            'confirm_required' => 'Debes confirmar que no hay personas en la foto.',
-            'missing_location' => 'Completa tu ciudad y país en tu perfil para continuar.',
+            'missing_profile' => 'Debes completar tu perfil y aceptar las normas antes de publicar.',
             'missing_title' => 'El título es obligatorio.',
             'title_too_short' => 'El título debe tener al menos 2 caracteres.',
             'title_too_long' => 'El título no puede superar los 40 caracteres.',
+            'mode_required' => 'Debes elegir dónde publicar tu foto.',
             'no_event' => 'No hay evento activo para recibir publicaciones.',
             'missing_file' => 'Selecciona una imagen para continuar.',
             'file_too_large' => 'La imagen supera el tamaño máximo permitido.',
@@ -176,8 +198,8 @@ class CatGame_Submissions {
         if (!empty($state['tags']) && is_array($state['tags'])) {
             $query['upload_tags'] = implode(',', array_values(array_filter(array_map([__CLASS__, 'normalize_tag'], $state['tags']))));
         }
-        if (!empty($state['confirm_no_people'])) {
-            $query['upload_confirm_no_people'] = '1';
+        if (!empty($state['publish_mode']) && in_array((string) $state['publish_mode'], ['event', 'free'], true)) {
+            $query['upload_publish_mode'] = (string) $state['publish_mode'];
         }
         if (!empty($state['ban_until'])) {
             $query['upload_ban_until'] = sanitize_text_field((string) $state['ban_until']);
@@ -209,22 +231,20 @@ class CatGame_Submissions {
         $title_length = function_exists('mb_strlen') ? mb_strlen($title) : strlen($title);
         $selected_tags = wp_unslash($_POST['tags'] ?? []);
         $custom_tags_input = (string) wp_unslash($_POST['custom_tags'] ?? '');
-        $confirm_no_people = !empty($_POST['confirm_no_people']);
+        $publish_mode = sanitize_key(wp_unslash($_POST['publish_mode'] ?? ''));
+        if (!in_array($publish_mode, ['event', 'free'], true)) {
+            $publish_mode = '';
+        }
 
         $upload_state = [
             'title' => $title,
             'tags' => is_array($selected_tags) ? $selected_tags : [],
             'custom_tags' => $custom_tags_input,
-            'confirm_no_people' => $confirm_no_people,
+            'publish_mode' => $publish_mode,
         ];
 
-        if (!$confirm_no_people) {
-            self::upload_redirect_with_state('confirm_required', $upload_state);
-        }
-
-        if ($city === '' || $country === '') {
-            wp_safe_redirect(add_query_arg('complete_profile', '1', home_url('/catgame/profile')));
-            exit;
+        if (!CatGame_Auth::has_user_completed_profile_requirements($user_id)) {
+            self::upload_redirect_with_state('missing_profile', $upload_state);
         }
 
         if ($title === '') {
@@ -240,8 +260,26 @@ class CatGame_Submissions {
         }
 
         $event = CatGame_Events::get_active_event();
-        if (!$event) {
-            self::upload_redirect_with_state('no_event', $upload_state);
+        $is_competitive_event = $event && (($event['event_type'] ?? 'competitive') === 'competitive');
+        $has_active_event = (bool) $is_competitive_event;
+
+        if ($has_active_event && $publish_mode === '') {
+            self::upload_redirect_with_state('mode_required', $upload_state);
+        }
+
+        $requested_publish_mode = $publish_mode;
+        if (!$has_active_event) {
+            $publish_mode = 'free';
+        }
+
+        $did_fallback_to_free = false;
+        if ($publish_mode === 'event' && $has_active_event) {
+            $event_id = (int) ($event['id'] ?? 0);
+        } else {
+            $event_id = 0;
+            if ($requested_publish_mode === 'event' && !$has_active_event) {
+                $did_fallback_to_free = true;
+            }
         }
 
         if (empty($_FILES['cat_image']['tmp_name'])) {
@@ -294,7 +332,7 @@ class CatGame_Submissions {
             $table,
             [
                 'user_id' => $user_id,
-                'event_id' => (int) $event['id'],
+                'event_id' => $event_id,
                 'city' => $city,
                 'country' => $country,
                 'tags_json' => wp_json_encode($filtered_tags),
@@ -304,21 +342,261 @@ class CatGame_Submissions {
                 'image_size_bytes' => $final_size > 0 ? $final_size : null,
                 'created_at' => current_time('mysql'),
                 'status' => 'active',
+                'review_status' => 'pending_review',
                 'score_cached' => 0,
                 'votes_count' => 0,
                 'votes_sum' => 0,
             ],
-            ['%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%f', '%d', '%d']
+            ['%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%f', '%d', '%d']
         );
 
         update_post_meta((int) $attachment_id, 'catgv_title', $title);
 
         self::clear_leaderboard_cache();
 
-        wp_safe_redirect(home_url('/catgame/feed?uploaded=1'));
+        $redirect_args = ['uploaded' => '1'];
+        if ($did_fallback_to_free) {
+            $redirect_args['publish_mode_adjusted'] = '1';
+        }
+        wp_safe_redirect(add_query_arg($redirect_args, home_url('/catgame/feed')));
         exit;
     }
 
+
+
+
+    public static function adoption_error_message(string $error): string {
+        $messages = [
+            'adoption_missing_required' => 'Completa todos los campos obligatorios de la publicación de adopción.',
+            'adoption_missing_file' => 'Debes seleccionar una foto de la mascota.',
+            'adoption_file_too_large' => 'La imagen supera el máximo permitido (3MB).',
+            'adoption_invalid_type' => 'El archivo seleccionado no es una imagen válida.',
+            'adoption_upload_failed' => 'No se pudo subir la imagen de adopción. Intenta nuevamente.',
+            'adoption_create_failed' => 'No se pudo guardar la publicación de adopción. Intenta nuevamente.',
+            'adoption_login_required' => 'Debes iniciar sesión para publicar en Adopciones.',
+            'adoption_not_found' => 'La publicación de adopción no está disponible.',
+        ];
+
+        return $messages[$error] ?? 'No se pudo procesar la publicación de adopción.';
+    }
+
+    public static function handle_create_adoption(): void {
+        if (!is_user_logged_in()) {
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_login_required', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        check_admin_referer('catgame_create_adoption');
+
+        $user_id = get_current_user_id();
+        $pet_name = trim(sanitize_text_field(wp_unslash($_POST['pet_name'] ?? '')));
+        $pet_type = trim(sanitize_text_field(wp_unslash($_POST['pet_type'] ?? '')));
+        $pet_gender = sanitize_key(wp_unslash($_POST['pet_gender'] ?? ''));
+        $pet_age_value = (int) ($_POST['pet_age_value'] ?? 0);
+        $pet_age_unit = sanitize_key(wp_unslash($_POST['pet_age_unit'] ?? ''));
+        $pet_age = self::format_adoption_age($pet_age_value, $pet_age_unit);
+        $city = trim(sanitize_text_field(wp_unslash($_POST['city'] ?? '')));
+        $country = trim(sanitize_text_field(wp_unslash($_POST['country'] ?? '')));
+        $adoption_type = sanitize_key(wp_unslash($_POST['adoption_type'] ?? ''));
+        $description = trim(sanitize_textarea_field(wp_unslash($_POST['description'] ?? '')));
+        $contact = trim(sanitize_textarea_field(wp_unslash($_POST['contact'] ?? '')));
+
+        if (!in_array($pet_gender, ['male', 'female'], true)) {
+            $pet_gender = '';
+        }
+
+        if (!in_array($adoption_type, ['adoption', 'temporary'], true)) {
+            $adoption_type = '';
+        }
+
+        if ($pet_name === '' || $pet_gender === '' || $pet_age === '' || $city === '' || $country === '' || $adoption_type === '' || $description === '' || $contact === '') {
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_missing_required', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        if (empty($_FILES['adoption_image']['tmp_name'])) {
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_missing_file', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        $file = $_FILES['adoption_image'];
+        if ((int) ($file['size'] ?? 0) > 3 * 1024 * 1024) {
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_file_too_large', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        $type = wp_check_filetype_and_ext($file['tmp_name'], $file['name']);
+        if (empty($type['type']) || strpos((string) $type['type'], 'image/') !== 0) {
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_invalid_type', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+
+        $attachment_id = media_handle_upload('adoption_image', 0);
+        if (is_wp_error($attachment_id)) {
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_upload_failed', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        $final_size = self::compress_uploaded_image_backup((int) $attachment_id);
+
+        global $wpdb;
+        $table = CatGame_DB::table('adoptions');
+        $ok = $wpdb->insert(
+            $table,
+            [
+                'user_id' => $user_id,
+                'pet_name' => $pet_name,
+                'pet_type' => $pet_type,
+                'pet_gender' => $pet_gender,
+                'pet_age' => $pet_age,
+                'city' => $city,
+                'country' => $country,
+                'adoption_type' => $adoption_type,
+                'description' => $description,
+                'contact' => $contact,
+                'attachment_id' => (int) $attachment_id,
+                'status' => 'active',
+                'created_at' => current_time('mysql'),
+                'updated_at' => current_time('mysql'),
+            ],
+            ['%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s']
+        );
+
+        if (!$ok) {
+            wp_delete_attachment((int) $attachment_id, true);
+            wp_safe_redirect(add_query_arg('catgame_error', 'adoption_create_failed', home_url('/catgame/adoptions/new')));
+            exit;
+        }
+
+        if ($final_size > 0) {
+            update_post_meta((int) $attachment_id, 'catgv_image_size_bytes', $final_size);
+        }
+
+        wp_safe_redirect(add_query_arg('adoption_created', '1', home_url('/catgame/adoptions')));
+        exit;
+    }
+
+    public static function list_adoptions(string $status = 'active', int $limit = 30, int $offset = 0): array {
+        global $wpdb;
+        $table = CatGame_DB::table('adoptions');
+
+        $status = sanitize_key($status);
+        if (!in_array($status, ['active', 'resolved', 'removed', 'all'], true)) {
+            $status = 'active';
+        }
+
+        $limit = max(1, min(100, (int) $limit));
+        $offset = max(0, (int) $offset);
+
+        if ($status === 'all') {
+            $sql = $wpdb->prepare("SELECT * FROM {$table} ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d", $limit, $offset);
+        } else {
+            $sql = $wpdb->prepare("SELECT * FROM {$table} WHERE status = %s ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d", $status, $limit, $offset);
+        }
+
+        $rows = $wpdb->get_results($sql, ARRAY_A);
+        return is_array($rows) ? $rows : [];
+    }
+
+    public static function get_adoption(int $id): ?array {
+        if ($id <= 0) {
+            return null;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('adoptions');
+        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE id = %d", $id), ARRAY_A);
+        return is_array($row) ? $row : null;
+    }
+
+    public static function update_adoption_status(int $id, string $status): void {
+        if ($id <= 0) {
+            return;
+        }
+
+        $status = sanitize_key($status);
+        if (!in_array($status, ['active', 'resolved', 'removed'], true)) {
+            return;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('adoptions');
+        $wpdb->update(
+            $table,
+            [
+                'status' => $status,
+                'updated_at' => current_time('mysql'),
+            ],
+            ['id' => $id],
+            ['%s', '%s'],
+            ['%d']
+        );
+    }
+
+    public static function adoption_type_label(string $type): string {
+        $type = sanitize_key($type);
+        if ($type === 'temporary') {
+            return '🛏 Hogar temporal';
+        }
+
+        return '🏡 En adopción';
+    }
+
+    public static function adoption_gender_label(string $gender): string {
+        $gender = sanitize_key($gender);
+        if ($gender === 'female') {
+            return 'Hembra';
+        }
+
+        return 'Macho';
+    }
+
+
+    private static function format_adoption_age(int $value, string $unit): string {
+        $unit = sanitize_key($unit);
+        if ($value <= 0 || !in_array($unit, ['months', 'years'], true)) {
+            return '';
+        }
+
+        if ($unit === 'months') {
+            return $value === 1 ? '1 mes' : $value . ' meses';
+        }
+
+        return $value === 1 ? '1 año' : $value . ' años';
+    }
+
+    public static function can_manage_adoption(array $adoption, int $user_id = 0): bool {
+        $user_id = $user_id > 0 ? $user_id : get_current_user_id();
+        if ($user_id <= 0) {
+            return false;
+        }
+
+        return current_user_can('manage_options') || (int) ($adoption['user_id'] ?? 0) === $user_id;
+    }
+
+    public static function handle_mark_adoption_resolved(): void {
+        if (!is_user_logged_in()) {
+            wp_safe_redirect(home_url('/catgame/adoptions'));
+            exit;
+        }
+
+        check_admin_referer('catgame_mark_adoption_resolved');
+
+        $adoption_id = (int) ($_POST['adoption_id'] ?? 0);
+        $adoption = self::get_adoption($adoption_id);
+        if (!$adoption || !self::can_manage_adoption($adoption)) {
+            wp_safe_redirect(add_query_arg('adoption_notice', 'invalid', home_url('/catgame/adoptions')));
+            exit;
+        }
+
+        self::update_adoption_status($adoption_id, 'resolved');
+        wp_safe_redirect(add_query_arg('adoption_notice', 'resolved', home_url('/catgame/adoptions/' . $adoption_id)));
+        exit;
+    }
 
     public static function handle_delete_submission(): void {
         if (!is_user_logged_in()) {
@@ -406,6 +684,226 @@ class CatGame_Submissions {
         return $submission ?: null;
     }
 
+    public static function list_review_submissions(string $type_filter = 'all', string $status_filter = 'pending_review', int $limit = 100): array {
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        $reports_table = CatGame_DB::table('reports');
+
+        $allowed_types = ['all', 'event', 'free'];
+        $allowed_status = ['pending_review', 'reviewed', 'removed_review', 'appealed_review'];
+        $type_filter = in_array($type_filter, $allowed_types, true) ? $type_filter : 'all';
+        $status_filter = in_array($status_filter, $allowed_status, true) ? $status_filter : 'pending_review';
+
+        $where = ['created_at >= DATE_SUB(%s, INTERVAL 24 HOUR)', "NOT EXISTS (SELECT 1 FROM {$reports_table} rep WHERE rep.submission_id = {$table}.id)"];
+        $params = [];
+        $params[] = current_time('mysql');
+
+        if ($type_filter === 'event') {
+            $where[] = 'event_id > 0';
+        } elseif ($type_filter === 'free') {
+            $where[] = 'event_id = 0';
+        }
+
+        if ($status_filter !== 'all') {
+            $where[] = 'review_status = %s';
+            $params[] = $status_filter;
+        }
+
+        $limit = max(1, min(500, $limit));
+        $params[] = $limit;
+        $sql = "SELECT * FROM {$table} WHERE " . implode(' AND ', $where) . ' ORDER BY created_at DESC, id DESC LIMIT %d';
+        return $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
+    }
+
+    public static function mark_reviewed(int $submission_id, int $admin_user_id): void {
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        $wpdb->update(
+            $table,
+            [
+                'review_status' => 'reviewed',
+                'review_decision' => 'keep',
+                'reviewed_by' => $admin_user_id,
+                'reviewed_at' => current_time('mysql'),
+            ],
+            ['id' => $submission_id],
+            ['%s', '%s', '%d', '%s'],
+            ['%d']
+        );
+    }
+
+    public static function remove_by_review(int $submission_id, int $admin_user_id, string $reason, string $detail = ''): void {
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        $deadline = wp_date('Y-m-d H:i:s', current_time('timestamp') + DAY_IN_SECONDS);
+        $wpdb->update(
+            $table,
+            [
+                'is_hidden' => 1,
+                'hidden_reason' => 'review_removed',
+                'hidden_at' => current_time('mysql'),
+                'review_status' => 'removed_review',
+                'review_decision' => 'remove',
+                'review_reason' => sanitize_key($reason),
+                'review_detail' => sanitize_text_field($detail),
+                'reviewed_by' => $admin_user_id,
+                'reviewed_at' => current_time('mysql'),
+                'appeal_deadline_at' => $deadline,
+            ],
+            ['id' => $submission_id],
+            ['%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s'],
+            ['%d']
+        );
+    }
+
+    public static function decide_review_appeal(int $submission_id, int $admin_user_id, bool $accept): void {
+        $submission = self::get_submission($submission_id);
+        if (!$submission) {
+            return;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        if ($accept) {
+            $wpdb->update(
+                $table,
+                [
+                    'is_hidden' => 0,
+                    'hidden_reason' => null,
+                    'hidden_at' => null,
+                    'review_status' => 'reviewed',
+                    'review_decision' => 'appeal_accepted',
+                    'reviewed_by' => $admin_user_id,
+                    'reviewed_at' => current_time('mysql'),
+                    'review_appeal_decision_at' => current_time('mysql'),
+                ],
+                ['id' => $submission_id],
+                ['%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s'],
+                ['%d']
+            );
+            return;
+        }
+
+        $attachment_id = (int) ($submission['attachment_id'] ?? 0);
+        if ($attachment_id > 0) {
+            wp_delete_attachment($attachment_id, true);
+        }
+        $wpdb->update(
+            $table,
+            [
+                'review_status' => 'removed_review',
+                'review_decision' => 'appeal_rejected',
+                'reviewed_by' => $admin_user_id,
+                'reviewed_at' => current_time('mysql'),
+                'review_appeal_decision_at' => current_time('mysql'),
+                'attachment_id' => 0,
+                'image_size_bytes' => null,
+            ],
+            ['id' => $submission_id],
+            ['%s', '%s', '%d', '%s', '%s', '%d', '%d'],
+            ['%d']
+        );
+    }
+
+    public static function handle_submit_review_appeal(): void {
+        if (!is_user_logged_in()) {
+            wp_safe_redirect(home_url('/catgame/profile'));
+            exit;
+        }
+
+        check_admin_referer('catgame_submit_review_appeal');
+        $submission_id = (int) ($_POST['submission_id'] ?? 0);
+        $message = sanitize_textarea_field(wp_unslash($_POST['appeal_message'] ?? ''));
+        $user_id = get_current_user_id();
+        $submission = self::get_submission($submission_id);
+        if (!$submission || (int) ($submission['user_id'] ?? 0) !== $user_id || (string) ($submission['review_status'] ?? '') !== 'removed_review') {
+            wp_safe_redirect(add_query_arg('review_appeal', 'invalid', home_url('/catgame/profile')));
+            exit;
+        }
+
+        $deadline_at = strtotime((string) ($submission['appeal_deadline_at'] ?? ''));
+        if ($deadline_at <= 0 || $deadline_at < current_time('timestamp')) {
+            wp_safe_redirect(add_query_arg('review_appeal', 'expired', home_url('/catgame/profile')));
+            exit;
+        }
+
+        global $wpdb;
+        $wpdb->update(
+            CatGame_DB::table('submissions'),
+            [
+                'review_status' => 'appealed_review',
+                'review_appeal_message' => $message,
+                'review_appealed_at' => current_time('mysql'),
+            ],
+            ['id' => $submission_id],
+            ['%s', '%s', '%s'],
+            ['%d']
+        );
+
+        wp_safe_redirect(add_query_arg('review_appeal', 'sent', home_url('/catgame/profile')));
+        exit;
+    }
+
+    public static function review_appeal_button_html(array $submission, int $current_user_id): string {
+        $submission_id = (int) ($submission['id'] ?? 0);
+        if ($submission_id <= 0 || $current_user_id <= 0 || (int) ($submission['user_id'] ?? 0) !== $current_user_id) {
+            return '';
+        }
+
+        $status = (string) ($submission['review_status'] ?? '');
+        if ($status === 'appealed_review') {
+            return '<p class="cg-appeal-state">Apelación de revisión pendiente</p>';
+        }
+        if ($status !== 'removed_review') {
+            return '';
+        }
+
+        $deadline_at = strtotime((string) ($submission['appeal_deadline_at'] ?? ''));
+        if ($deadline_at <= 0 || $deadline_at < current_time('timestamp')) {
+            return '<p class="cg-appeal-state">Ventana de apelación cerrada</p>';
+        }
+
+        ob_start();
+        ?>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-appeal-form">
+            <?php wp_nonce_field('catgame_submit_review_appeal'); ?>
+            <input type="hidden" name="action" value="catgame_submit_review_appeal">
+            <input type="hidden" name="submission_id" value="<?php echo (int) $submission_id; ?>">
+            <textarea name="appeal_message" rows="2" maxlength="500" placeholder="Explica tu apelación (opcional)"></textarea>
+            <button type="submit" class="button button-small">Apelar revisión (24h)</button>
+        </form>
+        <?php
+        return (string) ob_get_clean();
+    }
+
+    public static function purge_expired_review_removals(int $limit = 25): void {
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+        $now = current_time('mysql');
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, attachment_id FROM {$table} WHERE review_status = 'removed_review' AND attachment_id > 0 AND (review_appealed_at IS NULL OR review_appealed_at = '0000-00-00 00:00:00') AND appeal_deadline_at IS NOT NULL AND appeal_deadline_at <= %s ORDER BY appeal_deadline_at ASC LIMIT %d",
+                $now,
+                max(1, min(200, $limit))
+            ),
+            ARRAY_A
+        );
+
+        foreach ($rows as $row) {
+            $attachment_id = (int) ($row['attachment_id'] ?? 0);
+            if ($attachment_id > 0) {
+                wp_delete_attachment($attachment_id, true);
+            }
+            $wpdb->update(
+                $table,
+                ['attachment_id' => 0, 'image_size_bytes' => null],
+                ['id' => (int) ($row['id'] ?? 0)],
+                ['%d', '%d'],
+                ['%d']
+            );
+        }
+    }
+
     public static function list_feed(int $event_id, int $limit = 20, int $offset = 0, string $tag = ''): array {
         $result = self::list_feed_paginated($event_id, $limit, $offset, $tag);
         return $result['items'];
@@ -454,6 +952,45 @@ class CatGame_Submissions {
         ];
     }
 
+    public static function list_feed_publications_paginated(int $active_event_id = 0, int $per_page = 20, int $offset = 0, string $filter = 'all'): array {
+        global $wpdb;
+        $table = CatGame_DB::table('submissions');
+
+        $per_page = max(1, min(50, $per_page));
+        $offset = max(0, $offset);
+
+        $where = ["status = 'active'", 'is_hidden = 0'];
+        $params = [];
+
+        $allowed_filters = ['all', 'event', 'free'];
+        $filter = in_array($filter, $allowed_filters, true) ? $filter : 'all';
+
+        if ($filter === 'event') {
+            $where[] = 'event_id IS NOT NULL AND event_id != 0';
+        } elseif ($filter === 'free') {
+            $where[] = '(event_id IS NULL OR event_id = 0)';
+        }
+
+        $limit_plus_one = $per_page + 1;
+        $params[] = $limit_plus_one;
+        $params[] = $offset;
+
+        $sql = "SELECT * FROM {$table} WHERE " . implode(' AND ', $where) . ' ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d';
+        $prepared = $wpdb->prepare($sql, ...$params);
+        $rows = $wpdb->get_results($prepared, ARRAY_A);
+
+        $has_more = count($rows) > $per_page;
+        if ($has_more) {
+            $rows = array_slice($rows, 0, $per_page);
+        }
+
+        return [
+            'items' => $rows,
+            'has_more' => $has_more,
+            'next_offset' => $offset + count($rows),
+        ];
+    }
+
     public static function handle_feed_more(): void {
         $nonce = wp_unslash($_REQUEST['_wpnonce'] ?? '');
         if (!is_string($nonce) || !wp_verify_nonce($nonce, 'catgame_feed_more')) {
@@ -461,17 +998,20 @@ class CatGame_Submissions {
         }
 
         $event = CatGame_Events::get_active_event();
-        if (!$event) {
-            wp_send_json_success(['html' => '', 'has_more' => false, 'next_offset' => 0]);
-        }
-
+        $competitive_event = CatGame_Events::get_active_competitive_event();
         $offset = isset($_GET['offset']) ? (int) $_GET['offset'] : 0;
         $per_page = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 20;
-        $page = self::list_feed_paginated((int) $event['id'], $per_page, $offset);
+        $active_event_id = $event ? (int) ($event['id'] ?? 0) : 0;
+        $filter = sanitize_key(wp_unslash($_GET['filter'] ?? 'all'));
+        if (!in_array($filter, ['all', 'event', 'free'], true)) {
+            $filter = 'all';
+        }
+
+        $page = self::list_feed_publications_paginated($active_event_id, $per_page, $offset, $filter);
         $items = $page['items'];
 
         $current_user_id = is_user_logged_in() ? get_current_user_id() : 0;
-        $top_items = self::leaderboard((int) $event['id'], 'global', '', '', 3, []);
+        $top_items = $competitive_event ? self::leaderboard((int) $competitive_event['id'], 'global', '', '', 3, []) : [];
         $top3_positions = [];
         foreach ($top_items as $idx => $top_item) {
             $top3_positions[(int) ($top_item['id'] ?? 0)] = $idx + 1;
@@ -844,7 +1384,7 @@ class CatGame_Submissions {
             FROM {$table} s
             LEFT JOIN ({$reaction_agg_sql}) r ON r.submission_id = s.id
             WHERE {$where_sql}
-            ORDER BY COALESCE(r.total_reactions, 0) DESC, COALESCE(r.first_reaction_at, '9999-12-31 23:59:59') ASC, s.created_at DESC, s.id DESC
+            ORDER BY COALESCE(r.total_reactions, 0) DESC, COALESCE(r.first_reaction_at, '9999-12-31 23:59:59') ASC, s.created_at ASC, s.id ASC
             LIMIT %d";
         $prepared = $wpdb->prepare($sql, ...$params);
         $results = $wpdb->get_results($prepared, ARRAY_A);

@@ -29,6 +29,15 @@ class CatGame_Events {
         return self::hydrate_event_payload($event);
     }
 
+    public static function get_active_competitive_event(): ?array {
+        $event = self::get_active_event();
+        if (!$event) {
+            return null;
+        }
+
+        return (($event['event_type'] ?? 'competitive') === 'competitive') ? $event : null;
+    }
+
     public static function get_event(int $event_id): ?array {
         global $wpdb;
         $table = CatGame_DB::table('events');
@@ -38,6 +47,152 @@ class CatGame_Events {
         }
 
         return self::hydrate_event_payload($event);
+    }
+
+    public static function get_event_winners(int $event_id): ?array {
+        if ($event_id <= 0) {
+            return null;
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('event_winners');
+        $row = $wpdb->get_row(
+            $wpdb->prepare("SELECT * FROM {$table} WHERE event_id = %d LIMIT 1", $event_id),
+            ARRAY_A
+        );
+
+        return is_array($row) ? $row : null;
+    }
+
+    public static function finalize_competitive_event_winners(int $event_id): void {
+        if ($event_id <= 0) {
+            return;
+        }
+
+        $event = self::get_event($event_id);
+        if (!$event || (($event['event_type'] ?? 'competitive') !== 'competitive')) {
+            return;
+        }
+
+        if (self::get_event_winners($event_id)) {
+            return;
+        }
+
+        $top = class_exists('CatGame_Submissions')
+            ? CatGame_Submissions::leaderboard($event_id, 'global', '', '', 3, [])
+            : [];
+
+        global $wpdb;
+        $table = CatGame_DB::table('event_winners');
+        $wpdb->insert(
+            $table,
+            [
+                'event_id' => $event_id,
+                'first_place_submission_id' => isset($top[0]['id']) ? (int) $top[0]['id'] : null,
+                'second_place_submission_id' => isset($top[1]['id']) ? (int) $top[1]['id'] : null,
+                'third_place_submission_id' => isset($top[2]['id']) ? (int) $top[2]['id'] : null,
+                'finalized_at' => current_time('mysql'),
+            ],
+            ['%d', '%d', '%d', '%d', '%s']
+        );
+    }
+
+    public static function finalize_ended_competitive_events(): void {
+        global $wpdb;
+        $events_table = CatGame_DB::table('events');
+        $winners_table = CatGame_DB::table('event_winners');
+        $now = current_time('mysql');
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT e.id
+                 FROM {$events_table} e
+                 LEFT JOIN {$winners_table} w ON w.event_id = e.id
+                 WHERE e.event_type = %s AND e.ends_at < %s AND w.id IS NULL",
+                'competitive',
+                $now
+            ),
+            ARRAY_A
+        );
+
+        foreach ($rows as $row) {
+            self::finalize_competitive_event_winners((int) ($row['id'] ?? 0));
+        }
+    }
+
+    public static function list_historical_winners(int $limit = 20): array {
+        global $wpdb;
+
+        $limit = max(1, min(100, $limit));
+        $events_table = CatGame_DB::table('events');
+        $winners_table = CatGame_DB::table('event_winners');
+        $submissions_table = CatGame_DB::table('submissions');
+
+        $sql = "SELECT
+                e.id AS event_id,
+                e.name AS event_name,
+                e.starts_at,
+                e.ends_at,
+                w.finalized_at,
+                w.first_place_submission_id,
+                w.second_place_submission_id,
+                w.third_place_submission_id,
+                s1.title AS first_title,
+                s1.attachment_id AS first_attachment_id,
+                s1.user_id AS first_user_id,
+                s2.title AS second_title,
+                s2.attachment_id AS second_attachment_id,
+                s2.user_id AS second_user_id,
+                s3.title AS third_title,
+                s3.attachment_id AS third_attachment_id,
+                s3.user_id AS third_user_id
+            FROM {$winners_table} w
+            INNER JOIN {$events_table} e ON e.id = w.event_id
+            LEFT JOIN {$submissions_table} s1 ON s1.id = w.first_place_submission_id
+            LEFT JOIN {$submissions_table} s2 ON s2.id = w.second_place_submission_id
+            LEFT JOIN {$submissions_table} s3 ON s3.id = w.third_place_submission_id
+            WHERE e.event_type = 'competitive'
+              AND e.ends_at < %s
+            ORDER BY w.finalized_at DESC, e.ends_at DESC, e.id DESC
+            LIMIT %d";
+
+        $rows = $wpdb->get_results($wpdb->prepare($sql, current_time('mysql'), $limit), ARRAY_A);
+        if (!is_array($rows)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[] = [
+                'event_id' => (int) ($row['event_id'] ?? 0),
+                'event_name' => sanitize_text_field((string) ($row['event_name'] ?? 'Evento')),
+                'starts_at' => sanitize_text_field((string) ($row['starts_at'] ?? '')),
+                'ends_at' => sanitize_text_field((string) ($row['ends_at'] ?? '')),
+                'finalized_at' => sanitize_text_field((string) ($row['finalized_at'] ?? '')),
+                'winners' => [
+                    'first' => [
+                        'submission_id' => (int) ($row['first_place_submission_id'] ?? 0),
+                        'title' => sanitize_text_field((string) ($row['first_title'] ?? '')),
+                        'attachment_id' => (int) ($row['first_attachment_id'] ?? 0),
+                        'user_id' => (int) ($row['first_user_id'] ?? 0),
+                    ],
+                    'second' => [
+                        'submission_id' => (int) ($row['second_place_submission_id'] ?? 0),
+                        'title' => sanitize_text_field((string) ($row['second_title'] ?? '')),
+                        'attachment_id' => (int) ($row['second_attachment_id'] ?? 0),
+                        'user_id' => (int) ($row['second_user_id'] ?? 0),
+                    ],
+                    'third' => [
+                        'submission_id' => (int) ($row['third_place_submission_id'] ?? 0),
+                        'title' => sanitize_text_field((string) ($row['third_title'] ?? '')),
+                        'attachment_id' => (int) ($row['third_attachment_id'] ?? 0),
+                        'user_id' => (int) ($row['third_user_id'] ?? 0),
+                    ],
+                ],
+            ];
+        }
+
+        return $result;
     }
 
 
@@ -141,6 +296,7 @@ class CatGame_Events {
         return [
             'name' => $name !== '' ? $name : 'Evento vigente',
             'date_range' => $date_range,
+            'event_type' => ($event['event_type'] ?? 'competitive') === 'thematic' ? 'thematic' : 'competitive',
             'mode' => $mode === 'none' ? 'none' : $mode,
             'items' => $items,
             'general_summary' => self::general_rules_summary(),
@@ -149,6 +305,11 @@ class CatGame_Events {
 
     private static function hydrate_event_payload(array $event): array {
         $rules = self::normalize_rules_payload(isset($event['rules_json']) ? (string) $event['rules_json'] : null);
+        $event_type = sanitize_key((string) ($event['event_type'] ?? 'competitive'));
+        if (!in_array($event_type, ['competitive', 'thematic'], true)) {
+            $event_type = 'competitive';
+        }
+        $event['event_type'] = $event_type;
         $event['rules'] = $rules;
         $event['no_rules'] = ($rules['mode'] ?? 'none') === 'none';
         $event['event_updated_at'] = (string) ($event['created_at'] ?? '');
