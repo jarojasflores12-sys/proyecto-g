@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 class CatGame_DB {
-    private const SCHEMA_VERSION = '10';
+    private const SCHEMA_VERSION = '15';
     private const SCHEMA_OPTION_KEY = 'catgame_schema_version';
 
     public static function init(): void {
@@ -50,11 +50,15 @@ class CatGame_DB {
         $perma_bans = self::table('perma_bans');
         $bans = self::table('bans');
         $infractions = self::table('infractions');
+        $event_winners = self::table('event_winners');
+        $feedback = self::table('feedback');
+        $adoptions = self::table('adoptions');
 
         $sql = [];
         $sql[] = "CREATE TABLE {$events} (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             name VARCHAR(200) NOT NULL,
+            event_type VARCHAR(20) NOT NULL DEFAULT 'competitive',
             starts_at DATETIME NOT NULL,
             ends_at DATETIME NOT NULL,
             is_active TINYINT(1) NOT NULL DEFAULT 0,
@@ -78,6 +82,16 @@ class CatGame_DB {
             is_hidden TINYINT(1) NOT NULL DEFAULT 0,
             hidden_reason VARCHAR(32) NULL,
             hidden_at DATETIME NULL,
+            review_status VARCHAR(24) NOT NULL DEFAULT 'pending_review',
+            review_decision VARCHAR(24) NULL,
+            review_reason VARCHAR(64) NULL,
+            review_detail VARCHAR(250) NULL,
+            reviewed_by BIGINT UNSIGNED NULL,
+            reviewed_at DATETIME NULL,
+            appeal_deadline_at DATETIME NULL,
+            review_appeal_message TEXT NULL,
+            review_appealed_at DATETIME NULL,
+            review_appeal_decision_at DATETIME NULL,
             created_at DATETIME NOT NULL,
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             score_cached DECIMAL(5,2) NOT NULL DEFAULT 0,
@@ -87,7 +101,9 @@ class CatGame_DB {
             KEY event_status_score (event_id, status, score_cached),
             KEY geo (country, city),
             KEY user_id (user_id),
-            KEY hidden_idx (is_hidden, event_id)
+            KEY hidden_idx (is_hidden, event_id),
+            KEY review_status_idx (review_status),
+            KEY review_appeal_deadline_idx (appeal_deadline_at)
         ) {$charset};";
 
         $sql[] = "CREATE TABLE {$votes} (
@@ -246,6 +262,56 @@ class CatGame_DB {
             KEY user_id (user_id),
             KEY submission_id (submission_id),
             KEY case_status (case_status)
+        ) {$charset};";
+
+        $sql[] = "CREATE TABLE {$event_winners} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            event_id BIGINT UNSIGNED NOT NULL,
+            first_place_submission_id BIGINT UNSIGNED NULL,
+            second_place_submission_id BIGINT UNSIGNED NULL,
+            third_place_submission_id BIGINT UNSIGNED NULL,
+            finalized_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY uniq_event_id (event_id),
+            KEY finalized_at (finalized_at)
+        ) {$charset};";
+
+
+        $sql[] = "CREATE TABLE {$feedback} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            user_id BIGINT UNSIGNED NOT NULL,
+            username VARCHAR(60) NOT NULL,
+            type VARCHAR(24) NOT NULL,
+            message TEXT NOT NULL,
+            source_page VARCHAR(120) NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'nuevo',
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY user_id (user_id),
+            KEY status_created_at (status, created_at)
+        ) {$charset};";
+
+
+        $sql[] = "CREATE TABLE {$adoptions} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            user_id BIGINT UNSIGNED NOT NULL,
+            pet_name VARCHAR(120) NOT NULL,
+            pet_type VARCHAR(120) NULL,
+            pet_gender VARCHAR(12) NOT NULL,
+            pet_age VARCHAR(40) NOT NULL,
+            city VARCHAR(120) NOT NULL,
+            country VARCHAR(120) NOT NULL,
+            adoption_type VARCHAR(24) NOT NULL,
+            description TEXT NOT NULL,
+            contact TEXT NOT NULL,
+            attachment_id BIGINT UNSIGNED NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NULL,
+            PRIMARY KEY (id),
+            KEY status_created_at (status, created_at),
+            KEY user_id (user_id),
+            KEY adoption_type (adoption_type)
         ) {$charset};";
 
         foreach ($sql as $statement) {
