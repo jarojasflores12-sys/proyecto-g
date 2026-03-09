@@ -456,11 +456,7 @@ class CatGame_Auth {
         $remote_addr = $_SERVER['REMOTE_ADDR'] ?? '';
         $remote_addr = is_string($remote_addr) ? trim($remote_addr) : '';
 
-        if ($remote_addr !== '' && filter_var($remote_addr, FILTER_VALIDATE_IP)) {
-            return $remote_addr;
-        }
-
-        // Integrations with trusted edge infrastructure can override this through the filter.
+        // Let trusted-edge integrations override the baseline IP before we lock in the bucket key.
         // Any override still has to be a valid IP address.
         $filtered_ip = apply_filters('catgame_auth_rate_limit_ip', $remote_addr);
         if (is_string($filtered_ip)) {
@@ -468,6 +464,10 @@ class CatGame_Auth {
             if ($filtered_ip !== '' && filter_var($filtered_ip, FILTER_VALIDATE_IP)) {
                 return $filtered_ip;
             }
+        }
+
+        if ($remote_addr !== '' && filter_var($remote_addr, FILTER_VALIDATE_IP)) {
+            return $remote_addr;
         }
 
         return '0.0.0.0';
