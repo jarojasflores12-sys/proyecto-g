@@ -3,6 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 $current_page = $data['page'] ?? 'home';
+$nav_current_page = in_array($current_page, ['adoption-new', 'adoption-detail'], true) ? 'adoptions' : $current_page;
 $event = $data['event'] ?? null;
 $event_rules_view = [];
 $event_name = '';
@@ -10,6 +11,7 @@ $event_date_range = '';
 $event_rules_mode = 'none';
 $event_rules_items = [];
 $event_general_rules = [];
+$event_type = 'competitive';
 $event_revision = '';
 
 if (is_array($event) && !empty($event['id'])) {
@@ -19,13 +21,15 @@ if (is_array($event) && !empty($event['id'])) {
     $event_rules_mode = sanitize_key((string) ($event_rules_view['mode'] ?? 'none'));
     $event_rules_items = is_array($event_rules_view['items'] ?? null) ? $event_rules_view['items'] : [];
     $event_general_rules = is_array($event_rules_view['general_summary'] ?? null) ? $event_rules_view['general_summary'] : [];
-    $event_revision = md5((string) ($event['id'] ?? 0) . '|' . (string) ($event['name'] ?? '') . '|' . (string) ($event['starts_at'] ?? '') . '|' . (string) ($event['ends_at'] ?? '') . '|' . (string) ($event['rules_json'] ?? '') . '|' . (string) ($event['is_active'] ?? 0));
+    $event_type = sanitize_key((string) ($event_rules_view['event_type'] ?? 'competitive'));
+    $event_revision = md5((string) ($event['id'] ?? 0) . '|' . (string) ($event['name'] ?? '') . '|' . (string) ($event['starts_at'] ?? '') . '|' . (string) ($event['ends_at'] ?? '') . '|' . (string) ($event['rules_json'] ?? '') . '|' . (string) ($event['event_type'] ?? 'competitive') . '|' . (string) ($event['is_active'] ?? 0));
 }
 $background_style = '';
 $has_background = !empty($background_url) && is_string($background_url);
 $bottom_nav_items = [
     ['page' => 'feed', 'label' => 'Publicaciones', 'icon' => '🐱', 'url' => home_url('/catgame/feed')],
     ['page' => 'leaderboard', 'label' => 'Ranking', 'icon' => '🏆', 'url' => home_url('/catgame/leaderboard')],
+    ['page' => 'adoptions', 'label' => 'Adopciones', 'icon' => '🏡', 'url' => home_url('/catgame/adoptions')],
     ['page' => 'home', 'label' => 'Inicio', 'icon' => '🏠', 'url' => home_url('/catgame/')],
     ['page' => 'upload', 'label' => 'Subir', 'icon' => '📷', 'url' => home_url('/catgame/upload')],
     ['page' => 'profile', 'label' => 'Perfil', 'icon' => '👤', 'url' => home_url('/catgame/profile')],
@@ -48,7 +52,7 @@ if ($has_background) {
         <h1>🐱 Cat Game Vote</h1>
         <nav class="cg-nav" aria-label="Navegación principal">
             <?php foreach (CatGame_Render::nav_items() as $item): ?>
-                <?php $is_active = ($current_page === ($item['page'] ?? '')); ?>
+                <?php $is_active = ($nav_current_page === ($item['page'] ?? '')); ?>
                 <a class="<?php echo $is_active ? 'is-active' : ''; ?>" href="<?php echo esc_url($item['url']); ?>"><?php echo esc_html($item['label']); ?></a>
             <?php endforeach; ?>
         </nav>
@@ -87,7 +91,15 @@ if ($has_background) {
             <?php if ($event_date_range !== ''): ?>
                 <p class="cg-modal__dates"><strong>Vigencia:</strong> <?php echo esc_html($event_date_range); ?></p>
             <?php endif; ?>
-            <?php if ($event_rules_mode === 'none'): ?>
+            <?php if ($event_type === 'thematic'): ?>
+                <p class="cg-modal__intro">Este evento es temático. Las publicaciones relacionadas no compiten en ranking.</p>
+                <p class="cg-modal__intro">Reglas generales (resumen):</p>
+                <ul class="cg-modal__rules">
+                    <?php foreach ($event_general_rules as $line): ?>
+                        <li><?php echo esc_html((string) $line); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php elseif ($event_rules_mode === 'none'): ?>
                 <p class="cg-modal__intro">Reglas generales (resumen):</p>
                 <ul class="cg-modal__rules">
                     <?php foreach ($event_general_rules as $line): ?>
@@ -124,7 +136,7 @@ if ($has_background) {
 
     <nav class="catgame-bottom-nav" aria-label="Navegación inferior">
         <?php foreach ($bottom_nav_items as $item): ?>
-            <?php $is_bottom_active = ($current_page === $item['page']); ?>
+            <?php $is_bottom_active = ($nav_current_page === $item['page']); ?>
             <a href="<?php echo esc_url($item['url']); ?>" class="nav-item <?php echo $is_bottom_active ? 'active' : ''; ?> <?php echo $item['page'] === 'home' ? 'is-home' : ''; ?>" data-page="<?php echo esc_attr($item['page']); ?>" aria-current="<?php echo $is_bottom_active ? 'page' : 'false'; ?>">
                 <span class="icon" aria-hidden="true"><?php echo esc_html($item['icon']); ?></span>
                 <span><?php echo esc_html($item['label']); ?></span>

@@ -5,8 +5,7 @@ if (!$submission):
 <p>Publicación no encontrada.</p>
 <?php return; endif;
 $tags = CatGame_Submissions::submission_tags($submission);
-$title = trim((string) ($submission['title'] ?? ''));
-$title_label = $title !== '' ? $title : 'Publicación #' . (int) $submission['id'];
+$title_label = CatGame_Submissions::title_label($submission);
 $top3_positions = $data['top3_positions'] ?? [];
 $current_user_id = (int) ($data['current_user_id'] ?? 0);
 $position = isset($top3_positions[(int) ($submission['id'] ?? 0)]) ? (int) $top3_positions[(int) ($submission['id'] ?? 0)] : 0;
@@ -21,11 +20,9 @@ $author_name = $author ? (string) $author->user_login : 'usuario';
     <?php if ($is_mine): ?><p><span class="cg-inline-badge">Tu publicación</span></p><?php endif; ?>
     <?php if ($position > 0): ?><p><span class="cg-inline-badge">Top 3 #<?php echo (int) $position; ?></span></p><?php endif; ?>
     <div class="cg-detail-image"><?php echo wp_get_attachment_image((int) $submission['attachment_id'], 'large'); ?></div>
-    <p>Ubicación: <?php echo esc_html($submission['city'] . ', ' . $submission['country']); ?></p>
+    <p>Ubicación: <?php echo esc_html(CatGame_Submissions::visual_label((string) ($submission['city'] ?? '')) . ', ' . CatGame_Submissions::visual_label((string) ($submission['country'] ?? ''))); ?></p>
     <?php CatGame_Reactions::render_widget((int) ($submission['id'] ?? 0), is_user_logged_in(), ['reaction_counts' => (array) ($submission['reaction_counts'] ?? []), 'my_reaction' => ($submission['my_reaction'] ?? null)]); ?>
 
-    <?php $size_bytes = isset($submission['image_size_bytes']) ? (int) $submission['image_size_bytes'] : 0; ?>
-    <p>Tamaño imagen: <?php echo $size_bytes > 0 ? esc_html(number_format($size_bytes / 1024, 2)) . ' KB' : 'N/D'; ?></p>
 
     <h3>Etiquetas</h3>
     <?php if (empty($tags)): ?>

@@ -78,8 +78,12 @@ class CatGame_Render {
 
     private static function page_data(string $page): array {
 
+        CatGame_Events::finalize_ended_competitive_events();
+        CatGame_Submissions::purge_expired_review_removals();
+
         $event = CatGame_Events::get_active_event();
-        $top3_positions = self::top3_positions($event);
+        $competitive_event = CatGame_Events::get_active_competitive_event();
+        $top3_positions = self::top3_positions($competitive_event);
         $current_user_id = is_user_logged_in() ? get_current_user_id() : 0;
 
         switch ($page) {
@@ -89,13 +93,13 @@ class CatGame_Render {
                     'default_city' => '',
                     'default_country' => '',
                 ];
-                $requires_location = false;
+                $requires_profile_completion = false;
                 if (is_user_logged_in()) {
                     $uid = get_current_user_id();
                     $location = CatGame_Auth::get_user_default_location($uid);
                     $upload_defaults['default_city'] = $location['city'];
                     $upload_defaults['default_country'] = $location['country'];
-                    $requires_location = !CatGame_Auth::has_user_default_location($uid);
+                    $requires_profile_completion = !CatGame_Auth::has_user_completed_profile_requirements($uid);
                 }
 
                 $selected_tags_raw = sanitize_text_field(wp_unslash($_GET['upload_tags'] ?? ''));
@@ -113,7 +117,7 @@ class CatGame_Render {
                     'title' => sanitize_text_field(wp_unslash($_GET['upload_title'] ?? '')),
                     'custom_tags' => sanitize_textarea_field(wp_unslash($_GET['upload_custom_tags'] ?? '')),
                     'selected_tags' => array_values(array_unique($selected_tags)),
-                    'confirm_no_people' => (int) ($_GET['upload_confirm_no_people'] ?? 0) === 1,
+                    'publish_mode' => sanitize_key(wp_unslash($_GET['upload_publish_mode'] ?? (($event && (($event['event_type'] ?? 'competitive') === 'competitive')) ? '' : 'free'))),
                 ];
 
                 $upload_error_key = sanitize_key(wp_unslash($_GET['catgame_error'] ?? ''));
@@ -142,17 +146,24 @@ class CatGame_Render {
                     'upload_defaults' => $upload_defaults,
                     'upload_state' => $upload_state,
                     'upload_error' => $upload_error,
-                    'requires_location' => $requires_location,
+                    'requires_profile_completion' => $requires_profile_completion,
                     'upload_restriction' => $upload_restriction,
                 ];
             case 'feed':
                 $feed_per_page = 20;
-                $feed_page = $event ? CatGame_Submissions::list_feed_paginated((int) $event['id'], $feed_per_page, 0) : ['items' => [], 'has_more' => false, 'next_offset' => 0];
+                $active_event_id = $event ? (int) ($event['id'] ?? 0) : 0;
+                $feed_filter = sanitize_key(wp_unslash($_GET['filter'] ?? 'all'));
+                if (!in_array($feed_filter, ['all', 'event', 'free'], true)) {
+                    $feed_filter = 'all';
+                }
+                $feed_page = CatGame_Submissions::list_feed_publications_paginated($active_event_id, $feed_per_page, 0, $feed_filter);
 
                 return [
                     'page' => $page,
                     'event' => $event,
-                    'submissions' => $event ? self::with_reaction_payload((array) ($feed_page['items'] ?? []), $current_user_id) : [],
+                    'submissions' => self::with_reaction_payload((array) ($feed_page['items'] ?? []), $current_user_id),
+                    'feed_filter' => $feed_filter,
+                    'feed_has_active_event' => $active_event_id > 0,
                     'feed_per_page' => $feed_per_page,
                     'feed_has_more' => !empty($feed_page['has_more']),
                     'feed_next_offset' => (int) ($feed_page['next_offset'] ?? 0),
@@ -184,7 +195,7 @@ class CatGame_Render {
                     $scope = 'global';
                 }
 
-                $location_catalog = $event ? CatGame_Submissions::leaderboard_location_catalog((int) $event['id']) : [
+                $location_catalog = $competitive_event ? CatGame_Submissions::leaderboard_location_catalog((int) $competitive_event['id']) : [
                     'countries' => [],
                     'cities_by_country' => [],
                 ];
@@ -204,10 +215,14 @@ class CatGame_Render {
                     $city = '';
                 }
 
-                $items = $event ? self::with_reaction_payload(CatGame_Submissions::leaderboard((int) $event['id'], $scope, $country, $city, 20, []), $current_user_id) : [];
+                $items = $competitive_event ? self::with_reaction_payload(CatGame_Submissions::leaderboard((int) $competitive_event['id'], $scope, $country, $city, 20, []), $current_user_id) : [];
+                $historical_winners = CatGame_Events::list_historical_winners(20);
                 return [
                     'page' => $page,
                     'event' => $event,
+                    'ranking_event' => $competitive_event,
+                    'has_competitive_event' => (bool) $competitive_event,
+                    'historical_winners' => $historical_winners,
                     'scope' => $scope,
                     'country' => $country,
                     'city' => $city,
@@ -237,6 +252,7 @@ class CatGame_Render {
                 $profile_city = sanitize_text_field(wp_unslash($_GET['profile_city'] ?? ''));
                 $profile_country = sanitize_text_field(wp_unslash($_GET['profile_country'] ?? ''));
                 $profile_avatar = sanitize_key(wp_unslash($_GET['profile_avatar'] ?? ''));
+                $profile_terms = isset($_GET['profile_terms']) ? (int) $_GET['profile_terms'] : -1;
                 $login_identifier = sanitize_text_field(wp_unslash($_GET['login_identifier'] ?? ''));
                 $reg_username = sanitize_user(wp_unslash($_GET['reg_username'] ?? ''), true);
                 $reg_email = sanitize_email(wp_unslash($_GET['reg_email'] ?? ''));
@@ -342,6 +358,7 @@ class CatGame_Render {
                     }
                 }
                 $avatar_color_pref = (string) get_user_meta($user_id, 'catgame_avatar_color', true);
+                $terms_acceptance = CatGame_Auth::get_user_terms_acceptance($user_id);
 
                 return [
                     'page' => $page,
@@ -368,6 +385,8 @@ class CatGame_Render {
                         'avatar_color' => $profile_error !== '' && $profile_avatar !== '' ? $profile_avatar : $avatar_color_pref,
                         'default_city' => $profile_error !== '' ? $profile_city : $location['city'],
                         'default_country' => $profile_error !== '' ? $profile_country : $location['country'],
+                        'terms_accepted' => $terms_acceptance['accepted'] || $profile_terms === 1,
+                        'terms_accepted_at' => (string) ($terms_acceptance['accepted_at'] ?? ''),
                         'language' => (string) get_user_meta($user_id, 'catgame_language', true),
                     ],
                 ];
@@ -425,9 +444,70 @@ class CatGame_Render {
                     'public_profile_url' => self::public_profile_url((string) $public_user->user_login),
                 ];
 
+
+
+            case 'adoptions':
+                return [
+                    'page' => 'adoptions',
+                    'event' => $event,
+                    'adoptions' => array_values(array_filter(CatGame_Submissions::list_adoptions('all', 60, 0), static function (array $item): bool {
+                        return (string) ($item['status'] ?? 'active') !== 'removed';
+                    })),
+                    'adoption_created' => sanitize_key(wp_unslash($_GET['adoption_created'] ?? '')) === '1',
+                ];
+
+            case 'adoption-new':
+                $user_location = ['city' => '', 'country' => ''];
+                if (is_user_logged_in()) {
+                    $user_location = CatGame_Auth::get_user_default_location(get_current_user_id());
+                }
+                return [
+                    'page' => 'adoption-new',
+                    'event' => $event,
+                    'requires_login' => !is_user_logged_in(),
+                    'defaults' => [
+                        'city' => sanitize_text_field(wp_unslash($_GET['city'] ?? $user_location['city'] ?? '')),
+                        'country' => sanitize_text_field(wp_unslash($_GET['country'] ?? $user_location['country'] ?? '')),
+                        'pet_name' => sanitize_text_field(wp_unslash($_GET['pet_name'] ?? '')),
+                        'pet_type' => sanitize_text_field(wp_unslash($_GET['pet_type'] ?? '')),
+                        'pet_gender' => sanitize_key(wp_unslash($_GET['pet_gender'] ?? '')),
+                        'pet_age_value' => max(0, (int) ($_GET['pet_age_value'] ?? 0)),
+                        'pet_age_unit' => sanitize_key(wp_unslash($_GET['pet_age_unit'] ?? 'years')),
+                        'adoption_type' => sanitize_key(wp_unslash($_GET['adoption_type'] ?? 'adoption')),
+                        'description' => sanitize_textarea_field(wp_unslash($_GET['description'] ?? '')),
+                        'contact' => sanitize_textarea_field(wp_unslash($_GET['contact'] ?? '')),
+                    ],
+                    'form_error_key' => sanitize_key(wp_unslash($_GET['catgame_error'] ?? '')),
+                ];
+
+            case 'adoption-detail':
+                $adoption_id = (int) get_query_var('adoption_id');
+                $adoption = CatGame_Submissions::get_adoption($adoption_id);
+                if (!$adoption || (string) ($adoption['status'] ?? 'active') === 'removed') {
+                    return [
+                        'page' => 'adoption-detail',
+                        'event' => $event,
+                        'adoption_not_found' => true,
+                        'adoption' => null,
+                    ];
+                }
+
+                return [
+                    'page' => 'adoption-detail',
+                    'event' => $event,
+                    'adoption_not_found' => false,
+                    'adoption' => $adoption,
+                ];
+
+            case 'about':
+                return [
+                    'page' => 'about',
+                    'event' => $event,
+                ];
             case 'home':
                 $top_items = $event ? self::with_reaction_payload(CatGame_Submissions::leaderboard((int) $event['id'], 'global', '', '', 3), $current_user_id) : [];
-                $latest_items = $event ? self::with_reaction_payload(CatGame_Submissions::list_feed((int) $event['id'], 5, 0), $current_user_id) : [];
+                $latest_page = CatGame_Submissions::list_feed_publications_paginated($event ? (int) ($event['id'] ?? 0) : 0, 5, 0, 'all');
+                $latest_items = self::with_reaction_payload((array) ($latest_page['items'] ?? []), $current_user_id);
                 return [
                     'page' => 'home',
                     'event' => $event,
@@ -456,6 +536,7 @@ class CatGame_Render {
             ['label' => 'Inicio', 'url' => home_url('/catgame/'), 'page' => 'home'],
             ['label' => 'Subir', 'url' => home_url('/catgame/upload'), 'page' => 'upload'],
             ['label' => 'Publicaciones', 'url' => home_url('/catgame/feed'), 'page' => 'feed'],
+            ['label' => 'Adopciones', 'url' => home_url('/catgame/adoptions'), 'page' => 'adoptions'],
             ['label' => 'Clasificación', 'url' => home_url('/catgame/leaderboard'), 'page' => 'leaderboard'],
             ['label' => 'Mi perfil', 'url' => home_url('/catgame/profile'), 'page' => 'profile'],
         ];
