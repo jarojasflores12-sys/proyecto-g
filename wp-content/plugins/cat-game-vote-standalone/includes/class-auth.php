@@ -20,6 +20,7 @@ class CatGame_Auth {
         add_action('admin_post_catgame_reset_password', [__CLASS__, 'handle_reset_password']);
         add_action('admin_post_catgame_logout', [__CLASS__, 'handle_logout']);
         add_action('admin_post_catgame_profile_update', [__CLASS__, 'handle_profile_update']);
+        add_action('admin_post_catgame_submit_feedback', [__CLASS__, 'handle_submit_feedback']);
         add_filter('retrieve_password_message', [__CLASS__, 'filter_retrieve_password_message'], 10, 4);
     }
 
@@ -257,19 +258,23 @@ class CatGame_Auth {
         );
         $city = $location['city'];
         $country = $location['country'];
+        $terms_already_accepted = self::has_user_accepted_terms($user_id);
+        $terms_accepted_now = !empty($_POST['accept_terms']);
 
         $allowed_avatar_colors = ['rose', 'mint', 'lavender', 'yellow', 'sky'];
         if (!in_array($avatar_color, $allowed_avatar_colors, true)) {
             $avatar_color = 'rose';
         }
 
-        if ($city === '' || $country === '') {
+        if ($city === '' || $country === '' || (!$terms_already_accepted && !$terms_accepted_now)) {
+            $profile_error = ($city === '' || $country === '') ? 'missing_location' : 'missing_terms';
             $query = [
                 'complete_profile' => '1',
-                'profile_error' => 'missing_location',
+                'profile_error' => $profile_error,
                 'profile_city' => $city,
                 'profile_country' => $country,
                 'profile_avatar' => $avatar_color,
+                'profile_terms' => $terms_accepted_now ? '1' : '0',
             ];
             wp_safe_redirect(add_query_arg($query, home_url('/catgame/profile')));
             exit;
@@ -279,7 +284,73 @@ class CatGame_Auth {
         update_user_meta($user_id, 'catgame_default_city', $city);
         update_user_meta($user_id, 'catgame_default_country', $country);
 
+        if (!$terms_already_accepted && $terms_accepted_now) {
+            update_user_meta($user_id, 'catgame_terms_accepted', 1);
+            update_user_meta($user_id, 'catgame_terms_accepted_at', current_time('mysql'));
+        }
+
         wp_safe_redirect(add_query_arg('profile_saved', '1', home_url('/catgame/profile')));
+        exit;
+    }
+
+
+    public static function handle_submit_feedback(): void {
+        if (!is_user_logged_in()) {
+            wp_safe_redirect(home_url('/catgame/profile'));
+            exit;
+        }
+
+        check_admin_referer('catgame_submit_feedback');
+
+        $user_id = get_current_user_id();
+        $type = sanitize_key(wp_unslash($_POST['feedback_type'] ?? ''));
+        $message = trim(sanitize_textarea_field(wp_unslash($_POST['feedback_message'] ?? '')));
+        $source_page = trim(sanitize_text_field(wp_unslash($_POST['feedback_source_page'] ?? 'profile')));
+
+        $allowed_types = ['comment', 'suggestion', 'technical_error', 'bug_report'];
+        if (!in_array($type, $allowed_types, true)) {
+            $type = 'comment';
+        }
+
+        if ($message === '') {
+            wp_safe_redirect(add_query_arg('feedback_error', 'empty', home_url('/catgame/profile')));
+            exit;
+        }
+
+        if (function_exists('mb_substr')) {
+            $message = mb_substr($message, 0, 1200);
+        } else {
+            $message = substr($message, 0, 1200);
+        }
+
+        global $wpdb;
+        $table = CatGame_DB::table('feedback');
+        $user = wp_get_current_user();
+        $username = sanitize_user((string) ($user->user_login ?? ''), true);
+        if ($username === '') {
+            $username = 'usuario';
+        }
+
+        $wpdb->insert(
+            $table,
+            [
+                'user_id' => $user_id,
+                'username' => $username,
+                'type' => $type,
+                'message' => $message,
+                'source_page' => $source_page,
+                'status' => 'nuevo',
+                'created_at' => current_time('mysql'),
+            ],
+            ['%d', '%s', '%s', '%s', '%s', '%s', '%s']
+        );
+
+        if ($wpdb->last_error) {
+            wp_safe_redirect(add_query_arg('feedback_error', 'save_failed', home_url('/catgame/profile')));
+            exit;
+        }
+
+        wp_safe_redirect(add_query_arg('feedback_sent', '1', home_url('/catgame/profile')));
         exit;
     }
 
@@ -297,6 +368,25 @@ class CatGame_Auth {
     public static function has_user_default_location(int $user_id): bool {
         $location = self::get_user_default_location($user_id);
         return $location['city'] !== '' && $location['country'] !== '';
+    }
+
+    public static function has_user_accepted_terms(int $user_id): bool {
+        if ($user_id <= 0) {
+            return false;
+        }
+
+        return (int) get_user_meta($user_id, 'catgame_terms_accepted', true) === 1;
+    }
+
+    public static function get_user_terms_acceptance(int $user_id): array {
+        return [
+            'accepted' => self::has_user_accepted_terms($user_id),
+            'accepted_at' => sanitize_text_field((string) get_user_meta($user_id, 'catgame_terms_accepted_at', true)),
+        ];
+    }
+
+    public static function has_user_completed_profile_requirements(int $user_id): bool {
+        return self::has_user_default_location($user_id) && self::has_user_accepted_terms($user_id);
     }
 
     private static function sanitize_location_values($city_raw, $country_raw): array {
@@ -319,7 +409,7 @@ class CatGame_Auth {
 
     private static function redirect_after_auth(int $user_id, array $extra_query = []): void {
         $query = $extra_query;
-        if (!self::has_user_default_location($user_id)) {
+        if (!self::has_user_completed_profile_requirements($user_id)) {
             $query['complete_profile'] = '1';
         }
 
