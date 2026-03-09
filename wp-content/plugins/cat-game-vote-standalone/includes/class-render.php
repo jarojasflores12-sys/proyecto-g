@@ -450,7 +450,9 @@ class CatGame_Render {
                 return [
                     'page' => 'adoptions',
                     'event' => $event,
-                    'adoptions' => CatGame_Submissions::list_adoptions('active', 60, 0),
+                    'adoptions' => array_values(array_filter(CatGame_Submissions::list_adoptions('all', 60, 0), static function (array $item): bool {
+                        return (string) ($item['status'] ?? 'active') !== 'removed';
+                    })),
                     'adoption_created' => sanitize_key(wp_unslash($_GET['adoption_created'] ?? '')) === '1',
                 ];
 
@@ -469,7 +471,8 @@ class CatGame_Render {
                         'pet_name' => sanitize_text_field(wp_unslash($_GET['pet_name'] ?? '')),
                         'pet_type' => sanitize_text_field(wp_unslash($_GET['pet_type'] ?? '')),
                         'pet_gender' => sanitize_key(wp_unslash($_GET['pet_gender'] ?? '')),
-                        'pet_age' => sanitize_text_field(wp_unslash($_GET['pet_age'] ?? '')),
+                        'pet_age_value' => max(0, (int) ($_GET['pet_age_value'] ?? 0)),
+                        'pet_age_unit' => sanitize_key(wp_unslash($_GET['pet_age_unit'] ?? 'years')),
                         'adoption_type' => sanitize_key(wp_unslash($_GET['adoption_type'] ?? 'adoption')),
                         'description' => sanitize_textarea_field(wp_unslash($_GET['description'] ?? '')),
                         'contact' => sanitize_textarea_field(wp_unslash($_GET['contact'] ?? '')),
@@ -480,7 +483,7 @@ class CatGame_Render {
             case 'adoption-detail':
                 $adoption_id = (int) get_query_var('adoption_id');
                 $adoption = CatGame_Submissions::get_adoption($adoption_id);
-                if (!$adoption || (string) ($adoption['status'] ?? 'active') !== 'active') {
+                if (!$adoption || (string) ($adoption['status'] ?? 'active') === 'removed') {
                     return [
                         'page' => 'adoption-detail',
                         'event' => $event,

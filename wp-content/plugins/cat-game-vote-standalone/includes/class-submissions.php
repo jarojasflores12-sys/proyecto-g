@@ -16,6 +16,7 @@ class CatGame_Submissions {
         add_action('admin_post_catgame_delete_custom_tag', [__CLASS__, 'handle_delete_custom_tag']);
         add_action('admin_post_catgame_delete_submission', [__CLASS__, 'handle_delete_submission']);
         add_action('admin_post_catgame_create_adoption', [__CLASS__, 'handle_create_adoption']);
+        add_action('admin_post_catgame_mark_adoption_resolved', [__CLASS__, 'handle_mark_adoption_resolved']);
         add_action('admin_post_catgame_feed_more', [__CLASS__, 'handle_feed_more']);
         add_action('admin_post_nopriv_catgame_feed_more', [__CLASS__, 'handle_feed_more']);
         add_action('wp_ajax_catgame_tag_suggestions', [__CLASS__, 'handle_tag_suggestions']);
@@ -391,7 +392,9 @@ class CatGame_Submissions {
         $pet_name = trim(sanitize_text_field(wp_unslash($_POST['pet_name'] ?? '')));
         $pet_type = trim(sanitize_text_field(wp_unslash($_POST['pet_type'] ?? '')));
         $pet_gender = sanitize_key(wp_unslash($_POST['pet_gender'] ?? ''));
-        $pet_age = trim(sanitize_text_field(wp_unslash($_POST['pet_age'] ?? '')));
+        $pet_age_value = (int) ($_POST['pet_age_value'] ?? 0);
+        $pet_age_unit = sanitize_key(wp_unslash($_POST['pet_age_unit'] ?? ''));
+        $pet_age = self::format_adoption_age($pet_age_value, $pet_age_unit);
         $city = trim(sanitize_text_field(wp_unslash($_POST['city'] ?? '')));
         $country = trim(sanitize_text_field(wp_unslash($_POST['country'] ?? '')));
         $adoption_type = sanitize_key(wp_unslash($_POST['adoption_type'] ?? ''));
@@ -550,6 +553,49 @@ class CatGame_Submissions {
         }
 
         return 'Macho';
+    }
+
+
+    private static function format_adoption_age(int $value, string $unit): string {
+        $unit = sanitize_key($unit);
+        if ($value <= 0 || !in_array($unit, ['months', 'years'], true)) {
+            return '';
+        }
+
+        if ($unit === 'months') {
+            return $value === 1 ? '1 mes' : $value . ' meses';
+        }
+
+        return $value === 1 ? '1 año' : $value . ' años';
+    }
+
+    public static function can_manage_adoption(array $adoption, int $user_id = 0): bool {
+        $user_id = $user_id > 0 ? $user_id : get_current_user_id();
+        if ($user_id <= 0) {
+            return false;
+        }
+
+        return current_user_can('manage_options') || (int) ($adoption['user_id'] ?? 0) === $user_id;
+    }
+
+    public static function handle_mark_adoption_resolved(): void {
+        if (!is_user_logged_in()) {
+            wp_safe_redirect(home_url('/catgame/adoptions'));
+            exit;
+        }
+
+        check_admin_referer('catgame_mark_adoption_resolved');
+
+        $adoption_id = (int) ($_POST['adoption_id'] ?? 0);
+        $adoption = self::get_adoption($adoption_id);
+        if (!$adoption || !self::can_manage_adoption($adoption)) {
+            wp_safe_redirect(add_query_arg('adoption_notice', 'invalid', home_url('/catgame/adoptions')));
+            exit;
+        }
+
+        self::update_adoption_status($adoption_id, 'resolved');
+        wp_safe_redirect(add_query_arg('adoption_notice', 'resolved', home_url('/catgame/adoptions/' . $adoption_id)));
+        exit;
     }
 
     public static function handle_delete_submission(): void {

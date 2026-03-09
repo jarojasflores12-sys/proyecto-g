@@ -1,6 +1,7 @@
 <?php
 $items = is_array($data['adoptions'] ?? null) ? $data['adoptions'] : [];
 $adoption_created = !empty($data['adoption_created']);
+$adoption_notice = sanitize_key((string) ($_GET['adoption_notice'] ?? ''));
 ?>
 <section class="cg-adoptions-page">
     <header class="cg-adoptions-head">
@@ -12,6 +13,9 @@ $adoption_created = !empty($data['adoption_created']);
     <?php if ($adoption_created): ?>
         <p class="cg-alert cg-alert-success">Publicación de adopción creada correctamente.</p>
     <?php endif; ?>
+    <?php if ($adoption_notice === 'resolved'): ?>
+        <p class="cg-alert cg-alert-success">Publicación marcada como adoptada.</p>
+    <?php endif; ?>
 
     <?php if (empty($items)): ?>
         <p class="cg-empty-state">Aún no hay publicaciones de adopciones.</p>
@@ -20,7 +24,8 @@ $adoption_created = !empty($data['adoption_created']);
             <?php foreach ($items as $item): ?>
                 <?php
                 $detail_url = home_url('/catgame/adoptions/' . (int) ($item['id'] ?? 0));
-                $badge = CatGame_Submissions::adoption_type_label((string) ($item['adoption_type'] ?? 'adoption'));
+                $is_resolved = (string) ($item['status'] ?? 'active') === 'resolved';
+                $badge = $is_resolved ? '✅ Adoptado' : CatGame_Submissions::adoption_type_label((string) ($item['adoption_type'] ?? 'adoption'));
                 $pet_name = CatGame_Submissions::visual_label((string) ($item['pet_name'] ?? 'Mascota'));
                 $pet_type = CatGame_Submissions::visual_label((string) ($item['pet_type'] ?? ''));
                 $gender = CatGame_Submissions::adoption_gender_label((string) ($item['pet_gender'] ?? 'male'));
@@ -30,7 +35,7 @@ $adoption_created = !empty($data['adoption_created']);
                 $description = wp_trim_words((string) ($item['description'] ?? ''), 20, '…');
                 ?>
                 <article class="cg-card cg-adoption-card">
-                    <span class="cg-inline-badge cg-adoption-badge"><?php echo esc_html($badge); ?></span>
+                    <span class="cg-inline-badge cg-adoption-badge <?php echo $is_resolved ? 'cg-adoption-badge--resolved' : ''; ?>"><?php echo esc_html($badge); ?></span>
                     <a href="<?php echo esc_url($detail_url); ?>" class="cg-adoption-image-link" aria-label="Ver adopción de <?php echo esc_attr($pet_name); ?>">
                         <?php echo wp_get_attachment_image((int) ($item['attachment_id'] ?? 0), 'large', false, ['class' => 'cg-adoption-image', 'loading' => 'lazy']); ?>
                     </a>

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.60
+- Adopciones / Formulario: edad ahora se captura como número obligatorio + selector de unidad (Meses/Años) y se guarda con singular/plural correcto (`1 mes`, `2 meses`, `1 año`, `3 años`).
+- Adopciones / Formulario: sexo pasa a botones visuales `💙 Macho` y `💗 Hembra` con estado seleccionado visible y validación obligatoria.
+- Adopciones / Formulario: mejora de UX para foto con botón visible `📷 Seleccionar foto` y vista previa inmediata al elegir/cambiar imagen.
+- Adopciones / Detalle: nuevo botón `Marcar como adoptado` visible solo para autor o admin; al marcar, estado `resolved` y badge `✅ Adoptado`, ocultando bloque de contacto.
+
 ## 0.27.59
 - Revisión editorial: se corrige la ventana de apelación (24h) para usar la zona horaria de WordPress de forma consistente al guardar y validar `appeal_deadline_at`.
 - Evita cierres anticipados o tardíos de apelación en sitios con desfase horario respecto a UTC.

@@ -2278,3 +2278,91 @@ a.cg-btn--ghost {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.cg-adoption-photo-picker {
+  display: grid;
+  gap: 10px;
+}
+
+.cg-adoption-photo-picker input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cg-adoption-photo-btn {
+  display: inline-flex;
+  width: fit-content;
+  background: #2563eb;
+  color: #fff;
+  border-color: #1d4ed8;
+}
+
+.cg-adoption-preview {
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.cg-adoption-age-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.cg-adoption-sex-fieldset,
+.cg-adoption-form fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.cg-adoption-sex-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.cg-sex-btn {
+  display: block;
+}
+
+.cg-sex-btn input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cg-sex-btn span {
+  display: block;
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cg-sex-btn--male span {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.cg-sex-btn--female span {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+.cg-sex-btn input:checked + span {
+  border-color: #111827;
+  box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.12);
+}
+
+.cg-adoption-badge--resolved {
+  background: #dcfce7;
+  color: #166534;
+}

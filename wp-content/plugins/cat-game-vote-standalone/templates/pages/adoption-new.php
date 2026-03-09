@@ -3,6 +3,12 @@ $defaults = is_array($data['defaults'] ?? null) ? $data['defaults'] : [];
 $error_key = sanitize_key((string) ($data['form_error_key'] ?? ''));
 $error_message = $error_key !== '' ? CatGame_Submissions::adoption_error_message($error_key) : '';
 $requires_login = !empty($data['requires_login']);
+$default_gender = (string) ($defaults['pet_gender'] ?? '');
+$default_age_value = max(0, (int) ($defaults['pet_age_value'] ?? 0));
+$default_age_unit = (string) ($defaults['pet_age_unit'] ?? 'years');
+if (!in_array($default_age_unit, ['months', 'years'], true)) {
+    $default_age_unit = 'years';
+}
 ?>
 <section class="cg-adoptions-page">
     <header class="cg-adoptions-head">
@@ -22,9 +28,12 @@ $requires_login = !empty($data['requires_login']);
         <?php wp_nonce_field('catgame_create_adoption'); ?>
         <input type="hidden" name="action" value="catgame_create_adoption">
 
-        <label>Foto de la mascota
-            <input type="file" name="adoption_image" accept="image/*" required>
-        </label>
+        <label>Foto de la mascota</label>
+        <div class="cg-adoption-photo-picker">
+            <input id="cg-adoption-image" type="file" name="adoption_image" accept="image/*" required>
+            <label class="cg-btn cg-adoption-photo-btn" for="cg-adoption-image">📷 Seleccionar foto</label>
+            <img id="cg-adoption-preview" class="cg-adoption-preview" alt="Vista previa de la foto de la mascota" hidden>
+        </div>
 
         <label>Nombre de la mascota
             <input type="text" name="pet_name" maxlength="120" value="<?php echo esc_attr((string) ($defaults['pet_name'] ?? '')); ?>" required>
@@ -35,16 +44,29 @@ $requires_login = !empty($data['requires_login']);
         </label>
 
         <div class="cg-adoption-inline-fields">
-            <label>Sexo
-                <select name="pet_gender" required>
-                    <option value="">Selecciona</option>
-                    <option value="male" <?php selected((string) ($defaults['pet_gender'] ?? ''), 'male'); ?>>Macho</option>
-                    <option value="female" <?php selected((string) ($defaults['pet_gender'] ?? ''), 'female'); ?>>Hembra</option>
-                </select>
-            </label>
-            <label>Edad
-                <input type="text" name="pet_age" maxlength="40" placeholder="Ej: 2 años" value="<?php echo esc_attr((string) ($defaults['pet_age'] ?? '')); ?>" required>
-            </label>
+            <fieldset class="cg-adoption-sex-fieldset">
+                <legend>Sexo</legend>
+                <div class="cg-adoption-sex-buttons">
+                    <label class="cg-sex-btn cg-sex-btn--male">
+                        <input type="radio" name="pet_gender" value="male" <?php checked($default_gender, 'male'); ?> required>
+                        <span>💙 Macho</span>
+                    </label>
+                    <label class="cg-sex-btn cg-sex-btn--female">
+                        <input type="radio" name="pet_gender" value="female" <?php checked($default_gender, 'female'); ?> required>
+                        <span>💗 Hembra</span>
+                    </label>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Edad</legend>
+                <div class="cg-adoption-age-row">
+                    <input type="number" name="pet_age_value" min="1" step="1" inputmode="numeric" value="<?php echo $default_age_value > 0 ? (int) $default_age_value : ''; ?>" required>
+                    <select name="pet_age_unit" required>
+                        <option value="months" <?php selected($default_age_unit, 'months'); ?>>Meses</option>
+                        <option value="years" <?php selected($default_age_unit, 'years'); ?>>Años</option>
+                    </select>
+                </div>
+            </fieldset>
         </div>
 
         <div class="cg-adoption-inline-fields">
@@ -76,3 +98,20 @@ $requires_login = !empty($data['requires_login']);
 
     <a class="cg-btn cg-btn--ghost" href="<?php echo esc_url(home_url('/catgame/adoptions')); ?>">← Volver a Adopciones</a>
 </section>
+<script>
+(function () {
+  const input = document.getElementById('cg-adoption-image');
+  const preview = document.getElementById('cg-adoption-preview');
+  if (!input || !preview) return;
+  input.addEventListener('change', function () {
+    const file = input.files && input.files[0] ? input.files[0] : null;
+    if (!file) {
+      preview.hidden = true;
+      preview.removeAttribute('src');
+      return;
+    }
+    preview.src = URL.createObjectURL(file);
+    preview.hidden = false;
+  });
+})();
+</script>
