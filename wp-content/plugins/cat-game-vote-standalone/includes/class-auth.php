@@ -450,9 +450,14 @@ class CatGame_Auth {
     }
 
     private static function request_ip(): string {
+        // Important: never trust forwarding headers here (X-Forwarded-For, Client-IP, etc.)
+        // because clients can spoof them unless a trusted reverse-proxy setup sanitizes values.
+        // REMOTE_ADDR is the only server-populated baseline we should rely on by default.
         $remote_addr = $_SERVER['REMOTE_ADDR'] ?? '';
         $remote_addr = is_string($remote_addr) ? trim($remote_addr) : '';
 
+        // Let trusted-edge integrations override the baseline IP before we lock in the bucket key.
+        // Any override still has to be a valid IP address.
         $filtered_ip = apply_filters('catgame_auth_rate_limit_ip', $remote_addr);
         if (is_string($filtered_ip)) {
             $filtered_ip = trim($filtered_ip);
