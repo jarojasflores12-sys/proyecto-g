@@ -689,7 +689,7 @@ class CatGame_Submissions {
     public static function remove_by_review(int $submission_id, int $admin_user_id, string $reason, string $detail = ''): void {
         global $wpdb;
         $table = CatGame_DB::table('submissions');
-        $deadline = gmdate('Y-m-d H:i:s', time() + DAY_IN_SECONDS);
+        $deadline = wp_date('Y-m-d H:i:s', current_time('timestamp') + DAY_IN_SECONDS);
         $wpdb->update(
             $table,
             [
@@ -776,7 +776,7 @@ class CatGame_Submissions {
         }
 
         $deadline_at = strtotime((string) ($submission['appeal_deadline_at'] ?? ''));
-        if ($deadline_at <= 0 || $deadline_at < time()) {
+        if ($deadline_at <= 0 || $deadline_at < current_time('timestamp')) {
             wp_safe_redirect(add_query_arg('review_appeal', 'expired', home_url('/catgame/profile')));
             exit;
         }
@@ -813,7 +813,7 @@ class CatGame_Submissions {
         }
 
         $deadline_at = strtotime((string) ($submission['appeal_deadline_at'] ?? ''));
-        if ($deadline_at <= 0 || $deadline_at < time()) {
+        if ($deadline_at <= 0 || $deadline_at < current_time('timestamp')) {
             return '<p class="cg-appeal-state">Ventana de apelación cerrada</p>';
         }
 

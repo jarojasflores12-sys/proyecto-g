@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.59
+- Revisión editorial: se corrige la ventana de apelación (24h) para usar la zona horaria de WordPress de forma consistente al guardar y validar `appeal_deadline_at`.
+- Evita cierres anticipados o tardíos de apelación en sitios con desfase horario respecto a UTC.
+
 ## 0.27.58
 - Navegación móvil: tab bar inferior actualizada para mostrar los **6 accesos** solicitados: Publicaciones, Ranking, Adopciones, Inicio, Subir y Perfil.
 - Se ajusta el layout de la tab bar móvil (`flex: 1` por item, iconos/texto compactos) para evitar que desaparezcan tabs por espacio en pantallas pequeñas.
