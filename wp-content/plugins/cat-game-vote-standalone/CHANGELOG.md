@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.25
+- Inicio/UI: se agrega el enlace desplegable **"Ver reglas completas"** en la vista Home para mostrar un bloque claro con las reglas completas de la comunidad.
+- Home responsive: estilos del bloque de reglas optimizados para lectura en móvil, sin cambiar lógica de backend/rutas.
+
 ## 0.27.24
 - Ranking UX: filtros de ubicación ahora usan valores guiados con `select` para País/Ciudad (catálogo real del evento activo) en lugar de texto libre.
 - Ranking robustez: si `country/city` de querystring no existen en catálogo del evento, se normalizan a vacío para evitar filtros inválidos por typo/manual URL.

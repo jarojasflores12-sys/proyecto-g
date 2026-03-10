@@ -982,6 +982,51 @@ body.cg-has-custom-bg .cg-main {
   font-weight: 600;
 }
 
+
+.cg-home-rules {
+  margin-top: 14px;
+  border: 1px solid var(--cg-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+}
+
+.cg-home-rules summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 12px 14px;
+  font-weight: 600;
+  color: #465066;
+}
+
+.cg-home-rules summary::-webkit-details-marker {
+  display: none;
+}
+
+.cg-home-rules summary::after {
+  content: '▾';
+  float: right;
+}
+
+.cg-home-rules[open] summary::after {
+  content: '▴';
+}
+
+.cg-home-rules-content {
+  border-top: 1px solid var(--cg-border);
+  padding: 12px 14px;
+}
+
+.cg-home-rules-content h4 {
+  margin: 0 0 8px;
+}
+
+.cg-home-rules-content ol {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
 .cg-home-auth {
   margin-bottom: 16px;
   gap: 10px;
