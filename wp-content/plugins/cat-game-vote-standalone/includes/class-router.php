@@ -17,6 +17,10 @@ class CatGame_Router {
         add_rewrite_rule('^catgame/feed/?$', 'index.php?catgame_page=feed', 'top');
         add_rewrite_rule('^catgame/leaderboard/?$', 'index.php?catgame_page=leaderboard', 'top');
         add_rewrite_rule('^catgame/profile/?$', 'index.php?catgame_page=profile', 'top');
+        add_rewrite_rule('^catgame/about/?$', 'index.php?catgame_page=about', 'top');
+        add_rewrite_rule('^catgame/adoptions/?$', 'index.php?catgame_page=adoptions', 'top');
+        add_rewrite_rule('^catgame/adoptions/new/?$', 'index.php?catgame_page=adoption-new', 'top');
+        add_rewrite_rule('^catgame/adoptions/([0-9]+)/?$', 'index.php?catgame_page=adoption-detail&adoption_id=$matches[1]', 'top');
         add_rewrite_rule('^catgame/user/([^/]+)/?$', 'index.php?catgame_page=user&catgame_username=$matches[1]', 'top');
         add_rewrite_rule('^catgame/submission/([0-9]+)/?$', 'index.php?catgame_page=submission&submission_id=$matches[1]', 'top');
     }
@@ -28,6 +32,7 @@ class CatGame_Router {
         $vars[] = 'country';
         $vars[] = 'city';
         $vars[] = 'catgame_username';
+        $vars[] = 'adoption_id';
         return $vars;
     }
 
@@ -93,6 +98,18 @@ class CatGame_Router {
             return 'profile';
         }
 
+        if ($normalized_path === 'catgame/about') {
+            return 'about';
+        }
+
+        if ($normalized_path === 'catgame/adoptions') {
+            return 'adoptions';
+        }
+
+        if ($normalized_path === 'catgame/adoptions/new') {
+            return 'adoption-new';
+        }
+
         if (preg_match('#^catgame/user/([^/]+)$#', $normalized_path, $matches)) {
             set_query_var('catgame_username', sanitize_user(rawurldecode((string) $matches[1]), true));
             return 'user';
@@ -101,6 +118,11 @@ class CatGame_Router {
         if (preg_match('#^catgame/submission/(\d+)$#', $normalized_path, $matches)) {
             set_query_var('submission_id', (int) $matches[1]);
             return 'submission';
+        }
+
+        if (preg_match('#^catgame/adoptions/(\d+)$#', $normalized_path, $matches)) {
+            set_query_var('adoption_id', (int) $matches[1]);
+            return 'adoption-detail';
         }
 
         return '';

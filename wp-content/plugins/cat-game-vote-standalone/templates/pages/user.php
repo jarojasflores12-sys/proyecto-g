@@ -6,7 +6,7 @@ $active_items = (array) ($data['active_items'] ?? []);
 $recent_items = (array) ($data['recent_items'] ?? []);
 $viewer_logged_in = !empty($data['viewer_logged_in']);
 $current_user_id = (int) ($data['viewer_user_id'] ?? 0);
-$location_text = trim((string) ($location['city'] ?? '')) . ', ' . trim((string) ($location['country'] ?? ''));
+$location_text = CatGame_Submissions::visual_label(trim((string) ($location['city'] ?? ''))) . ', ' . CatGame_Submissions::visual_label(trim((string) ($location['country'] ?? '')));
 $location_text = trim($location_text, ' ,');
 ?>
 <section>
@@ -21,10 +21,10 @@ $location_text = trim($location_text, ' ,');
             <p class="cg-location">📍 <?php echo esc_html($location_text !== '' ? $location_text : 'Ubicación no disponible'); ?></p>
         </div>
 
-        <h3>Evento activo</h3>
+        <h3>La Arena activa</h3>
         <div class="cg-grid">
             <?php if (empty($active_items)): ?>
-                <p class="cg-empty-state">Aún no ha publicado en el evento activo.</p>
+                <p class="cg-empty-state">Aún no ha publicado en La Arena activa.</p>
             <?php endif; ?>
 
             <?php foreach ($active_items as $item): ?>
@@ -43,7 +43,7 @@ $location_text = trim($location_text, ' ,');
                             <span class="cg-badge">#<?php echo (int) ($item['id'] ?? 0); ?></span>
                             <p class="cg-title"><?php echo esc_html($title_label); ?></p>
                             <small class="cg-author">por <a href="<?php echo esc_url($author_profile_url); ?>">@<?php echo esc_html($username); ?></a></small>
-                            <p class="cg-location">📍 <?php echo esc_html((string) ($item['city'] ?? '') . ', ' . (string) ($item['country'] ?? '')); ?></p>
+                            <p class="cg-location">📍 <?php echo esc_html(CatGame_Submissions::visual_label((string) ($item['city'] ?? '')) . ', ' . CatGame_Submissions::visual_label((string) ($item['country'] ?? ''))); ?></p>
                         </div>
                     </div>
                     <?php if (!empty($item_tags)): ?>
@@ -88,7 +88,7 @@ $location_text = trim($location_text, ' ,');
                             <span class="cg-badge">#<?php echo (int) ($item['id'] ?? 0); ?></span>
                             <p class="cg-title"><?php echo esc_html($title_label); ?></p>
                             <small class="cg-author">por <a href="<?php echo esc_url($author_profile_url); ?>">@<?php echo esc_html($username); ?></a></small>
-                            <p class="cg-location">📍 <?php echo esc_html((string) ($item['city'] ?? '') . ', ' . (string) ($item['country'] ?? '')); ?></p>
+                            <p class="cg-location">📍 <?php echo esc_html(CatGame_Submissions::visual_label((string) ($item['city'] ?? '')) . ', ' . CatGame_Submissions::visual_label((string) ($item['country'] ?? ''))); ?></p>
                         </div>
                     </div>
                     <?php if (!empty($item_tags)): ?>
@@ -98,7 +98,7 @@ $location_text = trim($location_text, ' ,');
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
-                    <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), $viewer_logged_in, ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)], ['readonly' => true, 'readonly_reason' => 'Evento finalizado']); ?>
+                    <?php CatGame_Reactions::render_widget((int) ($item['id'] ?? 0), $viewer_logged_in, ['reaction_counts' => (array) ($item['reaction_counts'] ?? []), 'my_reaction' => ($item['my_reaction'] ?? null)], ['readonly' => true, 'readonly_reason' => 'La Arena finalizada']); ?>
                 </article>
             <?php endforeach; ?>
         </div>
