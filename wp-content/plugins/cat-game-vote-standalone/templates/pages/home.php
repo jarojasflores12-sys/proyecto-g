@@ -18,6 +18,19 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
         <a class="cg-card cg-home-step-link" href="<?php echo esc_url(home_url('/catgame/feed')); ?>" aria-label="Ir a Publicaciones"><strong>😻 Reacciona</strong><p>La comunidad reacciona a las publicaciones.</p></a>
         <a class="cg-card cg-home-step-link" href="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>" aria-label="Ir a Ranking"><strong>🏆 Gana</strong><p>Sube en el ranking y llega al top.</p></a>
     </div>
+    <details class="cg-home-rules" aria-label="Reglas completas del juego">
+        <summary>Ver reglas completas</summary>
+        <div class="cg-home-rules-content">
+            <h4>Reglas de la comunidad</h4>
+            <ol>
+                <li>Sube fotos de tu mascota respetando las normas.</li>
+                <li>No se permiten imágenes ofensivas, violentas o que vulneren a personas o animales.</li>
+                <li>Los administradores pueden moderar publicaciones si incumplen las normas.</li>
+                <li>Las sanciones pueden incluir advertencias, puntos o bloqueos temporales.</li>
+                <li>Si una publicación es eliminada, el usuario puede ver el motivo y apelar.</li>
+            </ol>
+        </div>
+    </details>
 </section>
 
 <section class="cg-home-section">
