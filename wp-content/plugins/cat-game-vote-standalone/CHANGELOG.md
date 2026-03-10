@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.63
+- Inicio: el botón `📜 Ver reglas completas` ahora abre un bloque modal claro dentro de la misma vista con las reglas completas de la comunidad.
+- Inicio / UX móvil: se agregan estilos responsive para el modal de reglas (overlay, card centrada y scroll interno) sin tocar lógica de backend.
+
 ## 0.27.62
 - Inicio / Cómo funciona: se reemplaza la lista por 4 tarjetas visuales compactas (icono, título y descripción) para mejorar lectura y escaneo.
 - Inicio / Cómo funciona: layout responsive móvil-first con grilla de 2 columnas en pantallas amplias, manteniendo estilos del sitio.
