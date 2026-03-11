@@ -1073,33 +1073,40 @@ a.cg-btn--ghost {
   border-color: var(--cg-border);
 }
 
-.cg-home-rules-block {
-  display: none;
-  gap: 10px;
-  margin-top: 10px;
-  background: rgba(255, 255, 255, 0.94);
-}
-
-.cg-home-rules-block:target {
+.cg-rules-page {
   display: grid;
+  gap: 12px;
 }
 
-.cg-home-rules-block h4,
-.cg-home-rules-block ol {
+.cg-rules-hero {
+  gap: 6px;
+}
+
+.cg-rules-hero h2,
+.cg-rules-hero p {
   margin: 0;
 }
 
-.cg-home-rules-block ol {
-  padding-left: 20px;
-  display: grid;
-  gap: 8px;
+.cg-rules-hero p,
+.cg-rules-section p {
   line-height: 1.45;
 }
 
-.cg-home-rules-block .cg-btn {
-  justify-self: start;
+.cg-rules-section {
+  display: grid;
+  gap: 6px;
 }
 
+.cg-rules-section h3,
+.cg-rules-section p {
+  margin: 0;
+}
+
+.cg-rules-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
 
 .cg-about-page {
   display: grid;

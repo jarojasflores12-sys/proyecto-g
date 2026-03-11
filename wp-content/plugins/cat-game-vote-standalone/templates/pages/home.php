@@ -41,21 +41,10 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
         <p class="cg-home-guide-note">Los administradores pueden moderar publicaciones si no cumplen las normas. Dependiendo de la gravedad pueden aplicarse sanciones o eliminar publicaciones.</p>
 
         <div class="cg-home-guide-actions">
-            <a class="cg-btn cg-btn--ghost" href="#cg-community-rules">📜 Ver reglas completas</a>
+            <a class="cg-btn cg-btn--ghost" href="<?php echo esc_url(home_url('/catgame/rules')); ?>">📜 Ver reglas completas</a>
             <a class="cg-btn" href="<?php echo esc_url(home_url('/catgame/about')); ?>">ℹ️ Acerca de nosotros</a>
         </div>
 
-        <section id="cg-community-rules" class="cg-home-rules-block cg-card" aria-labelledby="cg-community-rules-title" tabindex="-1">
-            <h4 id="cg-community-rules-title">Reglas de la comunidad</h4>
-            <ol>
-                <li>Sube fotos de tu mascota respetando las normas.</li>
-                <li>No se permiten imágenes ofensivas, violentas o que vulneren a personas o animales.</li>
-                <li>Los administradores pueden moderar publicaciones si incumplen las normas.</li>
-                <li>Las sanciones pueden incluir advertencias, puntos o bloqueos temporales.</li>
-                <li>Si una publicación es eliminada, el usuario puede ver el motivo y apelar.</li>
-            </ol>
-            <a class="cg-btn cg-btn--ghost" href="#cg-home-guide-title">Ocultar reglas</a>
-        </section>
     </article>
 </section>
 

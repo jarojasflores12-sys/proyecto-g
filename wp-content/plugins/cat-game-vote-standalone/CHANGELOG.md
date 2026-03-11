@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.65
+- Inicio: `Ver reglas completas` ahora abre una página independiente de reglas (`/catgame/rules`) y deja de desplegar contenido inline en Home.
+- Reglas: nueva vista completa con 12 secciones y botón final `Entendido` para volver a Inicio.
+
 ## 0.27.64
 - Inicio: `Ver reglas completas` ahora abre un bloque claro dentro de la misma tarjeta (sin overlay), con botón para ocultar y lectura directa.
 - Inicio / responsive: reglas completas con espaciado y tipografía legible en móvil, sin cambios de lógica existente.
