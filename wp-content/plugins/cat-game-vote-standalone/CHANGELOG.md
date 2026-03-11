@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.69
+- Reglas / UI: mejora visual de la página con ancho de lectura cómodo (~800px), separación más clara entre tarjetas y jerarquía tipográfica más marcada.
+- Reglas / UI: títulos de sección con icono `🐾` y botón final `Entendido` reforzado con estilo pastel visible.
+
 ## 0.27.68
 - Reglas: se reemplaza el contenido de `rules.php` por el texto completo proporcionado de `Reglas de la comunidad PetUnity` (11 secciones detalladas).
 - Reglas: se mantiene el botón `Entendido` hacia Inicio, sin cambios de lógica o rutas.
