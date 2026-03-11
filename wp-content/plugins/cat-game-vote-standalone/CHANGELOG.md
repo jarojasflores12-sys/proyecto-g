@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.68
+- Reglas: se reemplaza el contenido de `rules.php` por el texto completo proporcionado de `Reglas de la comunidad PetUnity` (11 secciones detalladas).
+- Reglas: se mantiene el botón `Entendido` hacia Inicio, sin cambios de lógica o rutas.
+
 ## 0.27.67
 - Reglas: se amplía `rules.php` con el contenido completo de `Reglas de la comunidad PetUnity` en 12 secciones, con redacción detallada y estructura clara.
 - Reglas: se mantiene el botón final `Entendido` para volver a Inicio, sin cambios en lógica ni rutas.
