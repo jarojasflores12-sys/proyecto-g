@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.64
+- Inicio: `Ver reglas completas` ahora abre un bloque claro dentro de la misma tarjeta (sin overlay), con botón para ocultar y lectura directa.
+- Inicio / responsive: reglas completas con espaciado y tipografía legible en móvil, sin cambios de lógica existente.
+
 ## 0.27.63
 - Inicio: el botón `📜 Ver reglas completas` ahora abre un bloque modal claro dentro de la misma vista con las reglas completas de la comunidad.
 - Inicio / UX móvil: se agregan estilos responsive para el modal de reglas (overlay, card centrada y scroll interno) sin tocar lógica de backend.

@@ -1073,52 +1073,31 @@ a.cg-btn--ghost {
   border-color: var(--cg-border);
 }
 
-.cg-home-rules-modal {
+.cg-home-rules-block {
   display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  background: rgba(0, 0, 0, 0.45);
-  padding: 16px;
-  align-items: center;
-  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.94);
 }
 
-.cg-home-rules-modal:target {
-  display: flex;
-}
-
-.cg-home-rules-modal__card {
-  width: min(100%, 620px);
-  max-height: min(85vh, 560px);
-  overflow-y: auto;
+.cg-home-rules-block:target {
   display: grid;
-  gap: 12px;
-  background: #fff;
 }
 
-.cg-home-rules-modal__card h4,
-.cg-home-rules-modal__card ol {
+.cg-home-rules-block h4,
+.cg-home-rules-block ol {
   margin: 0;
 }
 
-.cg-home-rules-modal__card ol {
+.cg-home-rules-block ol {
   padding-left: 20px;
   display: grid;
   gap: 8px;
   line-height: 1.45;
 }
 
-@media (max-width: 767px) {
-  .cg-home-rules-modal {
-    padding: 10px;
-    align-items: flex-end;
-  }
-
-  .cg-home-rules-modal__card {
-    width: 100%;
-    max-height: 78vh;
-  }
+.cg-home-rules-block .cg-btn {
+  justify-self: start;
 }
 
 
