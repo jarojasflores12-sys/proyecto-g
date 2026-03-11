@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.66
+- Routing: se registra la ruta pública `/catgame/rules` para evitar `Página no encontrada` al abrir `Ver reglas completas`.
+- Render: se habilita la página `rules` en el flujo de vistas manteniendo el contenido y botón `Entendido` existentes.
+
 ## 0.27.65
 - Inicio: `Ver reglas completas` ahora abre una página independiente de reglas (`/catgame/rules`) y deja de desplegar contenido inline en Home.
 - Reglas: nueva vista completa con 12 secciones y botón final `Entendido` para volver a Inicio.

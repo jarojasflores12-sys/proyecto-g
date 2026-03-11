@@ -18,6 +18,7 @@ class CatGame_Router {
         add_rewrite_rule('^catgame/leaderboard/?$', 'index.php?catgame_page=leaderboard', 'top');
         add_rewrite_rule('^catgame/profile/?$', 'index.php?catgame_page=profile', 'top');
         add_rewrite_rule('^catgame/about/?$', 'index.php?catgame_page=about', 'top');
+        add_rewrite_rule('^catgame/rules/?$', 'index.php?catgame_page=rules', 'top');
         add_rewrite_rule('^catgame/adoptions/?$', 'index.php?catgame_page=adoptions', 'top');
         add_rewrite_rule('^catgame/adoptions/new/?$', 'index.php?catgame_page=adoption-new', 'top');
         add_rewrite_rule('^catgame/adoptions/([0-9]+)/?$', 'index.php?catgame_page=adoption-detail&adoption_id=$matches[1]', 'top');
@@ -100,6 +101,10 @@ class CatGame_Router {
 
         if ($normalized_path === 'catgame/about') {
             return 'about';
+        }
+
+        if ($normalized_path === 'catgame/rules') {
+            return 'rules';
         }
 
         if ($normalized_path === 'catgame/adoptions') {
