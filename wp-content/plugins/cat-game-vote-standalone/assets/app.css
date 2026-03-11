@@ -2042,6 +2042,7 @@ a.cg-home-rules-btn:focus-visible {
 .cg-upload-location {
   margin: 0;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .cg-upload-location-wrap {
@@ -2050,6 +2051,7 @@ a.cg-home-rules-btn:focus-visible {
   justify-content: space-between;
   flex-wrap: nowrap;
   gap: 8px;
+  width: 100%;
 }
 
 .cg-upload-location-edit {
@@ -2094,15 +2096,17 @@ a.cg-home-rules-btn:focus-visible {
 }
 
 .cg-upload-mode__options {
-  display: flex;
+  display: flex !important;
   justify-content: center;
   flex-wrap: nowrap;
+  align-items: center;
   gap: 8px;
 }
 
 .cg-upload-mode__option {
-  width: auto;
+  width: auto !important;
   min-width: 0;
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2158,8 +2162,9 @@ a.cg-home-rules-btn:focus-visible {
 }
 
 .cg-upload-picker__btn {
-  background: #E67A7A;
+  background: #E67A7A !important;
   color: #fff !important;
+  border-color: #E67A7A !important;
   border-radius: 12px;
   padding: 8px 12px;
   font-weight: 700;
@@ -2168,12 +2173,14 @@ a.cg-home-rules-btn:focus-visible {
 .cg-upload-picker__btn:hover,
 .cg-upload-picker__btn:focus-visible {
   background: #D96666 !important;
+  border-color: #D96666 !important;
   filter: none;
 }
 
 .cg-upload-picker__btn:active {
   transform: scale(0.98);
   background: #D96666 !important;
+  border-color: #D96666 !important;
   filter: none;
 }
 
@@ -2208,11 +2215,13 @@ a.cg-home-rules-btn:focus-visible {
 
 .cg-upload-submit {
   background: #E67A7A !important;
+  border-color: #E67A7A !important;
   color: #fff !important;
 }
 
 .cg-upload-submit:hover {
   background: #D96666 !important;
+  border-color: #D96666 !important;
   filter: none;
 }
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.74
+- Subir / UI: se fuerza aplicación del color principal en `Subir archivo`, `Tomar foto` y `Enviar` con `#E67A7A` y hover/activo `#D96666`.
+- Subir / UI: se ajusta layout para mantener `Ubicación` + `Modificar` en una línea y `La Arena`/`El Parque` como chips compactos en fila.
+
 ## 0.27.73
 - Subir / UI: corrección visual de botones principales (`Subir archivo`, `Tomar foto`, `Enviar`) para aplicar color armónico `#E67A7A` con hover/activo `#D96666`.
 - Subir / UI: ubicación y botón `Modificar` en una sola línea, y botones `La Arena` / `El Parque` como chips compactos en la misma fila.
