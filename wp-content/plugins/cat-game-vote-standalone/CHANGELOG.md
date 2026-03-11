@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.70
+- Inicio / UI: `Ver reglas completas` ahora usa estilo de botón pastel destacado (gradiente, sombra y foco visible), dejando de verse como chip blanco.
+- Inicio / UI: se aplica clase específica para este botón sin alterar la lógica del enlace ni otros flujos.
+
 ## 0.27.69
 - Reglas / UI: mejora visual de la página con ancho de lectura cómodo (~800px), separación más clara entre tarjetas y jerarquía tipográfica más marcada.
 - Reglas / UI: títulos de sección con icono `🐾` y botón final `Entendido` reforzado con estilo pastel visible.

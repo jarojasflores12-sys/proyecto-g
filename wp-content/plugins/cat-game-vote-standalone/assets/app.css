@@ -1073,6 +1073,25 @@ a.cg-btn--ghost {
   border-color: var(--cg-border);
 }
 
+
+a.cg-home-rules-btn {
+  background: linear-gradient(180deg, #f7b7c3 0%, #f18fa3 100%);
+  color: #fff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 12px rgba(241, 143, 163, 0.3);
+  font-weight: 700;
+}
+
+a.cg-home-rules-btn:hover {
+  filter: brightness(0.97);
+  transform: translateY(-1px);
+}
+
+a.cg-home-rules-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(241, 143, 163, 0.25), 0 6px 12px rgba(241, 143, 163, 0.3);
+}
+
 .cg-rules-page {
   display: grid;
   gap: 14px;
