@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.67
+- Reglas: se amplía `rules.php` con el contenido completo de `Reglas de la comunidad PetUnity` en 12 secciones, con redacción detallada y estructura clara.
+- Reglas: se mantiene el botón final `Entendido` para volver a Inicio, sin cambios en lógica ni rutas.
+
 ## 0.27.66
 - Routing: se registra la ruta pública `/catgame/rules` para evitar `Página no encontrada` al abrir `Ver reglas completas`.
 - Render: se habilita la página `rules` en el flujo de vistas manteniendo el contenido y botón `Entendido` existentes.
