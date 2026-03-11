@@ -2048,7 +2048,7 @@ a.cg-home-rules-btn:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
 }
 
@@ -2094,19 +2094,24 @@ a.cg-home-rules-btn:focus-visible {
 }
 
 .cg-upload-mode__options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  justify-content: center;
+  flex-wrap: nowrap;
   gap: 8px;
 }
 
 .cg-upload-mode__option {
-  width: 100%;
+  width: auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  border-radius: 14px;
+  border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: #f8fafc;
-  padding: 12px;
-  font-size: 15px;
+  padding: 8px 14px;
+  font-size: 14px;
   font-weight: 700;
   color: #374151;
 }
@@ -2154,7 +2159,7 @@ a.cg-home-rules-btn:focus-visible {
 
 .cg-upload-picker__btn {
   background: #E67A7A;
-  color: #fff;
+  color: #fff !important;
   border-radius: 12px;
   padding: 8px 12px;
   font-weight: 700;
@@ -2162,13 +2167,13 @@ a.cg-home-rules-btn:focus-visible {
 
 .cg-upload-picker__btn:hover,
 .cg-upload-picker__btn:focus-visible {
-  background: #D96666;
+  background: #D96666 !important;
   filter: none;
 }
 
 .cg-upload-picker__btn:active {
   transform: scale(0.98);
-  background: #D96666;
+  background: #D96666 !important;
   filter: none;
 }
 
@@ -2202,11 +2207,12 @@ a.cg-home-rules-btn:focus-visible {
 }
 
 .cg-upload-submit {
-  background: #E67A7A;
+  background: #E67A7A !important;
+  color: #fff !important;
 }
 
 .cg-upload-submit:hover {
-  background: #D96666;
+  background: #D96666 !important;
   filter: none;
 }
 
