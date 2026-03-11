@@ -1004,26 +1004,49 @@ body.cg-has-custom-bg .cg-main {
 .cg-home-guide-cards {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
+  gap: 12px;
 }
 
 .cg-home-guide-card {
   display: grid;
-  gap: 4px;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.07);
-  background: rgba(255, 255, 255, 0.75);
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "icon title"
+    "icon text";
+  align-items: start;
+  column-gap: 10px;
+  row-gap: 4px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 245, 248, 0.92) 100%);
+  box-shadow: 0 4px 12px rgba(20, 16, 38, 0.06);
 }
 
 .cg-home-guide-card__icon {
-  font-size: 18px;
+  grid-area: icon;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
   line-height: 1;
+  background: rgba(245, 110, 150, 0.12);
 }
 
 .cg-home-guide-card h4,
 .cg-home-guide-card p {
   margin: 0;
+}
+
+.cg-home-guide-card h4 {
+  grid-area: title;
+}
+
+.cg-home-guide-card p {
+  grid-area: text;
 }
 
 .cg-home-guide-card p {
@@ -1035,6 +1058,7 @@ body.cg-has-custom-bg .cg-main {
 @media (min-width: 768px) {
   .cg-home-guide-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
 }
 
@@ -1176,11 +1200,14 @@ a.cg-home-rules-btn:focus-visible {
 
 .cg-about-page {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .cg-about-hero {
-  gap: 6px;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: linear-gradient(180deg, #fff2f6 0%, #fff 100%);
 }
 
 .cg-about-hero h2,
@@ -1191,11 +1218,27 @@ a.cg-home-rules-btn:focus-visible {
 .cg-about-hero p,
 .cg-about-block p {
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.5;
+}
+
+.cg-about-grid {
+  display: grid;
+  gap: 12px;
 }
 
 .cg-about-block {
-  gap: 8px;
+  gap: 9px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 12px rgba(20, 16, 38, 0.05);
+}
+
+.cg-about-block--intro {
+  border-left: 4px solid #f18fa3;
+}
+
+.cg-about-block h3 {
+  font-size: 1.03rem;
 }
 
 .cg-about-values {
@@ -1203,11 +1246,25 @@ a.cg-home-rules-btn:focus-visible {
   padding-left: 0;
   list-style: none;
   display: grid;
-  gap: 6px;
+  gap: 7px;
+}
+
+.cg-about-values li {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(241, 143, 163, 0.1);
 }
 
 .cg-about-back {
-  margin-top: 4px;
+  margin-top: 6px;
+  justify-self: start;
+  min-width: 185px;
+}
+
+@media (min-width: 768px) {
+  .cg-about-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 

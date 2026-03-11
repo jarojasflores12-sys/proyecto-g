@@ -7,31 +7,31 @@ $top3_positions = $data['top3_positions'] ?? [];
 $current_user_id = (int) ($data['current_user_id'] ?? 0);
 ?>
 <section class="cg-home-hero">
-    <h2>¡Compite con tu gato y gana!</h2>
-    <p>Mientras más reacciones consigas, más subes en el ranking.</p>
+    <h2>Comparte, compite y ayuda a mascotas en PetUnity</h2>
+    <p>Participa en La Arena, publica en El Parque y descubre adopciones.</p>
 </section>
 
 <section class="cg-home-section">
     <article class="cg-card cg-home-guide" aria-labelledby="cg-home-guide-title">
         <h3 id="cg-home-guide-title">Cómo funciona el juego</h3>
 
-        <div class="cg-home-guide-cards" role="list" aria-label="Pasos para participar en el juego">
-            <article class="cg-home-guide-card" role="listitem">
+        <div class="cg-home-guide-cards" aria-label="Pasos para participar en el juego">
+            <article class="cg-home-guide-card">
                 <div class="cg-home-guide-card__icon" aria-hidden="true">📸</div>
                 <h4>Sube fotos de tu mascota</h4>
                 <p>Comparte momentos de tu mascota en la comunidad.</p>
             </article>
-            <article class="cg-home-guide-card" role="listitem">
+            <article class="cg-home-guide-card">
                 <div class="cg-home-guide-card__icon" aria-hidden="true">❤️</div>
                 <h4>Reacciona por tus favoritas</h4>
                 <p>Apoya a las mascotas que más te gusten.</p>
             </article>
-            <article class="cg-home-guide-card" role="listitem">
+            <article class="cg-home-guide-card">
                 <div class="cg-home-guide-card__icon" aria-hidden="true">🏆</div>
                 <h4>Participa en La Arena</h4>
                 <p>Compite en eventos temáticos y sube en el ranking.</p>
             </article>
-            <article class="cg-home-guide-card" role="listitem">
+            <article class="cg-home-guide-card">
                 <div class="cg-home-guide-card__icon" aria-hidden="true">🐾</div>
                 <h4>Explora adopciones</h4>
                 <p>Conoce mascotas que buscan una familia.</p>

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.27.73
+- Inicio / Hero: se actualiza el mensaje principal a un texto inclusivo para PetUnity y todo tipo de mascotas.
+- Inicio / Hero: se reemplaza el subtítulo por una descripción breve alineada con La Arena, El Parque y adopciones, sin cambios de lógica o navegación.
+
+## 0.27.72
+- Acerca de nosotros / UI: mejora visual de la página con hero destacado y bloques tipo tarjeta para ordenar el contenido sin modificar textos.
+- Acerca de nosotros / responsive: se organiza el contenido en grilla (1 columna móvil, 2 columnas escritorio) y se refuerza el botón `Volver al inicio`.
+
+## 0.27.71
+- Inicio / UI: el bloque `Cómo funciona el juego` se refuerza como 4 tarjetas visuales (icono destacado, jerarquía título/texto y estilo card), evitando apariencia de lista simple.
+- Inicio / responsive: tarjetas optimizadas para móvil y escritorio con mejor separación y distribución en grilla sin cambios de lógica o navegación.
+
 ## 0.27.70
 - Inicio / UI: `Ver reglas completas` ahora usa estilo de botón pastel destacado (gradiente, sombra y foco visible), dejando de verse como chip blanco.
 - Inicio / UI: se aplica clase específica para este botón sin alterar la lógica del enlace ni otros flujos.
