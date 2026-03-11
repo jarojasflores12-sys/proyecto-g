@@ -2045,8 +2045,30 @@ a.cg-home-rules-btn:focus-visible {
 }
 
 .cg-upload-location-wrap {
-  display: grid;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.cg-upload-location-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 1.2;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+  color: var(--cg-text);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.cg-upload-location-edit:hover {
+  background: #fff6f6;
 }
 
 .cg-upload-context {
@@ -2131,7 +2153,7 @@ a.cg-home-rules-btn:focus-visible {
 }
 
 .cg-upload-picker__btn {
-  background: #7c3aed;
+  background: #E67A7A;
   color: #fff;
   border-radius: 12px;
   padding: 8px 12px;
@@ -2140,12 +2162,14 @@ a.cg-home-rules-btn:focus-visible {
 
 .cg-upload-picker__btn:hover,
 .cg-upload-picker__btn:focus-visible {
-  filter: brightness(1.05);
+  background: #D96666;
+  filter: none;
 }
 
 .cg-upload-picker__btn:active {
   transform: scale(0.98);
-  filter: brightness(0.92);
+  background: #D96666;
+  filter: none;
 }
 
 .cg-upload-picker__btn.is-hidden {
@@ -2178,11 +2202,12 @@ a.cg-home-rules-btn:focus-visible {
 }
 
 .cg-upload-submit {
-  background: #7c3aed;
+  background: #E67A7A;
 }
 
 .cg-upload-submit:hover {
-  filter: brightness(1.05);
+  background: #D96666;
+  filter: none;
 }
 
 .cg-report-reasons {
@@ -2199,10 +2224,6 @@ a.cg-home-rules-btn:focus-visible {
 
 @media (max-width: 640px) {
   .cg-profile-location-fields {
-    grid-template-columns: 1fr;
-  }
-
-  .cg-upload-mode__options {
     grid-template-columns: 1fr;
   }
 }
@@ -2243,20 +2264,25 @@ a.cg-home-rules-btn:focus-visible {
 
 
 .cg-tag-suggest {
-  margin-top: -2px;
-  margin-bottom: 8px;
-  border: 1px solid var(--cg-border);
-  border-radius: 12px;
-  padding: 8px;
-  background: #fff;
+  margin: 0 auto 8px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .cg-tag-suggest__summary {
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  color: var(--cg-primary-strong);
+  color: #9a4f4f;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #fff;
   list-style: none;
+  text-align: center;
 }
 
 .cg-tag-suggest__summary::-webkit-details-marker {

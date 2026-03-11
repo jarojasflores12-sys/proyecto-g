@@ -67,7 +67,7 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
 
             <div class="cg-upload-location-wrap">
                 <p class="cg-upload-location"><strong>Ubicación:</strong> <?php echo esc_html($location_text); ?></p>
-                <a class="cg-cta" href="<?php echo esc_url(home_url('/catgame/profile?complete_profile=1')); ?>">Ir a Perfil para modificar</a>
+                <a class="cg-upload-location-edit" href="<?php echo esc_url(home_url('/catgame/profile?complete_profile=1')); ?>">Modificar</a>
             </div>
 
             <label>
@@ -86,7 +86,7 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
 
             <?php if (!empty($user_tags)): ?>
                 <details class="cg-tag-suggest" id="catgame-tag-suggestions" data-user-tags="<?php echo esc_attr(wp_json_encode(array_values($user_tags))); ?>">
-                    <summary class="cg-tag-suggest__summary">Mis etiquetas guardadas</summary>
+                    <summary class="cg-tag-suggest__summary">Mis etiquetas</summary>
                     <div class="cg-tag-suggest__list" data-tag-saved-list="1"></div>
                 </details>
             <?php endif; ?>
@@ -102,9 +102,9 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
                 <p class="cg-upload-context"><?php echo esc_html($publish_context); ?></p>
                 <div class="cg-upload-mode__options">
                     <?php if ($has_active_event): ?>
-                        <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'event' ? 'is-active' : ''; ?>" data-upload-mode-option="event">🏆 Entrar a La Arena</button>
+                        <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'event' ? 'is-active' : ''; ?>" data-upload-mode-option="event">La Arena</button>
                     <?php endif; ?>
-                    <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'free' ? 'is-active' : ''; ?>" data-upload-mode-option="free">🐾 Publicar en El Parque</button>
+                    <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'free' ? 'is-active' : ''; ?>" data-upload-mode-option="free">El Parque</button>
                 </div>
                 <p class="cg-upload-mode__help" data-upload-mode-help="1">
                     <?php if ($selected_publish_mode === 'event'): ?>

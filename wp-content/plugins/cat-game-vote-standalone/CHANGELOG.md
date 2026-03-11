@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.72
+- Subir / UI: pulido visual compacto con botones principales en tono armónico `#E67A7A` y estado hover/activo `#D96666`.
+- Subir / UI: ubicación en una sola línea con botón pequeño `Modificar`, `Mis etiquetas` como chip corto centrado y botones `La Arena` / `El Parque` con texto corto.
+
 ## 0.27.71
 - Subir / UI: se reordena la vista según el flujo definido (botones de carga, preview, ubicación con acceso a Perfil, título, etiquetas, modo de publicación, normas y envío) sin cambios de lógica.
 - Subir / UI: los botones `Entrar a La Arena` y `Publicar en El Parque` pasan a layout lado a lado en escritorio (apilados en móvil).
