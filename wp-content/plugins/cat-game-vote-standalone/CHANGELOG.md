@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.27.70
+- Inicio / UI: `Ver reglas completas` ahora usa estilo de botón pastel destacado (gradiente, sombra y foco visible), dejando de verse como chip blanco.
+- Inicio / UI: se aplica clase específica para este botón sin alterar la lógica del enlace ni otros flujos.
+
+## 0.27.69
+- Reglas / UI: mejora visual de la página con ancho de lectura cómodo (~800px), separación más clara entre tarjetas y jerarquía tipográfica más marcada.
+- Reglas / UI: títulos de sección con icono `🐾` y botón final `Entendido` reforzado con estilo pastel visible.
+
+## 0.27.68
+- Reglas: se reemplaza el contenido de `rules.php` por el texto completo proporcionado de `Reglas de la comunidad PetUnity` (11 secciones detalladas).
+- Reglas: se mantiene el botón `Entendido` hacia Inicio, sin cambios de lógica o rutas.
+
+## 0.27.67
+- Reglas: se amplía `rules.php` con el contenido completo de `Reglas de la comunidad PetUnity` en 12 secciones, con redacción detallada y estructura clara.
+- Reglas: se mantiene el botón final `Entendido` para volver a Inicio, sin cambios en lógica ni rutas.
+
+## 0.27.66
+- Routing: se registra la ruta pública `/catgame/rules` para evitar `Página no encontrada` al abrir `Ver reglas completas`.
+- Render: se habilita la página `rules` en el flujo de vistas manteniendo el contenido y botón `Entendido` existentes.
+
+## 0.27.65
+- Inicio: `Ver reglas completas` ahora abre una página independiente de reglas (`/catgame/rules`) y deja de desplegar contenido inline en Home.
+- Reglas: nueva vista completa con 12 secciones y botón final `Entendido` para volver a Inicio.
+
+## 0.27.64
+- Inicio: `Ver reglas completas` ahora abre un bloque claro dentro de la misma tarjeta (sin overlay), con botón para ocultar y lectura directa.
+- Inicio / responsive: reglas completas con espaciado y tipografía legible en móvil, sin cambios de lógica existente.
+
+## 0.27.63
+- Inicio: el botón `📜 Ver reglas completas` ahora abre un bloque modal claro dentro de la misma vista con las reglas completas de la comunidad.
+- Inicio / UX móvil: se agregan estilos responsive para el modal de reglas (overlay, card centrada y scroll interno) sin tocar lógica de backend.
+
 ## 0.27.62
 - Inicio / Cómo funciona: se reemplaza la lista por 4 tarjetas visuales compactas (icono, título y descripción) para mejorar lectura y escaneo.
 - Inicio / Cómo funciona: layout responsive móvil-first con grilla de 2 columnas en pantallas amplias, manteniendo estilos del sitio.
