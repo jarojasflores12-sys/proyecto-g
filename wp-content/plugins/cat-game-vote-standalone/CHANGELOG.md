@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.71
+- Inicio / UI: el bloque `Cómo funciona el juego` se refuerza como 4 tarjetas visuales (icono destacado, jerarquía título/texto y estilo card), evitando apariencia de lista simple.
+- Inicio / responsive: tarjetas optimizadas para móvil y escritorio con mejor separación y distribución en grilla sin cambios de lógica o navegación.
+
 ## 0.27.70
 - Inicio / UI: `Ver reglas completas` ahora usa estilo de botón pastel destacado (gradiente, sombra y foco visible), dejando de verse como chip blanco.
 - Inicio / UI: se aplica clase específica para este botón sin alterar la lógica del enlace ni otros flujos.

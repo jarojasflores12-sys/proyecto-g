@@ -1004,26 +1004,49 @@ body.cg-has-custom-bg .cg-main {
 .cg-home-guide-cards {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
+  gap: 12px;
 }
 
 .cg-home-guide-card {
   display: grid;
-  gap: 4px;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.07);
-  background: rgba(255, 255, 255, 0.75);
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "icon title"
+    "icon text";
+  align-items: start;
+  column-gap: 10px;
+  row-gap: 4px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 245, 248, 0.92) 100%);
+  box-shadow: 0 4px 12px rgba(20, 16, 38, 0.06);
 }
 
 .cg-home-guide-card__icon {
-  font-size: 18px;
+  grid-area: icon;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
   line-height: 1;
+  background: rgba(245, 110, 150, 0.12);
 }
 
 .cg-home-guide-card h4,
 .cg-home-guide-card p {
   margin: 0;
+}
+
+.cg-home-guide-card h4 {
+  grid-area: title;
+}
+
+.cg-home-guide-card p {
+  grid-area: text;
 }
 
 .cg-home-guide-card p {
@@ -1035,6 +1058,7 @@ body.cg-has-custom-bg .cg-main {
 @media (min-width: 768px) {
   .cg-home-guide-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
 }
 
