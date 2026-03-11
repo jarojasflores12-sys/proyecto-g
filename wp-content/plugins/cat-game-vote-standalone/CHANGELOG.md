@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.73
+- Inicio / Hero: se actualiza el mensaje principal a un texto inclusivo para PetUnity y todo tipo de mascotas.
+- Inicio / Hero: se reemplaza el subtítulo por una descripción breve alineada con La Arena, El Parque y adopciones, sin cambios de lógica o navegación.
+
 ## 0.27.72
 - Acerca de nosotros / UI: mejora visual de la página con hero destacado y bloques tipo tarjeta para ordenar el contenido sin modificar textos.
 - Acerca de nosotros / responsive: se organiza el contenido en grilla (1 columna móvil, 2 columnas escritorio) y se refuerza el botón `Volver al inicio`.

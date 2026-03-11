@@ -7,8 +7,8 @@ $top3_positions = $data['top3_positions'] ?? [];
 $current_user_id = (int) ($data['current_user_id'] ?? 0);
 ?>
 <section class="cg-home-hero">
-    <h2>¡Compite con tu gato y gana!</h2>
-    <p>Mientras más reacciones consigas, más subes en el ranking.</p>
+    <h2>Comparte, compite y ayuda a mascotas en PetUnity</h2>
+    <p>Participa en La Arena, publica en El Parque y descubre adopciones.</p>
 </section>
 
 <section class="cg-home-section">
