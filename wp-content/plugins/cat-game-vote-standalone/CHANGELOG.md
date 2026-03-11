@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.71
+- Subir / UI: se reordena la vista según el flujo definido (botones de carga, preview, ubicación con acceso a Perfil, título, etiquetas, modo de publicación, normas y envío) sin cambios de lógica.
+- Subir / UI: los botones `Entrar a La Arena` y `Publicar en El Parque` pasan a layout lado a lado en escritorio (apilados en móvil).
+
 ## 0.27.70
 - Inicio / UI: `Ver reglas completas` ahora usa estilo de botón pastel destacado (gradiente, sombra y foco visible), dejando de verse como chip blanco.
 - Inicio / UI: se aplica clase específica para este botón sin alterar la lógica del enlace ni otros flujos.
