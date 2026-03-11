@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.72
+- Acerca de nosotros / UI: mejora visual de la página con hero destacado y bloques tipo tarjeta para ordenar el contenido sin modificar textos.
+- Acerca de nosotros / responsive: se organiza el contenido en grilla (1 columna móvil, 2 columnas escritorio) y se refuerza el botón `Volver al inicio`.
+
 ## 0.27.71
 - Inicio / UI: el bloque `Cómo funciona el juego` se refuerza como 4 tarjetas visuales (icono destacado, jerarquía título/texto y estilo card), evitando apariencia de lista simple.
 - Inicio / responsive: tarjetas optimizadas para móvil y escritorio con mejor separación y distribución en grilla sin cambios de lógica o navegación.
