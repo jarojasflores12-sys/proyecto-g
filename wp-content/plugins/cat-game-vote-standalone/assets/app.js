@@ -259,9 +259,9 @@
   };
 
   const isiOSClient = isIOS();
-  if (universalPickerBtn) universalPickerBtn.classList.toggle('is-hidden', !isiOSClient);
-  if (filePickerBtn) filePickerBtn.classList.toggle('is-hidden', isiOSClient);
-  if (cameraPickerBtn) cameraPickerBtn.classList.toggle('is-hidden', isiOSClient);
+  if (universalPickerBtn) universalPickerBtn.classList.add('is-hidden');
+  if (filePickerBtn) filePickerBtn.classList.remove('is-hidden');
+  if (cameraPickerBtn) cameraPickerBtn.classList.remove('is-hidden');
   if (filePickerText) {
     filePickerText.textContent = isiOSClient ? 'Selecciona desde Fotos o Cámara de iOS' : 'JPG, PNG o WEBP';
   }
@@ -289,10 +289,6 @@
   }
 
 
-  if (isiOSClient && cameraProxyInput) {
-    cameraProxyInput.disabled = true;
-  }
-
   if (filePickerBtn && fileProxyInput) {
     filePickerBtn.addEventListener('click', () => {
       fileProxyInput.click();
@@ -300,7 +296,7 @@
     fileProxyInput.addEventListener('change', () => syncFileToMainInput(fileProxyInput));
   }
 
-  if (!isiOSClient && cameraPickerBtn && cameraProxyInput) {
+  if (cameraPickerBtn && cameraProxyInput) {
     cameraPickerBtn.addEventListener('click', () => {
       cameraProxyInput.click();
     });

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.77
+- Subir / iPhone Safari: se corrige el picker para mostrar y habilitar siempre `Subir archivo` y `Tomar foto` (sin ocultarlos por iOS).
+- Subir / iOS: `Tomar foto` vuelve a enlazar el input de cámara y sincroniza archivo/preview como en Android y escritorio.
+
 ## 0.27.76
 - Subir / iPhone Safari: `Subir archivo` y `Tomar foto` ahora se asocian directamente a inputs reales mediante `label for`, mejorando la apertura de fototeca/cámara en iOS.
 - Subir / UI: se mantiene compatibilidad del flujo actual (preview + selección) en escritorio y Android sin tocar lógica de publicación.
