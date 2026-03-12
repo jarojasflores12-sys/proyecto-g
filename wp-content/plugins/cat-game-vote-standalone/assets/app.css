@@ -2118,13 +2118,33 @@ a.cg-home-rules-btn:focus-visible {
   font-size: 14px;
   font-weight: 700;
   color: #374151;
+  transition: all 0.2s ease;
 }
 
-.cg-upload-mode__option.is-active {
-  border-color: rgba(76, 29, 149, 0.28);
-  background: #ede9fe;
-  color: #4c1d95;
-  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.14);
+.cg-upload-mode__option[data-upload-mode-option='event'] {
+  background: #ffe7df;
+  border-color: #f2b8a7;
+  color: #8c4a3a;
+}
+
+.cg-upload-mode__option[data-upload-mode-option='free'] {
+  background: #e6f3e8;
+  border-color: #b8d8bf;
+  color: #3f6a4b;
+}
+
+.cg-upload-mode__option[data-upload-mode-option='event'].is-active {
+  background: #f7cdbf;
+  border-color: #df9d86;
+  color: #7a3f30;
+  box-shadow: 0 0 0 2px rgba(230, 122, 122, 0.25);
+}
+
+.cg-upload-mode__option[data-upload-mode-option='free'].is-active {
+  background: #cfe7d3;
+  border-color: #95bea1;
+  color: #2f5a3e;
+  box-shadow: 0 0 0 2px rgba(149, 190, 161, 0.3);
 }
 
 .cg-upload-mode__help {

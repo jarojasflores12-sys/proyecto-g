@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.75
+- Subir / UI: actualización visual de opciones de publicación a `🏆 La Arena` y `🌿 El Parque` con estilos pastel diferenciados (durazno/rosado y verde salvia).
+- Subir / UI: se refuerza el estado seleccionado para que ambas opciones sean más distinguibles, manteniendo layout compacto en una sola fila.
+
 ## 0.27.74
 - Subir / UI: se fuerza aplicación del color principal en `Subir archivo`, `Tomar foto` y `Enviar` con `#E67A7A` y hover/activo `#D96666`.
 - Subir / UI: se ajusta layout para mantener `Ubicación` + `Modificar` en una línea y `La Arena`/`El Parque` como chips compactos en fila.

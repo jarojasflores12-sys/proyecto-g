@@ -102,9 +102,9 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
                 <p class="cg-upload-context"><?php echo esc_html($publish_context); ?></p>
                 <div class="cg-upload-mode__options">
                     <?php if ($has_active_event): ?>
-                        <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'event' ? 'is-active' : ''; ?>" data-upload-mode-option="event">La Arena</button>
+                        <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'event' ? 'is-active' : ''; ?>" data-upload-mode-option="event">🏆 La Arena</button>
                     <?php endif; ?>
-                    <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'free' ? 'is-active' : ''; ?>" data-upload-mode-option="free">El Parque</button>
+                    <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'free' ? 'is-active' : ''; ?>" data-upload-mode-option="free">🌿 El Parque</button>
                 </div>
                 <p class="cg-upload-mode__help" data-upload-mode-help="1">
                     <?php if ($selected_publish_mode === 'event'): ?>
