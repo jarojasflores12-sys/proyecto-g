@@ -2182,6 +2182,9 @@ a.cg-home-rules-btn:focus-visible {
 }
 
 .cg-upload-picker__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: #E67A7A !important;
   color: #fff !important;
   border-color: #E67A7A !important;

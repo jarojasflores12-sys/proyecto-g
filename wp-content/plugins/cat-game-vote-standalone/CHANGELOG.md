@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.76
+- Subir / iPhone Safari: `Subir archivo` y `Tomar foto` ahora se asocian directamente a inputs reales mediante `label for`, mejorando la apertura de fototeca/cámara en iOS.
+- Subir / UI: se mantiene compatibilidad del flujo actual (preview + selección) en escritorio y Android sin tocar lógica de publicación.
+
 ## 0.27.75
 - Subir / UI: actualización visual de opciones de publicación a `🏆 La Arena` y `🌿 El Parque` con estilos pastel diferenciados (durazno/rosado y verde salvia).
 - Subir / UI: se refuerza el estado seleccionado para que ambas opciones sean más distinguibles, manteniendo layout compacto en una sola fila.

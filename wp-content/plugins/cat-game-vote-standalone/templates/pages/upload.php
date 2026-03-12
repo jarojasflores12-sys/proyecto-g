@@ -51,8 +51,8 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
             <div class="cg-upload-picker" data-catgame-upload-picker>
                 <p class="cg-upload-picker__title">Selecciona tu foto</p>
                 <div class="cg-upload-picker__actions">
-                    <button type="button" class="cg-upload-picker__btn" data-catgame-pick-file="1">Subir archivo</button>
-                    <button type="button" class="cg-upload-picker__btn" data-catgame-pick-camera="1">Tomar foto</button>
+                    <label for="catgame-cat-image-file" class="cg-upload-picker__btn" data-catgame-pick-file="1">Subir archivo</label>
+                    <label for="catgame-cat-image-camera" class="cg-upload-picker__btn" data-catgame-pick-camera="1">Tomar foto</label>
                 </div>
                 <p class="cg-file-picker-text">JPG, PNG o WEBP</p>
             </div>
