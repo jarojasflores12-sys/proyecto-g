@@ -67,7 +67,7 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
 
             <div class="cg-upload-location-wrap">
                 <p class="cg-upload-location"><strong>Ubicación:</strong> <?php echo esc_html($location_text); ?></p>
-                <a class="cg-upload-location-edit" href="<?php echo esc_url(home_url('/catgame/profile?complete_profile=1')); ?>">Modificar</a>
+                <a class="cg-upload-location-edit" data-upload-edit-location="1" href="<?php echo esc_url(home_url('/catgame/profile?complete_profile=1&return_to=upload')); ?>">Modificar</a>
             </div>
 
             <label>

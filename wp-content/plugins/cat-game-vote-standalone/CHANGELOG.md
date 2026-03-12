@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.78
+- Subir / UI: el botón `Modificar` de ubicación se refuerza como acción secundaria visible (chip pastel con borde y texto marcado).
+- Subir / flujo: al ir a Perfil desde `Modificar` se guarda y restaura en frontend el borrador de `Subir` (título, etiquetas, modo y foto seleccionada) para continuar al volver.
+
 ## 0.27.77
 - Subir / iPhone Safari: se corrige el picker para mostrar y habilitar siempre `Subir archivo` y `Tomar foto` (sin ocultarlos por iOS).
 - Subir / iOS: `Tomar foto` vuelve a enlazar el input de cámara y sincroniza archivo/preview como en Android y escritorio.

@@ -165,6 +165,8 @@
   const fileProxyInput = document.getElementById('catgame-cat-image-file');
   const cameraProxyInput = document.getElementById('catgame-cat-image-camera');
   const titleInput = form.querySelector('input[name="title"]');
+  const tagsInput = form.querySelector('textarea[name="custom_tags"]');
+  const editLocationLink = form.querySelector('[data-upload-edit-location="1"]');
   const submitButton = form.querySelector('button[type="submit"]');
   const uploadModeWrap = form.querySelector('[data-upload-mode="1"]');
   const uploadModeInput = form.querySelector('[data-upload-mode-input="1"]');
@@ -180,8 +182,21 @@
   let compressedFile = null;
   let compressing = false;
   let previewObjectUrl = null;
+  let draftImageDataUrl = '';
+  let draftImageName = '';
+  let draftImageType = '';
   let selectedUploadMode = uploadModeInput ? String(uploadModeInput.value || '') : '';
   const hasEventOption = uploadModeWrap ? uploadModeWrap.getAttribute('data-has-event') === '1' : false;
+  const uploadDraftStorageKey = 'catgame_upload_draft_v1';
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('uploaded') === '1') {
+      window.sessionStorage.removeItem(uploadDraftStorageKey);
+    }
+  } catch (_) {
+    // no-op
+  }
 
   const modeHelpText = {
     event: 'Participa en el evento activo de La Arena.',
@@ -207,6 +222,70 @@
     }
   };
 
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      if (!file) {
+        resolve('');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('No se pudo leer archivo para borrador'));
+      reader.readAsDataURL(file);
+    });
+
+  const saveUploadDraft = () => {
+    try {
+      const payload = {
+        title: titleInput ? String(titleInput.value || '') : '',
+        tags: tagsInput ? String(tagsInput.value || '') : '',
+        publishMode: selectedUploadMode,
+        imageDataUrl: draftImageDataUrl,
+        imageName: draftImageName,
+        imageType: draftImageType,
+        updatedAt: Date.now(),
+      };
+      window.sessionStorage.setItem(uploadDraftStorageKey, JSON.stringify(payload));
+    } catch (_) {
+      // no-op
+    }
+  };
+
+  const restoreUploadDraft = async () => {
+    try {
+      const raw = window.sessionStorage.getItem(uploadDraftStorageKey);
+      if (!raw) {
+        return;
+      }
+      const draft = JSON.parse(raw);
+      if (titleInput && typeof draft.title === 'string' && draft.title.trim() !== '') {
+        titleInput.value = draft.title;
+      }
+      if (tagsInput && typeof draft.tags === 'string' && draft.tags.trim() !== '') {
+        tagsInput.value = draft.tags;
+      }
+      if (typeof draft.publishMode === 'string' && (draft.publishMode === 'event' || draft.publishMode === 'free')) {
+        selectedUploadMode = draft.publishMode;
+        syncUploadModeUi();
+      }
+
+      if (typeof draft.imageDataUrl === 'string' && draft.imageDataUrl.startsWith('data:image/')) {
+        const response = await fetch(draft.imageDataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], draft.imageName || 'cat-image.jpg', { type: draft.imageType || blob.type || 'image/jpeg', lastModified: Date.now() });
+
+        if (typeof DataTransfer === 'function') {
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          input.files = dt.files;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    } catch (_) {
+      // no-op
+    }
+  };
+
   if (uploadModeWrap && !hasEventOption && selectedUploadMode !== 'free') {
     selectedUploadMode = 'free';
   }
@@ -219,6 +298,7 @@
       }
       selectedUploadMode = mode;
       syncUploadModeUi();
+      saveUploadDraft();
     });
   });
 
@@ -278,6 +358,19 @@
 
     titleInput.addEventListener('input', () => {
       titleInput.setCustomValidity('');
+      saveUploadDraft();
+    });
+  }
+
+  if (tagsInput) {
+    tagsInput.addEventListener('input', () => {
+      saveUploadDraft();
+    });
+  }
+
+  if (editLocationLink) {
+    editLocationLink.addEventListener('click', () => {
+      saveUploadDraft();
     });
   }
 
@@ -406,6 +499,10 @@
     }
 
     if (!file) {
+      draftImageDataUrl = '';
+      draftImageName = '';
+      draftImageType = '';
+      saveUploadDraft();
       if (filePickerText) filePickerText.textContent = 'JPG, PNG o WEBP';
       setState('Estado: esperando archivo', false);
       return;
@@ -422,9 +519,22 @@
       setState('Estado: comprimiendo...', true);
       const nextFile = await buildCompressedFile(file);
       compressedFile = nextFile;
+      const draftSource = compressedFile || file;
+      draftImageDataUrl = await fileToDataUrl(draftSource);
+      draftImageName = draftSource.name || 'cat-image.jpg';
+      draftImageType = draftSource.type || 'image/jpeg';
+      saveUploadDraft();
       setState('Estado: listo para enviar', false);
     } catch (err) {
       console.warn('CatGame compression fallback:', err);
+      try {
+        draftImageDataUrl = await fileToDataUrl(file);
+        draftImageName = file.name || 'cat-image.jpg';
+        draftImageType = file.type || 'image/jpeg';
+        saveUploadDraft();
+      } catch (_) {
+        // no-op
+      }
       setState('Estado: error de compresión (se enviará original)', false);
     }
   });
@@ -465,6 +575,8 @@
       console.warn('CatGame submit fallback:', err);
     }
   });
+
+  restoreUploadDraft();
 
 })();
 
