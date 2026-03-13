@@ -671,16 +671,13 @@ body.cg-has-custom-bg .cg-main {
 }
 
 @media (max-width: 767px) {
-  .cg-feed-img-wrap {
-    display: flex;
-    justify-content: center;
-  }
-
   .cg-feed-img-wrap .cg-img,
   .cg-feed-img-wrap.is-tall-photo .cg-img {
-    width: auto;
-    max-width: 100%;
+    width: 100%;
+    height: min(520px, 78vw);
     max-height: 520px;
+    object-fit: cover;
+    object-position: center;
     margin: 0;
     display: block;
   }
