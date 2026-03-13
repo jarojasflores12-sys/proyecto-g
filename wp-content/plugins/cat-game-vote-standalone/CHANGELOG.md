@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.82
+- Publicaciones / UI: se fija altura visual consistente de imagen en cards del feed para evitar diferencias de tamaño entre fotos de iPhone, Android y escritorio.
+- Publicaciones / UI: se mantiene `object-fit: cover` con ancho/alto 100% para preservar proporción sin deformar.
+
 ## 0.27.81
 - Publicaciones / UI: se normaliza el render de imagen en cards del feed con contenedor de proporción consistente para evitar fotos desproporcionadas (incluyendo subidas desde iPhone).
 - Publicaciones / UI: la imagen del feed usa `object-fit: cover` para mantener presentación uniforme sin deformación.
