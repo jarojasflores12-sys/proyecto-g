@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.27.89
+- Publicaciones / UI: en móvil, la imagen del feed ahora ocupa todo el ancho de la card con `object-fit: cover` y centrado para eliminar el efecto visual de foto corrida.
+- Publicaciones / UI: se mantiene tope de alto (`max-height: 520px`) para evitar cards desproporcionadas.
+
+## 0.27.88
+- Publicaciones / UI: ajuste fino en móvil para centrar correctamente la imagen del feed dentro de la card y evitar que se vea corrida hacia un lado.
+- Publicaciones / UI: se mantiene el límite de alto (`max-height: 520px`) y compatibilidad con el comportamiento actual.
+
+## 0.27.87
+- Publicaciones / UI: en móvil, todas las fotos del feed ahora respetan un límite de alto (`max-height: 520px`) para evitar que una publicación quede más grande que el resto.
+- Publicaciones / UI: se mantiene proporción original y centrado de imagen, sin cambios de lógica ni backend.
+
 ## 0.27.86
 - Publicaciones / UI: ajuste puntual para fotos muy verticales del feed (caso iPhone) sin cambiar el look general de 0.27.77/previo.
 - Publicaciones / UI: solo en móviles, las cards con imagen extremadamente alta se limitan con `max-height` para evitar que una sola publicación desordene el layout.
