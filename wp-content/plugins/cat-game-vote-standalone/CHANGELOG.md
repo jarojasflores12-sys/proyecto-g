@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.87
+- Publicaciones / UI: en móvil, todas las fotos del feed ahora respetan un límite de alto (`max-height: 520px`) para evitar que una publicación quede más grande que el resto.
+- Publicaciones / UI: se mantiene proporción original y centrado de imagen, sin cambios de lógica ni backend.
+
 ## 0.27.86
 - Publicaciones / UI: ajuste puntual para fotos muy verticales del feed (caso iPhone) sin cambiar el look general de 0.27.77/previo.
 - Publicaciones / UI: solo en móviles, las cards con imagen extremadamente alta se limitan con `max-height` para evitar que una sola publicación desordene el layout.
