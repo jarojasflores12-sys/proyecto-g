@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.84
+- Publicaciones / UI: se restaura el look del feed evitando recorte agresivo y usando límites de alto (`max-height`) para que fotos de iPhone no se vean gigantes.
+- Publicaciones / UI: la imagen mantiene proporción con `object-fit: contain` y la card conserva apariencia previa.
+
 ## 0.27.83
 - Publicaciones / UI: se corrige render de imágenes en cards para evitar recortes de fotos (incluyendo iPhone) usando contenedor centrado e imagen con `object-fit: contain`.
 - Publicaciones / UI: se mantiene altura visual consistente del contenedor para que ninguna foto se vea gigante en el feed.
