@@ -16,7 +16,7 @@ $brand = CatGame_Admin::get_frontend_branding();
 $brand_name = sanitize_text_field((string) ($brand['name'] ?? 'PetUnity'));
 ?>
 <article class="cg-card <?php echo ($is_mine || $position > 0) ? 'cg-is-mine' : ''; ?>">
-    <div class="cg-img-wrap">
+    <div class="cg-img-wrap cg-feed-img-wrap">
         <div class="<?php echo esc_attr($post_type_badge_class); ?>"><?php echo esc_html($post_type_badge_label); ?></div>
         <?php echo wp_get_attachment_image(
             (int) $item['attachment_id'],

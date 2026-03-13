@@ -45,30 +45,31 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
         </article>
     <?php else: ?>
         <?php if ($upload_error !== ''): ?><p class="cg-alert cg-alert-error"><?php echo esc_html($upload_error); ?></p><?php endif; ?>
-        <p class="cg-upload-context"><?php echo esc_html($publish_context); ?></p>
-        <p class="cg-upload-location"><strong>Ubicación:</strong> <?php echo esc_html($location_text); ?></p>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data" class="cg-form">
             <?php wp_nonce_field('catgame_upload'); ?>
             <input type="hidden" name="action" value="catgame_upload">
-            <fieldset class="cg-upload-mode" data-upload-mode="1" data-has-event="<?php echo $has_active_event ? '1' : '0'; ?>">
-                <legend>¿Dónde quieres publicar tu foto?</legend>
-                <input type="hidden" name="publish_mode" value="<?php echo esc_attr($selected_publish_mode); ?>" data-upload-mode-input="1">
-                <div class="cg-upload-mode__options">
-                    <?php if ($has_active_event): ?>
-                        <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'event' ? 'is-active' : ''; ?>" data-upload-mode-option="event">🏆 Entrar a La Arena</button>
-                    <?php endif; ?>
-                    <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'free' ? 'is-active' : ''; ?>" data-upload-mode-option="free">🐾 Publicar en El Parque</button>
+            <div class="cg-upload-picker" data-catgame-upload-picker>
+                <p class="cg-upload-picker__title">Selecciona tu foto</p>
+                <div class="cg-upload-picker__actions">
+                    <label for="catgame-cat-image-file" class="cg-upload-picker__btn" data-catgame-pick-file="1">Subir archivo</label>
+                    <label for="catgame-cat-image-camera" class="cg-upload-picker__btn" data-catgame-pick-camera="1">Tomar foto</label>
                 </div>
-                <p class="cg-upload-mode__help" data-upload-mode-help="1">
-                    <?php if ($selected_publish_mode === 'event'): ?>
-                        Participa en el evento activo de La Arena.
-                    <?php elseif ($selected_publish_mode === 'free'): ?>
-                        Comparte tu mascota libremente en El Parque.
-                    <?php else: ?>
-                        Elige entre La Arena o El Parque para continuar.
-                    <?php endif; ?>
-                </p>
-            </fieldset>
+                <p class="cg-file-picker-text">JPG, PNG o WEBP</p>
+            </div>
+
+            <input type="file" name="cat_image" id="catgame-cat-image" class="cg-file-input" accept="image/*,.heic,.heif" required>
+            <input type="file" id="catgame-cat-image-universal" class="cg-file-input" accept="image/*,.heic,.heif" tabindex="-1" aria-hidden="true">
+            <input type="file" id="catgame-cat-image-file" class="cg-file-input" accept="image/*,.heic,.heif" tabindex="-1" aria-hidden="true">
+            <input type="file" id="catgame-cat-image-camera" class="cg-file-input" accept="image/*,.heic,.heif" capture="environment" tabindex="-1" aria-hidden="true">
+
+            <p id="catgame-compress-status" class="cg-file-size cg-visually-hidden" aria-live="polite">Estado: esperando archivo</p>
+            <img id="catgame-image-preview" class="cg-image-preview" alt="Preview de imagen seleccionada" style="display:none;" />
+
+            <div class="cg-upload-location-wrap">
+                <p class="cg-upload-location"><strong>Ubicación:</strong> <?php echo esc_html($location_text); ?></p>
+                <a class="cg-upload-location-edit" data-upload-edit-location="1" href="<?php echo esc_url(home_url('/catgame/profile?complete_profile=1&return_to=upload')); ?>">Modificar</a>
+            </div>
+
             <label>
                 Título
                 <input
@@ -82,34 +83,39 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
                     data-required-message="El título es obligatorio."
                 >
             </label>
-            <label>
-                Etiquetas (separadas por coma o salto de línea)
-                <textarea name="custom_tags" rows="3" id="catgame-upload-tags-input" placeholder="ej: pelusa, siesta, ventana"><?php echo esc_textarea((string) ($upload_state['custom_tags'] ?? '')); ?></textarea>
-            </label>
+
             <?php if (!empty($user_tags)): ?>
                 <details class="cg-tag-suggest" id="catgame-tag-suggestions" data-user-tags="<?php echo esc_attr(wp_json_encode(array_values($user_tags))); ?>">
-                    <summary class="cg-tag-suggest__summary">Mis etiquetas guardadas</summary>
+                    <summary class="cg-tag-suggest__summary">Mis etiquetas</summary>
                     <div class="cg-tag-suggest__list" data-tag-saved-list="1"></div>
                 </details>
             <?php endif; ?>
 
-            <div class="cg-upload-picker" data-catgame-upload-picker>
-                <p class="cg-upload-picker__title">Selecciona tu foto</p>
-                <div class="cg-upload-picker__actions">
-                    <button type="button" class="cg-upload-picker__btn" data-catgame-pick-universal="1">Seleccionar foto</button>
-                    <button type="button" class="cg-upload-picker__btn" data-catgame-pick-file="1">Subir archivo</button>
-                    <button type="button" class="cg-upload-picker__btn" data-catgame-pick-camera="1">Tomar foto</button>
+            <label>
+                Etiquetas (separadas por coma o salto de línea)
+                <textarea name="custom_tags" rows="3" id="catgame-upload-tags-input" placeholder="ej: pelusa, siesta, ventana"><?php echo esc_textarea((string) ($upload_state['custom_tags'] ?? '')); ?></textarea>
+            </label>
+
+            <fieldset class="cg-upload-mode" data-upload-mode="1" data-has-event="<?php echo $has_active_event ? '1' : '0'; ?>">
+                <legend>¿Dónde quieres publicar tu foto?</legend>
+                <input type="hidden" name="publish_mode" value="<?php echo esc_attr($selected_publish_mode); ?>" data-upload-mode-input="1">
+                <p class="cg-upload-context"><?php echo esc_html($publish_context); ?></p>
+                <div class="cg-upload-mode__options">
+                    <?php if ($has_active_event): ?>
+                        <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'event' ? 'is-active' : ''; ?>" data-upload-mode-option="event">🏆 La Arena</button>
+                    <?php endif; ?>
+                    <button type="button" class="cg-upload-mode__option <?php echo $selected_publish_mode === 'free' ? 'is-active' : ''; ?>" data-upload-mode-option="free">🌿 El Parque</button>
                 </div>
-                <p class="cg-file-picker-text">JPG, PNG o WEBP</p>
-            </div>
-
-            <input type="file" name="cat_image" id="catgame-cat-image" class="cg-file-input" accept="image/*" required>
-            <input type="file" id="catgame-cat-image-universal" class="cg-file-input" accept="image/*" tabindex="-1" aria-hidden="true">
-            <input type="file" id="catgame-cat-image-file" class="cg-file-input" accept="image/*" tabindex="-1" aria-hidden="true">
-            <input type="file" id="catgame-cat-image-camera" class="cg-file-input" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
-
-            <p id="catgame-compress-status" class="cg-file-size cg-visually-hidden" aria-live="polite">Estado: esperando archivo</p>
-            <img id="catgame-image-preview" class="cg-image-preview" alt="Preview de imagen seleccionada" style="display:none;" />
+                <p class="cg-upload-mode__help" data-upload-mode-help="1">
+                    <?php if ($selected_publish_mode === 'event'): ?>
+                        Participa en el evento activo de La Arena.
+                    <?php elseif ($selected_publish_mode === 'free'): ?>
+                        Comparte tu mascota libremente en El Parque.
+                    <?php else: ?>
+                        Elige entre La Arena o El Parque para continuar.
+                    <?php endif; ?>
+                </p>
+            </fieldset>
 
             <button type="button" class="secondary" data-open-upload-rules="1">Ver normas</button>
             <button type="submit" class="cg-upload-submit">Enviar</button>

@@ -165,6 +165,8 @@
   const fileProxyInput = document.getElementById('catgame-cat-image-file');
   const cameraProxyInput = document.getElementById('catgame-cat-image-camera');
   const titleInput = form.querySelector('input[name="title"]');
+  const tagsInput = form.querySelector('textarea[name="custom_tags"]');
+  const editLocationLink = form.querySelector('[data-upload-edit-location="1"]');
   const submitButton = form.querySelector('button[type="submit"]');
   const uploadModeWrap = form.querySelector('[data-upload-mode="1"]');
   const uploadModeInput = form.querySelector('[data-upload-mode-input="1"]');
@@ -180,13 +182,61 @@
   let compressedFile = null;
   let compressing = false;
   let previewObjectUrl = null;
+  let draftImageDataUrl = '';
+  let draftImageName = '';
+  let draftImageType = '';
+  let activeSourceInput = null;
+  let selectedSourceFile = null;
   let selectedUploadMode = uploadModeInput ? String(uploadModeInput.value || '') : '';
   const hasEventOption = uploadModeWrap ? uploadModeWrap.getAttribute('data-has-event') === '1' : false;
+  const uploadDraftStorageKey = 'catgame_upload_draft_v1';
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('uploaded') === '1') {
+      window.sessionStorage.removeItem(uploadDraftStorageKey);
+    }
+  } catch (_) {
+    // no-op
+  }
 
   const modeHelpText = {
     event: 'Participa en el evento activo de La Arena.',
     free: 'Comparte tu mascota libremente en El Parque.',
     none: 'Elige entre La Arena o El Parque para continuar.',
+  };
+
+  const allowedMimeTypes = new Set([
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+  ]);
+
+  const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'];
+
+  const getExtension = (name) => {
+    const base = String(name || '').split('.').pop() || '';
+    return base.toLowerCase();
+  };
+
+  const isValidImageFile = (file) => {
+    if (!file) return false;
+    const mime = String(file.type || '').toLowerCase();
+    const ext = getExtension(file.name);
+    if (mime && allowedMimeTypes.has(mime)) {
+      return true;
+    }
+    return allowedExtensions.includes(ext);
+  };
+
+  const isHeicOrHeif = (file) => {
+    if (!file) return false;
+    const mime = String(file.type || '').toLowerCase();
+    const ext = getExtension(file.name);
+    return mime === 'image/heic' || mime === 'image/heif' || ext === 'heic' || ext === 'heif';
   };
 
   const syncUploadModeUi = () => {
@@ -207,6 +257,70 @@
     }
   };
 
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      if (!file) {
+        resolve('');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('No se pudo leer archivo para borrador'));
+      reader.readAsDataURL(file);
+    });
+
+  const saveUploadDraft = () => {
+    try {
+      const payload = {
+        title: titleInput ? String(titleInput.value || '') : '',
+        tags: tagsInput ? String(tagsInput.value || '') : '',
+        publishMode: selectedUploadMode,
+        imageDataUrl: draftImageDataUrl,
+        imageName: draftImageName,
+        imageType: draftImageType,
+        updatedAt: Date.now(),
+      };
+      window.sessionStorage.setItem(uploadDraftStorageKey, JSON.stringify(payload));
+    } catch (_) {
+      // no-op
+    }
+  };
+
+  const restoreUploadDraft = async () => {
+    try {
+      const raw = window.sessionStorage.getItem(uploadDraftStorageKey);
+      if (!raw) {
+        return;
+      }
+      const draft = JSON.parse(raw);
+      if (titleInput && typeof draft.title === 'string' && draft.title.trim() !== '') {
+        titleInput.value = draft.title;
+      }
+      if (tagsInput && typeof draft.tags === 'string' && draft.tags.trim() !== '') {
+        tagsInput.value = draft.tags;
+      }
+      if (typeof draft.publishMode === 'string' && (draft.publishMode === 'event' || draft.publishMode === 'free')) {
+        selectedUploadMode = draft.publishMode;
+        syncUploadModeUi();
+      }
+
+      if (typeof draft.imageDataUrl === 'string' && draft.imageDataUrl.startsWith('data:image/')) {
+        const response = await fetch(draft.imageDataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], draft.imageName || 'cat-image.jpg', { type: draft.imageType || blob.type || 'image/jpeg', lastModified: Date.now() });
+
+        if (typeof DataTransfer === 'function') {
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          input.files = dt.files;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    } catch (_) {
+      // no-op
+    }
+  };
+
   if (uploadModeWrap && !hasEventOption && selectedUploadMode !== 'free') {
     selectedUploadMode = 'free';
   }
@@ -219,13 +333,91 @@
       }
       selectedUploadMode = mode;
       syncUploadModeUi();
+      saveUploadDraft();
     });
   });
 
   syncUploadModeUi();
 
+  const processPickedFile = async (file) => {
+    compressedFile = null;
+
+    if (previewEl) {
+      if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+      }
+      previewEl.src = '';
+      previewEl.style.display = 'none';
+    }
+
+    if (!file) {
+      selectedSourceFile = null;
+      draftImageDataUrl = '';
+      draftImageName = '';
+      draftImageType = '';
+      saveUploadDraft();
+      if (filePickerText) filePickerText.textContent = 'JPG, PNG, WEBP, HEIC o HEIF';
+      setState('Estado: esperando archivo', false);
+      return;
+    }
+
+    if (!isValidImageFile(file)) {
+      window.catgameToast?.('Formato no compatible. Usa JPG, JPEG, PNG, WEBP, HEIC o HEIF.', 'error', 3200);
+      setState('Estado: formato no compatible', false);
+      if (activeSourceInput) {
+        activeSourceInput.value = '';
+      }
+      input.value = '';
+      selectedSourceFile = null;
+      return;
+    }
+
+    selectedSourceFile = file;
+
+    if (previewEl) {
+      previewObjectUrl = URL.createObjectURL(file);
+      previewEl.src = previewObjectUrl;
+      previewEl.style.display = 'block';
+    }
+
+    try {
+      if (isHeicOrHeif(file)) {
+        compressedFile = file;
+        const draftSource = compressedFile;
+        draftImageDataUrl = await fileToDataUrl(draftSource);
+        draftImageName = draftSource.name || 'cat-image.heic';
+        draftImageType = draftSource.type || 'image/heic';
+        saveUploadDraft();
+        setState('Estado: listo para enviar (HEIC/HEIF)', false);
+        return;
+      }
+
+      setState('Estado: comprimiendo...', true);
+      const nextFile = await buildCompressedFile(file);
+      compressedFile = nextFile;
+      const draftSource = compressedFile || file;
+      draftImageDataUrl = await fileToDataUrl(draftSource);
+      draftImageName = draftSource.name || 'cat-image.jpg';
+      draftImageType = draftSource.type || 'image/jpeg';
+      saveUploadDraft();
+      setState('Estado: listo para enviar', false);
+    } catch (err) {
+      console.warn('CatGame compression fallback:', err);
+      try {
+        draftImageDataUrl = await fileToDataUrl(file);
+        draftImageName = file.name || 'cat-image.jpg';
+        draftImageType = file.type || 'image/jpeg';
+        saveUploadDraft();
+      } catch (_) {
+        // no-op
+      }
+      setState('Estado: error de compresión (se enviará original)', false);
+    }
+  };
+
   const syncFileToMainInput = (sourceInput) => {
-    if (!sourceInput || typeof DataTransfer !== 'function') {
+    if (!sourceInput) {
       return;
     }
 
@@ -234,10 +426,26 @@
       return;
     }
 
+    activeSourceInput = sourceInput;
+
+    if (typeof DataTransfer !== 'function') {
+      processPickedFile(nextFile);
+      return;
+    }
+
     const dt = new DataTransfer();
     dt.items.add(nextFile);
     input.files = dt.files;
-    input.dispatchEvent(new Event('change', { bubbles: true }));
+    processPickedFile(nextFile);
+  };
+
+  const getCurrentPickedFile = () => {
+    const fromMain = input.files && input.files[0] ? input.files[0] : null;
+    if (fromMain) return fromMain;
+    if (activeSourceInput && activeSourceInput.files && activeSourceInput.files[0]) {
+      return activeSourceInput.files[0];
+    }
+    return null;
   };
 
   const setState = (text, isBusy) => {
@@ -259,11 +467,11 @@
   };
 
   const isiOSClient = isIOS();
-  if (universalPickerBtn) universalPickerBtn.classList.toggle('is-hidden', !isiOSClient);
-  if (filePickerBtn) filePickerBtn.classList.toggle('is-hidden', isiOSClient);
-  if (cameraPickerBtn) cameraPickerBtn.classList.toggle('is-hidden', isiOSClient);
+  if (universalPickerBtn) universalPickerBtn.classList.add('is-hidden');
+  if (filePickerBtn) filePickerBtn.classList.remove('is-hidden');
+  if (cameraPickerBtn) cameraPickerBtn.classList.remove('is-hidden');
   if (filePickerText) {
-    filePickerText.textContent = isiOSClient ? 'Selecciona desde Fotos o Cámara de iOS' : 'JPG, PNG o WEBP';
+    filePickerText.textContent = isiOSClient ? 'Selecciona desde Fotos o Cámara de iOS' : 'JPG, PNG, WEBP, HEIC o HEIF';
   }
 
   if (titleInput) {
@@ -278,6 +486,19 @@
 
     titleInput.addEventListener('input', () => {
       titleInput.setCustomValidity('');
+      saveUploadDraft();
+    });
+  }
+
+  if (tagsInput) {
+    tagsInput.addEventListener('input', () => {
+      saveUploadDraft();
+    });
+  }
+
+  if (editLocationLink) {
+    editLocationLink.addEventListener('click', () => {
+      saveUploadDraft();
     });
   }
 
@@ -289,21 +510,11 @@
   }
 
 
-  if (isiOSClient && cameraProxyInput) {
-    cameraProxyInput.disabled = true;
-  }
-
   if (filePickerBtn && fileProxyInput) {
-    filePickerBtn.addEventListener('click', () => {
-      fileProxyInput.click();
-    });
     fileProxyInput.addEventListener('change', () => syncFileToMainInput(fileProxyInput));
   }
 
-  if (!isiOSClient && cameraPickerBtn && cameraProxyInput) {
-    cameraPickerBtn.addEventListener('click', () => {
-      cameraProxyInput.click();
-    });
+  if (cameraPickerBtn && cameraProxyInput) {
     cameraProxyInput.addEventListener('change', () => syncFileToMainInput(cameraProxyInput));
   }
 
@@ -397,40 +608,8 @@
   };
 
   input.addEventListener('change', async () => {
-    const file = input.files && input.files[0] ? input.files[0] : null;
-    compressedFile = null;
-
-    if (previewEl) {
-      if (previewObjectUrl) {
-        URL.revokeObjectURL(previewObjectUrl);
-        previewObjectUrl = null;
-      }
-      previewEl.src = '';
-      previewEl.style.display = 'none';
-    }
-
-    if (!file) {
-      if (filePickerText) filePickerText.textContent = 'JPG, PNG o WEBP';
-      setState('Estado: esperando archivo', false);
-      return;
-    }
-
-
-    if (previewEl) {
-      previewObjectUrl = URL.createObjectURL(file);
-      previewEl.src = previewObjectUrl;
-      previewEl.style.display = 'block';
-    }
-
-    try {
-      setState('Estado: comprimiendo...', true);
-      const nextFile = await buildCompressedFile(file);
-      compressedFile = nextFile;
-      setState('Estado: listo para enviar', false);
-    } catch (err) {
-      console.warn('CatGame compression fallback:', err);
-      setState('Estado: error de compresión (se enviará original)', false);
-    }
+    const file = input.files && input.files[0] ? input.files[0] : getCurrentPickedFile();
+    await processPickedFile(file);
   });
 
   form.addEventListener('submit', (event) => {
@@ -448,7 +627,17 @@
 
     window.catgameToast?.('Subiendo foto…', 'info', 2600);
 
+    if (typeof DataTransfer !== 'function' && activeSourceInput && activeSourceInput.files && activeSourceInput.files[0]) {
+      input.removeAttribute('name');
+      activeSourceInput.setAttribute('name', 'cat_image');
+      return;
+    }
+
     if (!compressedFile) {
+      if (typeof DataTransfer !== 'function' && activeSourceInput && activeSourceInput.files && activeSourceInput.files[0]) {
+        input.removeAttribute('name');
+        activeSourceInput.setAttribute('name', 'cat_image');
+      }
       return;
     }
 
@@ -469,6 +658,8 @@
       console.warn('CatGame submit fallback:', err);
     }
   });
+
+  restoreUploadDraft();
 
 })();
 
@@ -744,6 +935,10 @@
     }
 
     const markLoaded = () => {
+      if (wrapper.classList.contains('cg-feed-img-wrap') && img.naturalWidth > 0 && img.naturalHeight > 0) {
+        const ratio = img.naturalHeight / img.naturalWidth;
+        wrapper.classList.toggle('is-tall-photo', ratio >= 1.45);
+      }
       wrapper.classList.remove('is-error');
       wrapper.classList.add('is-loaded');
     };

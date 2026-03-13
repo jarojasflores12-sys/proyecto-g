@@ -1,5 +1,69 @@
 # Changelog
 
+## 0.27.86
+- Publicaciones / UI: ajuste puntual para fotos muy verticales del feed (caso iPhone) sin cambiar el look general de 0.27.77/previo.
+- Publicaciones / UI: solo en móviles, las cards con imagen extremadamente alta se limitan con `max-height` para evitar que una sola publicación desordene el layout.
+
+## 0.27.85
+- Publicaciones / UI: se restaura el comportamiento visual de imágenes del feed al estilo previo (similar a 0.27.77 o anterior), eliminando límites rígidos y contain forzado.
+- Publicaciones / UI: las cards mantienen su diseño general y las imágenes vuelven a render con alto automático dentro del flujo original.
+
+## 0.27.84
+- Publicaciones / UI: se restaura el look del feed evitando recorte agresivo y usando límites de alto (`max-height`) para que fotos de iPhone no se vean gigantes.
+- Publicaciones / UI: la imagen mantiene proporción con `object-fit: contain` y la card conserva apariencia previa.
+
+## 0.27.83
+- Publicaciones / UI: se corrige render de imágenes en cards para evitar recortes de fotos (incluyendo iPhone) usando contenedor centrado e imagen con `object-fit: contain`.
+- Publicaciones / UI: se mantiene altura visual consistente del contenedor para que ninguna foto se vea gigante en el feed.
+
+## 0.27.82
+- Publicaciones / UI: se fija altura visual consistente de imagen en cards del feed para evitar diferencias de tamaño entre fotos de iPhone, Android y escritorio.
+- Publicaciones / UI: se mantiene `object-fit: cover` con ancho/alto 100% para preservar proporción sin deformar.
+
+## 0.27.81
+- Publicaciones / UI: se normaliza el render de imagen en cards del feed con contenedor de proporción consistente para evitar fotos desproporcionadas (incluyendo subidas desde iPhone).
+- Publicaciones / UI: la imagen del feed usa `object-fit: cover` para mantener presentación uniforme sin deformación.
+
+## 0.27.80
+- Subir / bug fix: se estabiliza el estado del archivo seleccionado para que la foto elegida o tomada quede como archivo activo del formulario y no se pierda al continuar editando.
+- Subir / preview: la previsualización ahora se alimenta del mismo archivo activo de envío en iPhone, Android y escritorio.
+
+## 0.27.79
+- Subir / carga de foto: se corrige el flujo de selección + previsualización en iPhone y Android con validación de formato más robusta (JPG/JPEG/PNG/WEBP/HEIC/HEIF).
+- Subir / UX: se agrega mensaje claro cuando el archivo no es compatible y fallback de envío para navegadores móviles sin `DataTransfer`.
+
+## 0.27.78
+- Subir / UI: el botón `Modificar` de ubicación se refuerza como acción secundaria visible (chip pastel con borde y texto marcado).
+- Subir / flujo: al ir a Perfil desde `Modificar` se guarda y restaura en frontend el borrador de `Subir` (título, etiquetas, modo y foto seleccionada) para continuar al volver.
+
+## 0.27.77
+- Subir / iPhone Safari: se corrige el picker para mostrar y habilitar siempre `Subir archivo` y `Tomar foto` (sin ocultarlos por iOS).
+- Subir / iOS: `Tomar foto` vuelve a enlazar el input de cámara y sincroniza archivo/preview como en Android y escritorio.
+
+## 0.27.76
+- Subir / iPhone Safari: `Subir archivo` y `Tomar foto` ahora se asocian directamente a inputs reales mediante `label for`, mejorando la apertura de fototeca/cámara en iOS.
+- Subir / UI: se mantiene compatibilidad del flujo actual (preview + selección) en escritorio y Android sin tocar lógica de publicación.
+
+## 0.27.75
+- Subir / UI: actualización visual de opciones de publicación a `🏆 La Arena` y `🌿 El Parque` con estilos pastel diferenciados (durazno/rosado y verde salvia).
+- Subir / UI: se refuerza el estado seleccionado para que ambas opciones sean más distinguibles, manteniendo layout compacto en una sola fila.
+
+## 0.27.74
+- Subir / UI: se fuerza aplicación del color principal en `Subir archivo`, `Tomar foto` y `Enviar` con `#E67A7A` y hover/activo `#D96666`.
+- Subir / UI: se ajusta layout para mantener `Ubicación` + `Modificar` en una línea y `La Arena`/`El Parque` como chips compactos en fila.
+
+## 0.27.73
+- Subir / UI: corrección visual de botones principales (`Subir archivo`, `Tomar foto`, `Enviar`) para aplicar color armónico `#E67A7A` con hover/activo `#D96666`.
+- Subir / UI: ubicación y botón `Modificar` en una sola línea, y botones `La Arena` / `El Parque` como chips compactos en la misma fila.
+
+## 0.27.72
+- Subir / UI: pulido visual compacto con botones principales en tono armónico `#E67A7A` y estado hover/activo `#D96666`.
+- Subir / UI: ubicación en una sola línea con botón pequeño `Modificar`, `Mis etiquetas` como chip corto centrado y botones `La Arena` / `El Parque` con texto corto.
+
+## 0.27.71
+- Subir / UI: se reordena la vista según el flujo definido (botones de carga, preview, ubicación con acceso a Perfil, título, etiquetas, modo de publicación, normas y envío) sin cambios de lógica.
+- Subir / UI: los botones `Entrar a La Arena` y `Publicar en El Parque` pasan a layout lado a lado en escritorio (apilados en móvil).
+
 ## 0.27.70
 - Inicio / UI: `Ver reglas completas` ahora usa estilo de botón pastel destacado (gradiente, sombra y foco visible), dejando de verse como chip blanco.
 - Inicio / UI: se aplica clase específica para este botón sin alterar la lógica del enlace ni otros flujos.
