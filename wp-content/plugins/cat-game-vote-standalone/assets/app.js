@@ -935,6 +935,10 @@
     }
 
     const markLoaded = () => {
+      if (wrapper.classList.contains('cg-feed-img-wrap') && img.naturalWidth > 0 && img.naturalHeight > 0) {
+        const ratio = img.naturalHeight / img.naturalWidth;
+        wrapper.classList.toggle('is-tall-photo', ratio >= 1.45);
+      }
       wrapper.classList.remove('is-error');
       wrapper.classList.add('is-loaded');
     };

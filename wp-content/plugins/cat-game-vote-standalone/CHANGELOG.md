@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.86
+- Publicaciones / UI: ajuste puntual para fotos muy verticales del feed (caso iPhone) sin cambiar el look general de 0.27.77/previo.
+- Publicaciones / UI: solo en móviles, las cards con imagen extremadamente alta se limitan con `max-height` para evitar que una sola publicación desordene el layout.
+
 ## 0.27.85
 - Publicaciones / UI: se restaura el comportamiento visual de imágenes del feed al estilo previo (similar a 0.27.77 o anterior), eliminando límites rígidos y contain forzado.
 - Publicaciones / UI: las cards mantienen su diseño general y las imágenes vuelven a render con alto automático dentro del flujo original.

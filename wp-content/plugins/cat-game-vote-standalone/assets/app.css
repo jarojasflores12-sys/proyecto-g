@@ -670,6 +670,16 @@ body.cg-has-custom-bg .cg-main {
   object-fit: initial;
 }
 
+@media (max-width: 767px) {
+  .cg-feed-img-wrap.is-tall-photo .cg-img {
+    width: auto;
+    max-width: 100%;
+    max-height: 520px;
+    margin: 0 auto;
+    display: block;
+  }
+}
+
 .cg-img-wrap.is-loaded .cg-skel-img {
   display: none;
 }
