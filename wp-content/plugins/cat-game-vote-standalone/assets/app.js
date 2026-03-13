@@ -185,6 +185,7 @@
   let draftImageDataUrl = '';
   let draftImageName = '';
   let draftImageType = '';
+  let activeSourceInput = null;
   let selectedUploadMode = uploadModeInput ? String(uploadModeInput.value || '') : '';
   const hasEventOption = uploadModeWrap ? uploadModeWrap.getAttribute('data-has-event') === '1' : false;
   const uploadDraftStorageKey = 'catgame_upload_draft_v1';
@@ -202,6 +203,39 @@
     event: 'Participa en el evento activo de La Arena.',
     free: 'Comparte tu mascota libremente en El Parque.',
     none: 'Elige entre La Arena o El Parque para continuar.',
+  };
+
+  const allowedMimeTypes = new Set([
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+  ]);
+
+  const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'];
+
+  const getExtension = (name) => {
+    const base = String(name || '').split('.').pop() || '';
+    return base.toLowerCase();
+  };
+
+  const isValidImageFile = (file) => {
+    if (!file) return false;
+    const mime = String(file.type || '').toLowerCase();
+    const ext = getExtension(file.name);
+    if (mime && allowedMimeTypes.has(mime)) {
+      return true;
+    }
+    return allowedExtensions.includes(ext);
+  };
+
+  const isHeicOrHeif = (file) => {
+    if (!file) return false;
+    const mime = String(file.type || '').toLowerCase();
+    const ext = getExtension(file.name);
+    return mime === 'image/heic' || mime === 'image/heif' || ext === 'heic' || ext === 'heif';
   };
 
   const syncUploadModeUi = () => {
@@ -305,7 +339,7 @@
   syncUploadModeUi();
 
   const syncFileToMainInput = (sourceInput) => {
-    if (!sourceInput || typeof DataTransfer !== 'function') {
+    if (!sourceInput) {
       return;
     }
 
@@ -314,10 +348,26 @@
       return;
     }
 
+    activeSourceInput = sourceInput;
+
+    if (typeof DataTransfer !== 'function') {
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      return;
+    }
+
     const dt = new DataTransfer();
     dt.items.add(nextFile);
     input.files = dt.files;
     input.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+
+  const getCurrentPickedFile = () => {
+    const fromMain = input.files && input.files[0] ? input.files[0] : null;
+    if (fromMain) return fromMain;
+    if (activeSourceInput && activeSourceInput.files && activeSourceInput.files[0]) {
+      return activeSourceInput.files[0];
+    }
+    return null;
   };
 
   const setState = (text, isBusy) => {
@@ -343,7 +393,7 @@
   if (filePickerBtn) filePickerBtn.classList.remove('is-hidden');
   if (cameraPickerBtn) cameraPickerBtn.classList.remove('is-hidden');
   if (filePickerText) {
-    filePickerText.textContent = isiOSClient ? 'Selecciona desde Fotos o Cámara de iOS' : 'JPG, PNG o WEBP';
+    filePickerText.textContent = isiOSClient ? 'Selecciona desde Fotos o Cámara de iOS' : 'JPG, PNG, WEBP, HEIC o HEIF';
   }
 
   if (titleInput) {
@@ -486,7 +536,7 @@
   };
 
   input.addEventListener('change', async () => {
-    const file = input.files && input.files[0] ? input.files[0] : null;
+    const file = getCurrentPickedFile();
     compressedFile = null;
 
     if (previewEl) {
@@ -503,8 +553,18 @@
       draftImageName = '';
       draftImageType = '';
       saveUploadDraft();
-      if (filePickerText) filePickerText.textContent = 'JPG, PNG o WEBP';
+      if (filePickerText) filePickerText.textContent = 'JPG, PNG, WEBP, HEIC o HEIF';
       setState('Estado: esperando archivo', false);
+      return;
+    }
+
+    if (!isValidImageFile(file)) {
+      window.catgameToast?.('Formato no compatible. Usa JPG, JPEG, PNG, WEBP, HEIC o HEIF.', 'error', 3200);
+      setState('Estado: formato no compatible', false);
+      if (activeSourceInput) {
+        activeSourceInput.value = '';
+      }
+      input.value = '';
       return;
     }
 
@@ -516,6 +576,17 @@
     }
 
     try {
+      if (isHeicOrHeif(file)) {
+        compressedFile = file;
+        const draftSource = compressedFile;
+        draftImageDataUrl = await fileToDataUrl(draftSource);
+        draftImageName = draftSource.name || 'cat-image.heic';
+        draftImageType = draftSource.type || 'image/heic';
+        saveUploadDraft();
+        setState('Estado: listo para enviar (HEIC/HEIF)', false);
+        return;
+      }
+
       setState('Estado: comprimiendo...', true);
       const nextFile = await buildCompressedFile(file);
       compressedFile = nextFile;
@@ -554,7 +625,17 @@
 
     window.catgameToast?.('Subiendo foto…', 'info', 2600);
 
+    if (typeof DataTransfer !== 'function' && activeSourceInput && activeSourceInput.files && activeSourceInput.files[0]) {
+      input.removeAttribute('name');
+      activeSourceInput.setAttribute('name', 'cat_image');
+      return;
+    }
+
     if (!compressedFile) {
+      if (typeof DataTransfer !== 'function' && activeSourceInput && activeSourceInput.files && activeSourceInput.files[0]) {
+        input.removeAttribute('name');
+        activeSourceInput.setAttribute('name', 'cat_image');
+      }
       return;
     }
 

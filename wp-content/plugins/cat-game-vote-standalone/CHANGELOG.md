@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.79
+- Subir / carga de foto: se corrige el flujo de selección + previsualización en iPhone y Android con validación de formato más robusta (JPG/JPEG/PNG/WEBP/HEIC/HEIF).
+- Subir / UX: se agrega mensaje claro cuando el archivo no es compatible y fallback de envío para navegadores móviles sin `DataTransfer`.
+
 ## 0.27.78
 - Subir / UI: el botón `Modificar` de ubicación se refuerza como acción secundaria visible (chip pastel con borde y texto marcado).
 - Subir / flujo: al ir a Perfil desde `Modificar` se guarda y restaura en frontend el borrador de `Subir` (título, etiquetas, modo y foto seleccionada) para continuar al volver.

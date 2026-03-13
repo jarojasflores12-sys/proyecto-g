@@ -57,10 +57,10 @@ if (!in_array($selected_publish_mode, ['event', 'free'], true)) {
                 <p class="cg-file-picker-text">JPG, PNG o WEBP</p>
             </div>
 
-            <input type="file" name="cat_image" id="catgame-cat-image" class="cg-file-input" accept="image/*" required>
-            <input type="file" id="catgame-cat-image-universal" class="cg-file-input" accept="image/*" tabindex="-1" aria-hidden="true">
-            <input type="file" id="catgame-cat-image-file" class="cg-file-input" accept="image/*" tabindex="-1" aria-hidden="true">
-            <input type="file" id="catgame-cat-image-camera" class="cg-file-input" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+            <input type="file" name="cat_image" id="catgame-cat-image" class="cg-file-input" accept="image/*,.heic,.heif" required>
+            <input type="file" id="catgame-cat-image-universal" class="cg-file-input" accept="image/*,.heic,.heif" tabindex="-1" aria-hidden="true">
+            <input type="file" id="catgame-cat-image-file" class="cg-file-input" accept="image/*,.heic,.heif" tabindex="-1" aria-hidden="true">
+            <input type="file" id="catgame-cat-image-camera" class="cg-file-input" accept="image/*,.heic,.heif" capture="environment" tabindex="-1" aria-hidden="true">
 
             <p id="catgame-compress-status" class="cg-file-size cg-visually-hidden" aria-live="polite">Estado: esperando archivo</p>
             <img id="catgame-image-preview" class="cg-image-preview" alt="Preview de imagen seleccionada" style="display:none;" />
