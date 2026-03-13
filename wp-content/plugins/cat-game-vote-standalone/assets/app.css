@@ -671,19 +671,17 @@ body.cg-has-custom-bg .cg-main {
 }
 
 @media (max-width: 767px) {
-  .cg-feed-img-wrap .cg-img {
-    width: auto;
-    max-width: 100%;
-    max-height: 520px;
-    margin: 0 auto;
-    display: block;
+  .cg-feed-img-wrap {
+    display: flex;
+    justify-content: center;
   }
 
+  .cg-feed-img-wrap .cg-img,
   .cg-feed-img-wrap.is-tall-photo .cg-img {
     width: auto;
     max-width: 100%;
     max-height: 520px;
-    margin: 0 auto;
+    margin: 0;
     display: block;
   }
 }
