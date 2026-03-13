@@ -633,11 +633,7 @@ body.cg-has-custom-bg .cg-main {
 }
 
 .cg-feed-img-wrap {
-  max-height: 260px;
-  min-height: 220px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
 }
 
 .cg-skel {
@@ -670,20 +666,8 @@ body.cg-has-custom-bg .cg-main {
 .cg-feed-img-wrap .cg-img {
   width: 100%;
   height: auto;
-  max-height: 260px;
-  object-fit: contain;
-  object-position: center;
-}
-
-@media (max-width: 640px) {
-  .cg-feed-img-wrap {
-    max-height: 220px;
-    min-height: 200px;
-  }
-
-  .cg-feed-img-wrap .cg-img {
-    max-height: 220px;
-  }
+  max-height: none;
+  object-fit: initial;
 }
 
 .cg-img-wrap.is-loaded .cg-skel-img {

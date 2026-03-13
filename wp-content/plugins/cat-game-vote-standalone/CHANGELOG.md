@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.85
+- Publicaciones / UI: se restaura el comportamiento visual de imágenes del feed al estilo previo (similar a 0.27.77 o anterior), eliminando límites rígidos y contain forzado.
+- Publicaciones / UI: las cards mantienen su diseño general y las imágenes vuelven a render con alto automático dentro del flujo original.
+
 ## 0.27.84
 - Publicaciones / UI: se restaura el look del feed evitando recorte agresivo y usando límites de alto (`max-height`) para que fotos de iPhone no se vean gigantes.
 - Publicaciones / UI: la imagen mantiene proporción con `object-fit: contain` y la card conserva apariencia previa.
