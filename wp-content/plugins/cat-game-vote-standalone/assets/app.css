@@ -632,6 +632,11 @@ body.cg-has-custom-bg .cg-main {
   overflow: hidden;
 }
 
+.cg-feed-img-wrap {
+  aspect-ratio: 4 / 5;
+  background: rgba(0, 0, 0, 0.03);
+}
+
 .cg-skel {
   background: linear-gradient(90deg, rgba(0, 0, 0, 0.05) 25%, rgba(0, 0, 0, 0.09) 37%, rgba(0, 0, 0, 0.05) 63%);
   background-size: 400% 100%;
@@ -657,6 +662,12 @@ body.cg-has-custom-bg .cg-main {
   height: auto;
   display: block;
   border-radius: 14px;
+}
+
+.cg-feed-img-wrap .cg-img {
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .cg-img-wrap.is-loaded .cg-skel-img {

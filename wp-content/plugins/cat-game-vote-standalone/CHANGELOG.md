@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.81
+- Publicaciones / UI: se normaliza el render de imagen en cards del feed con contenedor de proporción consistente para evitar fotos desproporcionadas (incluyendo subidas desde iPhone).
+- Publicaciones / UI: la imagen del feed usa `object-fit: cover` para mantener presentación uniforme sin deformación.
+
 ## 0.27.80
 - Subir / bug fix: se estabiliza el estado del archivo seleccionado para que la foto elegida o tomada quede como archivo activo del formulario y no se pierda al continuar editando.
 - Subir / preview: la previsualización ahora se alimenta del mismo archivo activo de envío en iPhone, Android y escritorio.
