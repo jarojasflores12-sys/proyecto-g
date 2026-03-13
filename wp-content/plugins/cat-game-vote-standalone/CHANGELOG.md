@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.83
+- Publicaciones / UI: se corrige render de imágenes en cards para evitar recortes de fotos (incluyendo iPhone) usando contenedor centrado e imagen con `object-fit: contain`.
+- Publicaciones / UI: se mantiene altura visual consistente del contenedor para que ninguna foto se vea gigante en el feed.
+
 ## 0.27.82
 - Publicaciones / UI: se fija altura visual consistente de imagen en cards del feed para evitar diferencias de tamaño entre fotos de iPhone, Android y escritorio.
 - Publicaciones / UI: se mantiene `object-fit: cover` con ancho/alto 100% para preservar proporción sin deformar.
