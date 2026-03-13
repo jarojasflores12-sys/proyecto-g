@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.80
+- Subir / bug fix: se estabiliza el estado del archivo seleccionado para que la foto elegida o tomada quede como archivo activo del formulario y no se pierda al continuar editando.
+- Subir / preview: la previsualización ahora se alimenta del mismo archivo activo de envío en iPhone, Android y escritorio.
+
 ## 0.27.79
 - Subir / carga de foto: se corrige el flujo de selección + previsualización en iPhone y Android con validación de formato más robusta (JPG/JPEG/PNG/WEBP/HEIC/HEIF).
 - Subir / UX: se agrega mensaje claro cuando el archivo no es compatible y fallback de envío para navegadores móviles sin `DataTransfer`.

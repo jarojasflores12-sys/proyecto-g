@@ -186,6 +186,7 @@
   let draftImageName = '';
   let draftImageType = '';
   let activeSourceInput = null;
+  let selectedSourceFile = null;
   let selectedUploadMode = uploadModeInput ? String(uploadModeInput.value || '') : '';
   const hasEventOption = uploadModeWrap ? uploadModeWrap.getAttribute('data-has-event') === '1' : false;
   const uploadDraftStorageKey = 'catgame_upload_draft_v1';
@@ -338,6 +339,83 @@
 
   syncUploadModeUi();
 
+  const processPickedFile = async (file) => {
+    compressedFile = null;
+
+    if (previewEl) {
+      if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+      }
+      previewEl.src = '';
+      previewEl.style.display = 'none';
+    }
+
+    if (!file) {
+      selectedSourceFile = null;
+      draftImageDataUrl = '';
+      draftImageName = '';
+      draftImageType = '';
+      saveUploadDraft();
+      if (filePickerText) filePickerText.textContent = 'JPG, PNG, WEBP, HEIC o HEIF';
+      setState('Estado: esperando archivo', false);
+      return;
+    }
+
+    if (!isValidImageFile(file)) {
+      window.catgameToast?.('Formato no compatible. Usa JPG, JPEG, PNG, WEBP, HEIC o HEIF.', 'error', 3200);
+      setState('Estado: formato no compatible', false);
+      if (activeSourceInput) {
+        activeSourceInput.value = '';
+      }
+      input.value = '';
+      selectedSourceFile = null;
+      return;
+    }
+
+    selectedSourceFile = file;
+
+    if (previewEl) {
+      previewObjectUrl = URL.createObjectURL(file);
+      previewEl.src = previewObjectUrl;
+      previewEl.style.display = 'block';
+    }
+
+    try {
+      if (isHeicOrHeif(file)) {
+        compressedFile = file;
+        const draftSource = compressedFile;
+        draftImageDataUrl = await fileToDataUrl(draftSource);
+        draftImageName = draftSource.name || 'cat-image.heic';
+        draftImageType = draftSource.type || 'image/heic';
+        saveUploadDraft();
+        setState('Estado: listo para enviar (HEIC/HEIF)', false);
+        return;
+      }
+
+      setState('Estado: comprimiendo...', true);
+      const nextFile = await buildCompressedFile(file);
+      compressedFile = nextFile;
+      const draftSource = compressedFile || file;
+      draftImageDataUrl = await fileToDataUrl(draftSource);
+      draftImageName = draftSource.name || 'cat-image.jpg';
+      draftImageType = draftSource.type || 'image/jpeg';
+      saveUploadDraft();
+      setState('Estado: listo para enviar', false);
+    } catch (err) {
+      console.warn('CatGame compression fallback:', err);
+      try {
+        draftImageDataUrl = await fileToDataUrl(file);
+        draftImageName = file.name || 'cat-image.jpg';
+        draftImageType = file.type || 'image/jpeg';
+        saveUploadDraft();
+      } catch (_) {
+        // no-op
+      }
+      setState('Estado: error de compresión (se enviará original)', false);
+    }
+  };
+
   const syncFileToMainInput = (sourceInput) => {
     if (!sourceInput) {
       return;
@@ -351,14 +429,14 @@
     activeSourceInput = sourceInput;
 
     if (typeof DataTransfer !== 'function') {
-      input.dispatchEvent(new Event('change', { bubbles: true }));
+      processPickedFile(nextFile);
       return;
     }
 
     const dt = new DataTransfer();
     dt.items.add(nextFile);
     input.files = dt.files;
-    input.dispatchEvent(new Event('change', { bubbles: true }));
+    processPickedFile(nextFile);
   };
 
   const getCurrentPickedFile = () => {
@@ -433,16 +511,10 @@
 
 
   if (filePickerBtn && fileProxyInput) {
-    filePickerBtn.addEventListener('click', () => {
-      fileProxyInput.click();
-    });
     fileProxyInput.addEventListener('change', () => syncFileToMainInput(fileProxyInput));
   }
 
   if (cameraPickerBtn && cameraProxyInput) {
-    cameraPickerBtn.addEventListener('click', () => {
-      cameraProxyInput.click();
-    });
     cameraProxyInput.addEventListener('change', () => syncFileToMainInput(cameraProxyInput));
   }
 
@@ -536,78 +608,8 @@
   };
 
   input.addEventListener('change', async () => {
-    const file = getCurrentPickedFile();
-    compressedFile = null;
-
-    if (previewEl) {
-      if (previewObjectUrl) {
-        URL.revokeObjectURL(previewObjectUrl);
-        previewObjectUrl = null;
-      }
-      previewEl.src = '';
-      previewEl.style.display = 'none';
-    }
-
-    if (!file) {
-      draftImageDataUrl = '';
-      draftImageName = '';
-      draftImageType = '';
-      saveUploadDraft();
-      if (filePickerText) filePickerText.textContent = 'JPG, PNG, WEBP, HEIC o HEIF';
-      setState('Estado: esperando archivo', false);
-      return;
-    }
-
-    if (!isValidImageFile(file)) {
-      window.catgameToast?.('Formato no compatible. Usa JPG, JPEG, PNG, WEBP, HEIC o HEIF.', 'error', 3200);
-      setState('Estado: formato no compatible', false);
-      if (activeSourceInput) {
-        activeSourceInput.value = '';
-      }
-      input.value = '';
-      return;
-    }
-
-
-    if (previewEl) {
-      previewObjectUrl = URL.createObjectURL(file);
-      previewEl.src = previewObjectUrl;
-      previewEl.style.display = 'block';
-    }
-
-    try {
-      if (isHeicOrHeif(file)) {
-        compressedFile = file;
-        const draftSource = compressedFile;
-        draftImageDataUrl = await fileToDataUrl(draftSource);
-        draftImageName = draftSource.name || 'cat-image.heic';
-        draftImageType = draftSource.type || 'image/heic';
-        saveUploadDraft();
-        setState('Estado: listo para enviar (HEIC/HEIF)', false);
-        return;
-      }
-
-      setState('Estado: comprimiendo...', true);
-      const nextFile = await buildCompressedFile(file);
-      compressedFile = nextFile;
-      const draftSource = compressedFile || file;
-      draftImageDataUrl = await fileToDataUrl(draftSource);
-      draftImageName = draftSource.name || 'cat-image.jpg';
-      draftImageType = draftSource.type || 'image/jpeg';
-      saveUploadDraft();
-      setState('Estado: listo para enviar', false);
-    } catch (err) {
-      console.warn('CatGame compression fallback:', err);
-      try {
-        draftImageDataUrl = await fileToDataUrl(file);
-        draftImageName = file.name || 'cat-image.jpg';
-        draftImageType = file.type || 'image/jpeg';
-        saveUploadDraft();
-      } catch (_) {
-        // no-op
-      }
-      setState('Estado: error de compresión (se enviará original)', false);
-    }
+    const file = input.files && input.files[0] ? input.files[0] : getCurrentPickedFile();
+    await processPickedFile(file);
   });
 
   form.addEventListener('submit', (event) => {
