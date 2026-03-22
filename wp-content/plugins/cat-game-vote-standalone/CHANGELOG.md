@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.97
+- Publicaciones / UI: se fuerza la contención real y centrado del `<img>` dentro del `frame` compartido del feed para evitar que siga desbordando o viéndose corrido.
+- Publicaciones / UI: se conserva el mismo marco visual y altura del bloque de imagen, sin tocar lógica de publicación, backend ni rutas.
+
 ## 0.27.96
 - Publicaciones / UI: se recentra la imagen dentro del `frame` compartido del feed para evitar que quede corrida mientras conserva el tamaño visual logrado.
 - Publicaciones / UI: se mantiene el mismo contenedor y alto del bloque de imagen, sin tocar lógica de publicación, backend ni rutas.
