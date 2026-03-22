@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.1
+- Ranking / UI: se mejora visualmente `Ganadores anteriores` con más jerarquía para nombre del evento, vigencia más legible y mejor separación entre ganadores.
+- Ranking / UI: se ordenan las miniaturas y tarjetas del podio manteniendo intacta la lógica y el contenido actual.
+
 ## 0.28.0
 - Ranking / UI: la vigencia del evento ahora se muestra en formato `dd-mm-aaaa → dd-mm-aaaa`, sin hora y con mejor legibilidad visual.
 - Ranking / UI: se agrega un chip suave para destacar la vigencia sin alterar la lógica del ranking.
