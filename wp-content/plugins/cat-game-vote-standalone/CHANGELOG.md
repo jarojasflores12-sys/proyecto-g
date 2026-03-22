@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.2
+- Ranking / UI: las miniaturas de `Ganadores anteriores` ahora renderizan una imagen de mayor tamaño y sin recorte agresivo para verse más nítidas y completas.
+- Ranking / UI: se mantiene el orden visual del podio usando contenedor cuadrado con imagen centrada y `object-fit: contain`.
+
 ## 0.28.1
 - Ranking / UI: se mejora visualmente `Ganadores anteriores` con más jerarquía para nombre del evento, vigencia más legible y mejor separación entre ganadores.
 - Ranking / UI: se ordenan las miniaturas y tarjetas del podio manteniendo intacta la lógica y el contenido actual.

@@ -166,11 +166,11 @@ $ranking_event_period = trim($ranking_event_starts . ($ranking_event_starts !== 
                                 <?php if ($attachment_id > 0): ?>
                                     <?php if ($submission_url !== ''): ?>
                                         <a class="cg-history-thumb" href="<?php echo esc_url($submission_url); ?>">
-                                            <?php echo wp_get_attachment_image($attachment_id, 'medium', false, ['loading' => 'lazy']); ?>
+                                            <?php echo wp_get_attachment_image($attachment_id, 'large', false, ['loading' => 'lazy']); ?>
                                         </a>
                                     <?php else: ?>
                                         <div class="cg-history-thumb">
-                                            <?php echo wp_get_attachment_image($attachment_id, 'medium', false, ['loading' => 'lazy']); ?>
+                                            <?php echo wp_get_attachment_image($attachment_id, 'large', false, ['loading' => 'lazy']); ?>
                                         </div>
                                     <?php endif; ?>
                                 <?php endif; ?>
