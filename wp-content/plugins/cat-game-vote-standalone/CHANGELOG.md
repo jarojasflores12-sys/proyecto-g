@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.99
+- Ranking / UI: el header ahora muestra `🏆 Ranking · La Arena`, el nombre del evento activo y su vigencia cuando está disponible.
+- Ranking / UI: si no hay datos del evento, se muestra el fallback `Evento activo en curso` sin tocar la lógica de ranking.
+
 ## 0.27.98
 - Publicaciones / UI: el `<img>` del feed vuelve a renderizar con tamaño natural dentro del contenedor compartido, manteniendo proporción original y centrado sin estirarse.
 - Publicaciones / UI: se conserva un alto visual máximo del bloque para que imágenes verticales no desordenen el grid ni rompan la card.
