@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.28.7
+- Perfil / UI: se mejora la presentación visual de las subviews del perfil con cabeceras más claras, cards pastel y espaciado consistente sin cambiar la lógica.
+
 ## 0.28.6
 - Perfil / UI: `Cerrar sesión` ahora abre una confirmación dentro del perfil antes de ejecutar el logout.
 - Perfil / UI: se mantiene la acción real de cierre de sesión intacta y solo se agrega una capa de confirmación visual.

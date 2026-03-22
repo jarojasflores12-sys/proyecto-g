@@ -170,6 +170,16 @@ $profile_view_labels = [
     'community' => 'Comunidad',
     'feedback' => 'Ayúdanos a mejorar',
 ];
+$profile_view_descriptions = [
+    'location' => 'Actualiza la ciudad y el país que usas por defecto para publicar.',
+    'notifications' => 'Consulta tus avisos sin salir de esta vista.',
+    'rules' => 'Revisa el estado de aceptación y consulta las normas del juego.',
+    'account' => 'Mira sanciones, strikes y restricciones activas de tu cuenta.',
+    'stats' => 'Explora el resumen de rendimiento de tus publicaciones.',
+    'tags' => 'Administra las etiquetas personalizadas que has creado.',
+    'community' => 'Encuentra el canal oficial para compartir ideas con PetUnity.',
+    'feedback' => 'Envíanos sugerencias o reporta problemas desde tu perfil.',
+];
 $default_city = CatGame_Submissions::visual_label(trim((string) ($prefs['default_city'] ?? '')));
 $default_country = CatGame_Submissions::visual_label(trim((string) ($prefs['default_country'] ?? '')));
 $terms_accepted = !empty($prefs['terms_accepted']);
@@ -194,7 +204,7 @@ if ($upload_banned_until_iso !== '') {
     }
 }
 ?>
-<section>
+<section class="cg-profile-shell">
     <div class="cg-profile-topbar">
         <h2>Mi perfil</h2>
         <div class="cg-profile-topbar-actions">
@@ -261,7 +271,9 @@ if ($upload_banned_until_iso !== '') {
     <?php if (!$is_profile_main_view): ?>
         <div class="cg-card cg-profile-subview-head">
             <a class="cg-profile-subview-head__back" href="<?php echo esc_url($profile_base_url); ?>">← Volver a Mi perfil</a>
+            <p class="cg-profile-subview-head__eyebrow">Panel de perfil</p>
             <h3><?php echo esc_html($profile_view_labels[$profile_view] ?? 'Mi perfil'); ?></h3>
+            <p class="cg-profile-subview-head__intro"><?php echo esc_html($profile_view_descriptions[$profile_view] ?? 'Gestiona esta sección de tu perfil.'); ?></p>
         </div>
     <?php endif; ?>
 
@@ -294,18 +306,28 @@ if ($upload_banned_until_iso !== '') {
 
 
         <?php if ($profile_view === 'location'): ?>
-            <div class="cg-profile-location-fields" id="cg-profile-location">
+            <div class="cg-card cg-profile-subview-card cg-profile-subview-section" id="cg-profile-location">
+                <div class="cg-profile-subview-section__head">
+                    <h4>Tu ubicación base</h4>
+                    <p>Estos datos se usan para completar más rápido tus próximas publicaciones.</p>
+                </div>
+                <div class="cg-profile-location-fields">
                 <label>Ciudad
                     <input type="text" name="default_city" value="<?php echo esc_attr($default_city); ?>" placeholder="Ej: Talca" required>
                 </label>
                 <label>País
                     <input type="text" name="default_country" value="<?php echo esc_attr($default_country); ?>" placeholder="Ej: Chile" required>
                 </label>
+                </div>
             </div>
         <?php endif; ?>
 
         <?php if ($profile_view === 'rules'): ?>
-            <div class="cg-profile-terms" id="cg-profile-terms">
+            <div class="cg-card cg-profile-subview-card cg-profile-subview-section cg-profile-terms" id="cg-profile-terms">
+                <div class="cg-profile-subview-section__head">
+                    <h4>Normas del juego</h4>
+                    <p>Mantén esta aceptación al día para publicar con normalidad.</p>
+                </div>
             <?php if ($terms_accepted): ?>
                 <?php
                 $terms_accepted_label = '';
@@ -381,8 +403,11 @@ if ($upload_banned_until_iso !== '') {
 
 
     <?php if ($profile_view === 'account'): ?>
-    <article class="cg-card cg-account-status-card" id="cg-account-status">
-        <h3>Estado de tu cuenta</h3>
+    <article class="cg-card cg-account-status-card cg-profile-subview-card" id="cg-account-status">
+        <div class="cg-profile-subview-section__head">
+            <h3>Estado de tu cuenta</h3>
+            <p>Consulta aquí tu estado actual y cualquier restricción activa.</p>
+        </div>
         <p><strong>Strikes:</strong> <?php echo (int) $author_active; ?>/<?php echo (int) $strikes_threshold; ?></p>
         <p><strong>Reportes falsos:</strong> <?php echo (int) $reporter_active; ?>/<?php echo (int) $strikes_threshold; ?></p>
         <?php if ($upload_banned): ?>
@@ -401,7 +426,12 @@ if ($upload_banned_until_iso !== '') {
     <?php endif; ?>
 
     <?php if ($profile_view === 'stats'): ?>
-    <form method="get" action="<?php echo esc_url($profile_base_url); ?>" class="cg-form-inline">
+    <section class="cg-card cg-profile-subview-card cg-profile-subview-section">
+        <div class="cg-profile-subview-section__head">
+            <h3>Resumen de actividad</h3>
+            <p>Filtra el alcance y revisa tus métricas más importantes en un solo lugar.</p>
+        </div>
+        <form method="get" action="<?php echo esc_url($profile_base_url); ?>" class="cg-form-inline cg-profile-stats-filter">
         <input type="hidden" name="profile_view" value="stats">
         <label>Alcance
             <select name="scope">
@@ -410,9 +440,10 @@ if ($upload_banned_until_iso !== '') {
             </select>
         </label>
         <button type="submit">Aplicar</button>
-    </form>
+        </form>
+    </section>
 
-    <h3 id="cg-profile-summary">Resumen</h3>
+    <h3 class="cg-profile-section-title" id="cg-profile-summary">Resumen</h3>
     <div class="cg-profile-stats-grid cg-profile-summary-grid">
         <article class="cg-card">
             <strong>Publicaciones totales</strong>
@@ -451,7 +482,7 @@ if ($upload_banned_until_iso !== '') {
         </article>
     </div>
 
-    <h3>Tu publicación destacada</h3>
+    <h3 class="cg-profile-section-title">Tu publicación destacada</h3>
     <?php if ($best_photo): ?>
         <?php
         $best_title = CatGame_Submissions::title_label($best_photo);
@@ -472,9 +503,11 @@ if ($upload_banned_until_iso !== '') {
     <?php endif; ?>
 
     <?php if ($profile_view === 'community'): ?>
-    <section class="cg-card" id="cg-profile-community">
-        <h3>Comunidad</h3>
-        <p>¿Ideas para eventos futuros? Escríbenos en Instagram.</p>
+    <section class="cg-card cg-profile-subview-card cg-profile-subview-section" id="cg-profile-community">
+        <div class="cg-profile-subview-section__head">
+            <h3>Comunidad</h3>
+            <p>¿Ideas para eventos futuros? Escríbenos en Instagram.</p>
+        </div>
         <a class="cg-cta" href="<?php echo esc_url(CATGAME_INSTAGRAM_URL); ?>" target="_blank" rel="noopener noreferrer">Ir a Instagram</a>
     </section>
 
@@ -482,9 +515,11 @@ if ($upload_banned_until_iso !== '') {
     <?php endif; ?>
 
     <?php if ($profile_view === 'feedback'): ?>
-    <section class="cg-card cg-feedback-card" id="cg-profile-feedback">
-        <h3>Ayúdanos a mejorar</h3>
-        <p>Puedes enviarnos comentarios, sugerencias o reportar errores que encuentres en el juego.</p>
+    <section class="cg-card cg-feedback-card cg-profile-subview-card cg-profile-subview-section" id="cg-profile-feedback">
+        <div class="cg-profile-subview-section__head">
+            <h3>Ayúdanos a mejorar</h3>
+            <p>Puedes enviarnos comentarios, sugerencias o reportar errores que encuentres en el juego.</p>
+        </div>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form cg-feedback-form">
             <?php wp_nonce_field('catgame_submit_feedback'); ?>
             <input type="hidden" name="action" value="catgame_submit_feedback">
@@ -510,11 +545,15 @@ if ($upload_banned_until_iso !== '') {
     <?php endif; ?>
 
     <?php if ($profile_view === 'tags'): ?>
-    <h3 id="cg-profile-tags">Mis etiquetas</h3>
+    <section class="cg-card cg-profile-subview-card cg-profile-subview-section" id="cg-profile-tags">
+        <div class="cg-profile-subview-section__head">
+            <h3>Mis etiquetas</h3>
+            <p>Gestiona las etiquetas personalizadas que usas para clasificar a tus mascotas.</p>
+        </div>
     <?php if (empty($custom_tags)): ?>
-        <p>No tienes etiquetas.</p>
+        <p class="cg-profile-empty-state">No tienes etiquetas todavía.</p>
     <?php else: ?>
-        <ul>
+        <ul class="cg-profile-tags-list">
             <?php foreach ($custom_tags as $tag => $label): ?>
                 <li class="cg-tag-item">
                     <strong><?php echo esc_html(CatGame_Submissions::label_for_tag($tag, get_current_user_id())); ?></strong>
@@ -528,13 +567,16 @@ if ($upload_banned_until_iso !== '') {
             <?php endforeach; ?>
         </ul>
     <?php endif; ?>
+    </section>
 
     <?php endif; ?>
 
     <?php if ($profile_view === 'notifications'): ?>
-        <section class="cg-card cg-profile-subview-card">
-            <h3>Notificaciones</h3>
-            <p>Abre tus notificaciones desde aquí sin recargar la pantalla principal del perfil.</p>
+        <section class="cg-card cg-profile-subview-card cg-profile-subview-section">
+            <div class="cg-profile-subview-section__head">
+                <h3>Notificaciones</h3>
+                <p>Abre tus notificaciones desde aquí sin recargar la pantalla principal del perfil.</p>
+            </div>
             <button type="button" class="secondary" data-notifications-open="1">Ver notificaciones</button>
         </section>
     <?php endif; ?>
