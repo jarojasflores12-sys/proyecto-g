@@ -240,10 +240,12 @@ if ($upload_banned_until_iso !== '') {
         <div class="cg-profile-user">
             <div class="cg-avatar cg-avatar-<?php echo esc_attr($avatar_color); ?>" aria-hidden="true"><?php echo esc_html($initial); ?></div>
             <div class="cg-profile-user-meta">
-                <p>Usuario: @<?php echo esc_html($username); ?></p>
+                <p class="cg-profile-user-eyebrow">Mi perfil</p>
+                <h2 class="cg-profile-user-name">@<?php echo esc_html($username); ?></h2>
             </div>
             <div class="cg-profile-user-actions">
                 <button type="button" class="secondary js-avatar-color-toggle" aria-expanded="false" aria-controls="cg-avatar-colors">Cambiar color</button>
+                <button type="button" class="secondary js-share-link" data-url="<?php echo esc_url($profile_link); ?>" data-share-title="<?php echo esc_attr($brand_name); ?>" data-share-text="Mira el perfil de esta mascota en <?php echo esc_attr($brand_name); ?>">Compartir perfil</button>
                 <button type="submit" class="js-profile-save is-hidden">Guardar cambios</button>
             </div>
         </div>
@@ -423,7 +425,6 @@ if ($upload_banned_until_iso !== '') {
     <?php endif; ?>
 
     <div class="cg-profile-share">
-        <button type="button" class="secondary js-share-link" data-url="<?php echo esc_url($profile_link); ?>" data-share-title="<?php echo esc_attr($brand_name); ?>" data-share-text="Mira el perfil de esta mascota en <?php echo esc_attr($brand_name); ?>">Compartir mi perfil</button>
         <button type="button" class="secondary js-share-link" data-url="<?php echo esc_url($best_photo_link ?: $profile_link); ?>" data-share-title="<?php echo esc_attr($brand_name); ?>" data-share-text="Mira esta publicación destacada en <?php echo esc_attr($brand_name); ?>">Compartir mi publicación destacada</button>
     </div>
 

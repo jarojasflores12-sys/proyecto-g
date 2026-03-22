@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.3
+- Perfil / UI: se rediseña la cabecera de `Mi perfil` con avatar circular, nombre de usuario visible y acciones compactas `Cambiar color` + `Compartir perfil`.
+- Perfil / UI: se mantiene la lógica actual del perfil y se deja `Compartir mi publicación destacada` como acción separada debajo.
+
 ## 0.28.2
 - Ranking / UI: las miniaturas de `Ganadores anteriores` ahora renderizan una imagen de mayor tamaño y sin recorte agresivo para verse más nítidas y completas.
 - Ranking / UI: se mantiene el orden visual del podio usando contenedor cuadrado con imagen centrada y `object-fit: contain`.
