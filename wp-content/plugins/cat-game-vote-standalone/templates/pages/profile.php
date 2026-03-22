@@ -181,15 +181,27 @@ if ($upload_banned_until_iso !== '') {
     <div class="cg-profile-topbar">
         <h2>Mi perfil</h2>
         <div class="cg-profile-topbar-actions">
-            <button type="button" class="secondary cg-notif-bell" id="catgame-notif-bell" aria-label="Notificaciones" aria-haspopup="dialog" aria-controls="catgame-notifications-modal">
-                🔔
-                <span class="cg-notif-badge" id="catgame-notif-badge" hidden>0</span>
-            </button>
-            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-logout-form cg-logout-form-top">
-                <?php wp_nonce_field('catgame_logout'); ?>
-                <input type="hidden" name="action" value="catgame_logout">
-                <button type="submit" class="secondary cg-logout-btn" aria-label="Cerrar sesión">⎋ <span>Cerrar sesión</span></button>
-            </form>
+            <details class="cg-profile-menu">
+                <summary class="secondary cg-profile-menu__toggle" aria-label="Opciones de perfil">
+                    <span class="cg-profile-menu__icon" aria-hidden="true"><span></span><span></span><span></span></span>
+                    <span class="cg-notif-badge" id="catgame-notif-badge" hidden>0</span>
+                </summary>
+                <div class="cg-profile-menu__panel">
+                    <a class="cg-profile-menu__item" href="#cg-profile-location">Ubicación</a>
+                    <button type="button" class="cg-profile-menu__item" data-notifications-open="1">Notificaciones</button>
+                    <a class="cg-profile-menu__item" href="#cg-profile-terms">Normas</a>
+                    <a class="cg-profile-menu__item" href="#cg-account-status">Estado de la cuenta</a>
+                    <a class="cg-profile-menu__item" href="#cg-profile-summary">Estadísticas</a>
+                    <a class="cg-profile-menu__item" href="#cg-profile-tags">Mis etiquetas</a>
+                    <a class="cg-profile-menu__item" href="#cg-profile-community">Comunidad</a>
+                    <a class="cg-profile-menu__item" href="#cg-profile-feedback">Ayúdanos a mejorar</a>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-profile-menu__logout-form">
+                        <?php wp_nonce_field('catgame_logout'); ?>
+                        <input type="hidden" name="action" value="catgame_logout">
+                        <button type="submit" class="cg-profile-menu__item cg-profile-menu__item--logout">Cerrar sesión</button>
+                    </form>
+                </div>
+            </details>
         </div>
     </div>
 
@@ -261,7 +273,7 @@ if ($upload_banned_until_iso !== '') {
         </fieldset>
 
 
-        <div class="cg-profile-location-fields">
+        <div class="cg-profile-location-fields" id="cg-profile-location">
             <label>Ciudad
                 <input type="text" name="default_city" value="<?php echo esc_attr($default_city); ?>" placeholder="Ej: Talca" required>
             </label>
@@ -270,7 +282,7 @@ if ($upload_banned_until_iso !== '') {
             </label>
         </div>
 
-        <div class="cg-profile-terms">
+        <div class="cg-profile-terms" id="cg-profile-terms">
             <?php if ($terms_accepted): ?>
                 <?php
                 $terms_accepted_label = '';
@@ -344,7 +356,7 @@ if ($upload_banned_until_iso !== '') {
     </div>
 
 
-    <article class="cg-card cg-account-status-card">
+    <article class="cg-card cg-account-status-card" id="cg-account-status">
         <h3>Estado de tu cuenta</h3>
         <p><strong>Strikes:</strong> <?php echo (int) $author_active; ?>/<?php echo (int) $strikes_threshold; ?></p>
         <p><strong>Reportes falsos:</strong> <?php echo (int) $reporter_active; ?>/<?php echo (int) $strikes_threshold; ?></p>
@@ -371,7 +383,7 @@ if ($upload_banned_until_iso !== '') {
         <button type="submit">Aplicar</button>
     </form>
 
-    <h3>Resumen</h3>
+    <h3 id="cg-profile-summary">Resumen</h3>
     <div class="cg-profile-stats-grid cg-profile-summary-grid">
         <article class="cg-card">
             <strong>Publicaciones totales</strong>
@@ -428,14 +440,14 @@ if ($upload_banned_until_iso !== '') {
         <button type="button" class="secondary js-share-link" data-url="<?php echo esc_url($best_photo_link ?: $profile_link); ?>" data-share-title="<?php echo esc_attr($brand_name); ?>" data-share-text="Mira esta publicación destacada en <?php echo esc_attr($brand_name); ?>">Compartir mi publicación destacada</button>
     </div>
 
-    <section class="cg-card">
+    <section class="cg-card" id="cg-profile-community">
         <h3>Comunidad</h3>
         <p>¿Ideas para eventos futuros? Escríbenos en Instagram.</p>
         <a class="cg-cta" href="<?php echo esc_url(CATGAME_INSTAGRAM_URL); ?>" target="_blank" rel="noopener noreferrer">Ir a Instagram</a>
     </section>
 
 
-    <section class="cg-card cg-feedback-card">
+    <section class="cg-card cg-feedback-card" id="cg-profile-feedback">
         <h3>Ayúdanos a mejorar</h3>
         <p>Puedes enviarnos comentarios, sugerencias o reportar errores que encuentres en el juego.</p>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form cg-feedback-form">
@@ -460,7 +472,7 @@ if ($upload_banned_until_iso !== '') {
         </form>
     </section>
 
-    <h3>Mis etiquetas</h3>
+    <h3 id="cg-profile-tags">Mis etiquetas</h3>
     <?php if (empty($custom_tags)): ?>
         <p>No tienes etiquetas.</p>
     <?php else: ?>

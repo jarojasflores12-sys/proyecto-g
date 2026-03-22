@@ -1919,11 +1919,11 @@
 
 (function () {
   const config = window.CATGAME || {};
-  const bell = document.getElementById('catgame-notif-bell');
+  const triggers = Array.from(document.querySelectorAll('[data-notifications-open]'));
   const badge = document.getElementById('catgame-notif-badge');
   const modal = document.getElementById('catgame-notifications-modal');
   const list = document.getElementById('catgame-notifications-list');
-  if (!bell || !badge || !modal || !list || !config.ajaxUrl || !config.nonce) {
+  if (!triggers.length || !badge || !modal || !list || !config.ajaxUrl || !config.nonce) {
     return;
   }
 
@@ -1994,15 +1994,21 @@
     }
   };
 
-  bell.addEventListener('click', async () => {
-    setOpen(true);
-    try {
-      await post('catgame_mark_notifications_read');
-      setBadge(0);
-      list.querySelectorAll('.cg-notification-item').forEach((item) => item.classList.remove('is-unread'));
-    } catch (_) {
-      // noop
-    }
+  triggers.forEach((trigger) => {
+    trigger.addEventListener('click', async () => {
+      const menu = trigger.closest('details');
+      if (menu instanceof HTMLDetailsElement) {
+        menu.open = false;
+      }
+      setOpen(true);
+      try {
+        await post('catgame_mark_notifications_read');
+        setBadge(0);
+        list.querySelectorAll('.cg-notification-item').forEach((item) => item.classList.remove('is-unread'));
+      } catch (_) {
+        // noop
+      }
+    });
   });
 
   modal.addEventListener('click', (event) => {

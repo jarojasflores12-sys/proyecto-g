@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.4
+- Perfil / UI: se agrega un menú hamburguesa en la esquina superior derecha de `Mi perfil` con accesos ordenados a ubicación, notificaciones, normas, estado, estadísticas, etiquetas, comunidad, feedback y cierre de sesión.
+- Perfil / UI: se mantiene la lógica existente y solo se agrega la estructura visual/desplegable del menú con interacción mínima frontend.
+
 ## 0.28.3
 - Perfil / UI: se rediseña la cabecera de `Mi perfil` con avatar circular, nombre de usuario visible y acciones compactas `Cambiar color` + `Compartir perfil`.
 - Perfil / UI: se mantiene la lógica actual del perfil y se deja `Compartir mi publicación destacada` como acción separada debajo.
