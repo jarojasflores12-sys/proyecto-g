@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.90
+- Publicaciones / UI: se unifica el marco visual de las imágenes del feed con proporción consistente para que ninguna card se vea más grande que las demás.
+- Publicaciones / UI: las fotos del feed mantienen centrado con `object-fit: cover`, sin cambios en lógica, backend ni rutas.
+
 ## 0.27.89
 - Publicaciones / UI: en móvil, la imagen del feed ahora ocupa todo el ancho de la card con `object-fit: cover` y centrado para eliminar el efecto visual de foto corrida.
 - Publicaciones / UI: se mantiene tope de alto (`max-height: 520px`) para evitar cards desproporcionadas.
