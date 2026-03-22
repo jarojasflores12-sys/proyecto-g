@@ -1,5 +1,76 @@
 # Changelog
 
+## 0.28.7
+- Perfil / UI: se mejora la presentación visual de las subviews del perfil con cabeceras más claras, cards pastel y espaciado consistente sin cambiar la lógica.
+
+## 0.28.6
+- Perfil / UI: `Cerrar sesión` ahora abre una confirmación dentro del perfil antes de ejecutar el logout.
+- Perfil / UI: se mantiene la acción real de cierre de sesión intacta y solo se agrega una capa de confirmación visual.
+
+## 0.28.5
+- Perfil / UI: `Mi perfil` queda enfocado en cabecera + publicaciones, y las opciones del menú hamburguesa pasan a vistas separadas del perfil vía navegación frontend.
+- Perfil / UI: se agregan vistas individuales para ubicación, notificaciones, normas, estado, estadísticas, etiquetas, comunidad y feedback sin tocar lógica interna.
+
+## 0.28.4
+- Perfil / UI: se agrega un menú hamburguesa en la esquina superior derecha de `Mi perfil` con accesos ordenados a ubicación, notificaciones, normas, estado, estadísticas, etiquetas, comunidad, feedback y cierre de sesión.
+- Perfil / UI: se mantiene la lógica existente y solo se agrega la estructura visual/desplegable del menú con interacción mínima frontend.
+
+## 0.28.3
+- Perfil / UI: se rediseña la cabecera de `Mi perfil` con avatar circular, nombre de usuario visible y acciones compactas `Cambiar color` + `Compartir perfil`.
+- Perfil / UI: se mantiene la lógica actual del perfil y se deja `Compartir mi publicación destacada` como acción separada debajo.
+
+## 0.28.2
+- Ranking / UI: las miniaturas de `Ganadores anteriores` ahora renderizan una imagen de mayor tamaño y sin recorte agresivo para verse más nítidas y completas.
+- Ranking / UI: se mantiene el orden visual del podio usando contenedor cuadrado con imagen centrada y `object-fit: contain`.
+
+## 0.28.1
+- Ranking / UI: se mejora visualmente `Ganadores anteriores` con más jerarquía para nombre del evento, vigencia más legible y mejor separación entre ganadores.
+- Ranking / UI: se ordenan las miniaturas y tarjetas del podio manteniendo intacta la lógica y el contenido actual.
+
+## 0.28.0
+- Ranking / UI: la vigencia del evento ahora se muestra en formato `dd-mm-aaaa → dd-mm-aaaa`, sin hora y con mejor legibilidad visual.
+- Ranking / UI: se agrega un chip suave para destacar la vigencia sin alterar la lógica del ranking.
+
+## 0.27.99
+- Ranking / UI: el header ahora muestra `🏆 Ranking · La Arena`, el nombre del evento activo y su vigencia cuando está disponible.
+- Ranking / UI: si no hay datos del evento, se muestra el fallback `Evento activo en curso` sin tocar la lógica de ranking.
+
+## 0.27.98
+- Publicaciones / UI: el `<img>` del feed vuelve a renderizar con tamaño natural dentro del contenedor compartido, manteniendo proporción original y centrado sin estirarse.
+- Publicaciones / UI: se conserva un alto visual máximo del bloque para que imágenes verticales no desordenen el grid ni rompan la card.
+
+## 0.27.97
+- Publicaciones / UI: se fuerza la contención real y centrado del `<img>` dentro del `frame` compartido del feed para evitar que siga desbordando o viéndose corrido.
+- Publicaciones / UI: se conserva el mismo marco visual y altura del bloque de imagen, sin tocar lógica de publicación, backend ni rutas.
+
+## 0.27.96
+- Publicaciones / UI: se recentra la imagen dentro del `frame` compartido del feed para evitar que quede corrida mientras conserva el tamaño visual logrado.
+- Publicaciones / UI: se mantiene el mismo contenedor y alto del bloque de imagen, sin tocar lógica de publicación, backend ni rutas.
+
+## 0.27.95
+- Publicaciones / UI: se mantiene el mismo frame compartido del feed, pero las imágenes ahora se muestran completas dentro del contenedor para evitar recortes en cards que ya se veían bien.
+- Publicaciones / UI: se conserva el alto visual unificado del bloque de imagen sin tocar lógica de publicación, backend ni rutas.
+
+## 0.27.94
+- Publicaciones / UI: todas las cards del feed pasan a usar el mismo `frame` interno compartido para la imagen, evitando diferencias de tamaño visual entre publicaciones.
+- Publicaciones / UI: se unifica el alto/recorte del bloque de imagen sin tocar lógica de publicación, backend ni rutas.
+
+## 0.27.93
+- Publicaciones / UI: se ancla la imagen del feed al contenedor visual para evitar que una foto siga empujando o desbordando la card en escritorio.
+- Publicaciones / UI: en móvil se mantiene el alto actual del feed, pero la imagen ahora llena el marco desde el mismo contenedor compartido.
+
+## 0.27.92
+- Publicaciones / UI: se fija un alto visual consistente del marco de imagen en escritorio para que la foto problemática deje de verse más grande que el resto del feed.
+- Publicaciones / UI: la imagen vuelve a llenar su contenedor con `object-fit: cover`, manteniendo el comportamiento móvil existente.
+
+## 0.27.91
+- Publicaciones / UI: se revierte el marco fijo del feed que achicaba cards sanas y se limita solo el desborde visual de imágenes grandes dentro de la card.
+- Publicaciones / UI: se agrega contención del ancho útil de la card y tope de alto en escritorio, manteniendo el comportamiento móvil existente.
+
+## 0.27.90
+- Publicaciones / UI: se unifica el marco visual de las imágenes del feed con proporción consistente para que ninguna card se vea más grande que las demás.
+- Publicaciones / UI: las fotos del feed mantienen centrado con `object-fit: cover`, sin cambios en lógica, backend ni rutas.
+
 ## 0.27.89
 - Publicaciones / UI: en móvil, la imagen del feed ahora ocupa todo el ancho de la card con `object-fit: cover` y centrado para eliminar el efecto visual de foto corrida.
 - Publicaciones / UI: se mantiene tope de alto (`max-height: 520px`) para evitar cards desproporcionadas.

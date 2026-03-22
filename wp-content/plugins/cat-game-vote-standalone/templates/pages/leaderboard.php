@@ -11,12 +11,34 @@ $has_competitive_event = !empty($data['has_competitive_event']);
 $historical_winners = isset($data['historical_winners']) && is_array($data['historical_winners']) ? $data['historical_winners'] : [];
 $top3_positions = $data['top3_positions'] ?? [];
 $current_user_id = (int) ($data['current_user_id'] ?? 0);
+$ranking_event_name = trim((string) ($ranking_event['name'] ?? ''));
+$ranking_event_name = $ranking_event_name !== '' ? $ranking_event_name : 'Evento activo en curso';
+$format_ranking_date = static function (string $raw_date): string {
+    $raw_date = trim($raw_date);
+    if ($raw_date === '') {
+        return '';
+    }
+
+    $timestamp = strtotime($raw_date);
+    if ($timestamp === false) {
+        return '';
+    }
+
+    return gmdate('d-m-Y', $timestamp);
+};
+$ranking_event_starts = $format_ranking_date((string) ($ranking_event['starts_at'] ?? ''));
+$ranking_event_ends = $format_ranking_date((string) ($ranking_event['ends_at'] ?? ''));
+$ranking_event_period = trim($ranking_event_starts . ($ranking_event_starts !== '' && $ranking_event_ends !== '' ? ' → ' : '') . $ranking_event_ends);
 ?>
 <section>
-    <h2>Ranking</h2>
+    <header class="cg-ranking-hero">
+        <h2 class="cg-ranking-hero__title">🏆 Ranking · La Arena</h2>
+        <p class="cg-ranking-hero__event"><?php echo esc_html($has_competitive_event ? $ranking_event_name : 'Evento activo en curso'); ?></p>
+        <?php if ($has_competitive_event && $ranking_event_period !== ''): ?>
+            <p class="cg-ranking-hero__period">Vigencia: <span class="cg-ranking-hero__period-chip"><?php echo esc_html($ranking_event_period); ?></span></p>
+        <?php endif; ?>
+    </header>
     <?php if ($has_competitive_event): ?>
-        <p class="cg-upload-context"><strong>La Arena:</strong> <?php echo esc_html((string) ($ranking_event['name'] ?? 'La Arena competitiva')); ?></p>
-        <p class="cg-file-picker-text"><strong>Vigencia:</strong> <?php echo esc_html((string) ($ranking_event['starts_at'] ?? '') . ' - ' . (string) ($ranking_event['ends_at'] ?? '')); ?></p>
         <form method="get" action="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>" class="cg-form-inline">
             <label>Alcance
                 <select name="scope">
@@ -144,11 +166,11 @@ $current_user_id = (int) ($data['current_user_id'] ?? 0);
                                 <?php if ($attachment_id > 0): ?>
                                     <?php if ($submission_url !== ''): ?>
                                         <a class="cg-history-thumb" href="<?php echo esc_url($submission_url); ?>">
-                                            <?php echo wp_get_attachment_image($attachment_id, 'medium', false, ['loading' => 'lazy']); ?>
+                                            <?php echo wp_get_attachment_image($attachment_id, 'large', false, ['loading' => 'lazy']); ?>
                                         </a>
                                     <?php else: ?>
                                         <div class="cg-history-thumb">
-                                            <?php echo wp_get_attachment_image($attachment_id, 'medium', false, ['loading' => 'lazy']); ?>
+                                            <?php echo wp_get_attachment_image($attachment_id, 'large', false, ['loading' => 'lazy']); ?>
                                         </div>
                                     <?php endif; ?>
                                 <?php endif; ?>

@@ -18,18 +18,20 @@ $brand_name = sanitize_text_field((string) ($brand['name'] ?? 'PetUnity'));
 <article class="cg-card <?php echo ($is_mine || $position > 0) ? 'cg-is-mine' : ''; ?>">
     <div class="cg-img-wrap cg-feed-img-wrap">
         <div class="<?php echo esc_attr($post_type_badge_class); ?>"><?php echo esc_html($post_type_badge_label); ?></div>
-        <?php echo wp_get_attachment_image(
-            (int) $item['attachment_id'],
-            'medium',
-            false,
-            [
-                'class' => 'cg-img',
-                'loading' => 'lazy',
-                'alt' => 'Foto enviada al juego',
-            ]
-        ); ?>
-        <div class="cg-skel cg-skel-img" aria-hidden="true"></div>
-        <div class="cg-img-error" aria-hidden="true">No se pudo cargar la imagen</div>
+        <div class="cg-feed-img-frame">
+            <?php echo wp_get_attachment_image(
+                (int) $item['attachment_id'],
+                'medium',
+                false,
+                [
+                    'class' => 'cg-img',
+                    'loading' => 'lazy',
+                    'alt' => 'Foto enviada al juego',
+                ]
+            ); ?>
+            <div class="cg-skel cg-skel-img" aria-hidden="true"></div>
+            <div class="cg-img-error" aria-hidden="true">No se pudo cargar la imagen</div>
+        </div>
     </div>
 
     <div class="cg-card-meta">

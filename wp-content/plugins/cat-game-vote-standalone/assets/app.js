@@ -1919,11 +1919,11 @@
 
 (function () {
   const config = window.CATGAME || {};
-  const bell = document.getElementById('catgame-notif-bell');
+  const triggers = Array.from(document.querySelectorAll('[data-notifications-open]'));
   const badge = document.getElementById('catgame-notif-badge');
   const modal = document.getElementById('catgame-notifications-modal');
   const list = document.getElementById('catgame-notifications-list');
-  if (!bell || !badge || !modal || !list || !config.ajaxUrl || !config.nonce) {
+  if (!badge || !modal || !list || !config.ajaxUrl || !config.nonce) {
     return;
   }
 
@@ -1994,15 +1994,21 @@
     }
   };
 
-  bell.addEventListener('click', async () => {
-    setOpen(true);
-    try {
-      await post('catgame_mark_notifications_read');
-      setBadge(0);
-      list.querySelectorAll('.cg-notification-item').forEach((item) => item.classList.remove('is-unread'));
-    } catch (_) {
-      // noop
-    }
+  triggers.forEach((trigger) => {
+    trigger.addEventListener('click', async () => {
+      const menu = trigger.closest('details');
+      if (menu instanceof HTMLDetailsElement) {
+        menu.open = false;
+      }
+      setOpen(true);
+      try {
+        await post('catgame_mark_notifications_read');
+        setBadge(0);
+        list.querySelectorAll('.cg-notification-item').forEach((item) => item.classList.remove('is-unread'));
+      } catch (_) {
+        // noop
+      }
+    });
   });
 
   modal.addEventListener('click', (event) => {
@@ -2014,4 +2020,35 @@
   });
 
   loadNotifications();
+})();
+
+(function () {
+  const modal = document.getElementById('catgame-profile-logout-modal');
+  const triggers = Array.from(document.querySelectorAll('[data-profile-logout-open="1"]'));
+  if (!modal || !triggers.length) {
+    return;
+  }
+
+  const setOpen = (open) => {
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+  };
+
+  triggers.forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+      const menu = trigger.closest('details');
+      if (menu instanceof HTMLDetailsElement) {
+        menu.open = false;
+      }
+      setOpen(true);
+    });
+  });
+
+  modal.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest('[data-profile-logout-close="1"]')) {
+      setOpen(false);
+    }
+  });
 })();
