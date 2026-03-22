@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.5
+- Perfil / UI: `Mi perfil` queda enfocado en cabecera + publicaciones, y las opciones del menú hamburguesa pasan a vistas separadas del perfil vía navegación frontend.
+- Perfil / UI: se agregan vistas individuales para ubicación, notificaciones, normas, estado, estadísticas, etiquetas, comunidad y feedback sin tocar lógica interna.
+
 ## 0.28.4
 - Perfil / UI: se agrega un menú hamburguesa en la esquina superior derecha de `Mi perfil` con accesos ordenados a ubicación, notificaciones, normas, estado, estadísticas, etiquetas, comunidad, feedback y cierre de sesión.
 - Perfil / UI: se mantiene la lógica existente y solo se agrega la estructura visual/desplegable del menú con interacción mínima frontend.

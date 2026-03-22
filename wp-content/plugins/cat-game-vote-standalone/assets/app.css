@@ -2153,6 +2153,32 @@ a.cg-home-rules-btn:focus-visible {
   color: #b42318;
 }
 
+.cg-profile-subview-head {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.cg-profile-subview-head__back {
+  font-size: 0.95rem;
+  color: #5b628a;
+  text-decoration: none;
+}
+
+.cg-profile-subview-head__back:hover {
+  text-decoration: underline;
+}
+
+.cg-profile-subview-card {
+  display: grid;
+  gap: 10px;
+}
+
+.cg-profile-subview-card h3,
+.cg-profile-subview-head h3 {
+  margin: 0;
+}
+
 .cg-notif-bell {
   position: relative;
   min-width: 38px;

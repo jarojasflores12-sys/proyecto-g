@@ -153,6 +153,23 @@ $best_photo = is_array($data['best_photo'] ?? null) ? $data['best_photo'] : null
 
 $profile_link = home_url('/catgame/user/' . rawurlencode(sanitize_user($username, true)));
 $best_photo_link = $best_photo ? home_url('/catgame/submission/' . (int) ($best_photo['id'] ?? 0)) : '';
+$profile_base_url = home_url('/catgame/profile');
+$profile_view = sanitize_key((string) ($_GET['profile_view'] ?? 'main'));
+$allowed_profile_views = ['main', 'location', 'notifications', 'rules', 'account', 'stats', 'tags', 'community', 'feedback'];
+if (!in_array($profile_view, $allowed_profile_views, true)) {
+    $profile_view = 'main';
+}
+$is_profile_main_view = $profile_view === 'main';
+$profile_view_labels = [
+    'location' => 'Ubicación',
+    'notifications' => 'Notificaciones',
+    'rules' => 'Normas',
+    'account' => 'Estado de la cuenta',
+    'stats' => 'Estadísticas',
+    'tags' => 'Mis etiquetas',
+    'community' => 'Comunidad',
+    'feedback' => 'Ayúdanos a mejorar',
+];
 $default_city = CatGame_Submissions::visual_label(trim((string) ($prefs['default_city'] ?? '')));
 $default_country = CatGame_Submissions::visual_label(trim((string) ($prefs['default_country'] ?? '')));
 $terms_accepted = !empty($prefs['terms_accepted']);
@@ -187,14 +204,14 @@ if ($upload_banned_until_iso !== '') {
                     <span class="cg-notif-badge" id="catgame-notif-badge" hidden>0</span>
                 </summary>
                 <div class="cg-profile-menu__panel">
-                    <a class="cg-profile-menu__item" href="#cg-profile-location">Ubicación</a>
-                    <button type="button" class="cg-profile-menu__item" data-notifications-open="1">Notificaciones</button>
-                    <a class="cg-profile-menu__item" href="#cg-profile-terms">Normas</a>
-                    <a class="cg-profile-menu__item" href="#cg-account-status">Estado de la cuenta</a>
-                    <a class="cg-profile-menu__item" href="#cg-profile-summary">Estadísticas</a>
-                    <a class="cg-profile-menu__item" href="#cg-profile-tags">Mis etiquetas</a>
-                    <a class="cg-profile-menu__item" href="#cg-profile-community">Comunidad</a>
-                    <a class="cg-profile-menu__item" href="#cg-profile-feedback">Ayúdanos a mejorar</a>
+                    <a class="cg-profile-menu__item" href="<?php echo esc_url(add_query_arg('profile_view', 'location', $profile_base_url)); ?>">Ubicación</a>
+                    <a class="cg-profile-menu__item" href="<?php echo esc_url(add_query_arg('profile_view', 'notifications', $profile_base_url)); ?>">Notificaciones</a>
+                    <a class="cg-profile-menu__item" href="<?php echo esc_url(add_query_arg('profile_view', 'rules', $profile_base_url)); ?>">Normas</a>
+                    <a class="cg-profile-menu__item" href="<?php echo esc_url(add_query_arg('profile_view', 'account', $profile_base_url)); ?>">Estado de la cuenta</a>
+                    <a class="cg-profile-menu__item" href="<?php echo esc_url(add_query_arg('profile_view', 'stats', $profile_base_url)); ?>">Estadísticas</a>
+                    <a class="cg-profile-menu__item" href="<?php echo esc_url(add_query_arg('profile_view', 'tags', $profile_base_url)); ?>">Mis etiquetas</a>
+                    <a class="cg-profile-menu__item" href="<?php echo esc_url(add_query_arg('profile_view', 'community', $profile_base_url)); ?>">Comunidad</a>
+                    <a class="cg-profile-menu__item" href="<?php echo esc_url(add_query_arg('profile_view', 'feedback', $profile_base_url)); ?>">Ayúdanos a mejorar</a>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-profile-menu__logout-form">
                         <?php wp_nonce_field('catgame_logout'); ?>
                         <input type="hidden" name="action" value="catgame_logout">
@@ -245,6 +262,13 @@ if ($upload_banned_until_iso !== '') {
         <p class="cg-alert cg-alert-error">No se pudo guardar tu mensaje. Intenta nuevamente.</p>
     <?php endif; ?>
 
+    <?php if (!$is_profile_main_view): ?>
+        <div class="cg-card cg-profile-subview-head">
+            <a class="cg-profile-subview-head__back" href="<?php echo esc_url($profile_base_url); ?>">← Volver a Mi perfil</a>
+            <h3><?php echo esc_html($profile_view_labels[$profile_view] ?? 'Mi perfil'); ?></h3>
+        </div>
+    <?php endif; ?>
+
     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-form" id="catgame-profile-form">
         <?php wp_nonce_field('catgame_profile_update'); ?>
         <input type="hidden" name="action" value="catgame_profile_update">
@@ -273,16 +297,19 @@ if ($upload_banned_until_iso !== '') {
         </fieldset>
 
 
-        <div class="cg-profile-location-fields" id="cg-profile-location">
-            <label>Ciudad
-                <input type="text" name="default_city" value="<?php echo esc_attr($default_city); ?>" placeholder="Ej: Talca" required>
-            </label>
-            <label>País
-                <input type="text" name="default_country" value="<?php echo esc_attr($default_country); ?>" placeholder="Ej: Chile" required>
-            </label>
-        </div>
+        <?php if ($profile_view === 'location'): ?>
+            <div class="cg-profile-location-fields" id="cg-profile-location">
+                <label>Ciudad
+                    <input type="text" name="default_city" value="<?php echo esc_attr($default_city); ?>" placeholder="Ej: Talca" required>
+                </label>
+                <label>País
+                    <input type="text" name="default_country" value="<?php echo esc_attr($default_country); ?>" placeholder="Ej: Chile" required>
+                </label>
+            </div>
+        <?php endif; ?>
 
-        <div class="cg-profile-terms" id="cg-profile-terms">
+        <?php if ($profile_view === 'rules'): ?>
+            <div class="cg-profile-terms" id="cg-profile-terms">
             <?php if ($terms_accepted): ?>
                 <?php
                 $terms_accepted_label = '';
@@ -307,7 +334,8 @@ if ($upload_banned_until_iso !== '') {
                 </label>
                 <button type="button" class="secondary" data-open-upload-rules="1">Ver normas</button>
             <?php endif; ?>
-        </div>
+            </div>
+        <?php endif; ?>
     </form>
 
     <div class="cg-modal" id="catgame-upload-rules-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-upload-rules-title">
@@ -356,6 +384,7 @@ if ($upload_banned_until_iso !== '') {
     </div>
 
 
+    <?php if ($profile_view === 'account'): ?>
     <article class="cg-card cg-account-status-card" id="cg-account-status">
         <h3>Estado de tu cuenta</h3>
         <p><strong>Strikes:</strong> <?php echo (int) $author_active; ?>/<?php echo (int) $strikes_threshold; ?></p>
@@ -369,11 +398,15 @@ if ($upload_banned_until_iso !== '') {
         <small>Los strikes expiran en <?php echo esc_html($strikes_resets); ?>.</small>
     </article>
 
-    <?php if (!empty($top_position_for_user)): ?>
+    <?php endif; ?>
+
+    <?php if ($profile_view === 'stats' && !empty($top_position_for_user)): ?>
         <p class="cg-alert cg-alert-success">🏆 Estás en el Top 3 de La Arena: #<?php echo (int) $top_position_for_user; ?>. <a href="<?php echo esc_url(home_url('/catgame/leaderboard')); ?>">Ver ranking</a></p>
     <?php endif; ?>
 
-    <form method="get" action="<?php echo esc_url(home_url('/catgame/profile')); ?>" class="cg-form-inline">
+    <?php if ($profile_view === 'stats'): ?>
+    <form method="get" action="<?php echo esc_url($profile_base_url); ?>" class="cg-form-inline">
+        <input type="hidden" name="profile_view" value="stats">
         <label>Alcance
             <select name="scope">
                 <option value="event" <?php selected($scope, 'event'); ?>>La Arena activa</option>
@@ -440,6 +473,9 @@ if ($upload_banned_until_iso !== '') {
         <button type="button" class="secondary js-share-link" data-url="<?php echo esc_url($best_photo_link ?: $profile_link); ?>" data-share-title="<?php echo esc_attr($brand_name); ?>" data-share-text="Mira esta publicación destacada en <?php echo esc_attr($brand_name); ?>">Compartir mi publicación destacada</button>
     </div>
 
+    <?php endif; ?>
+
+    <?php if ($profile_view === 'community'): ?>
     <section class="cg-card" id="cg-profile-community">
         <h3>Comunidad</h3>
         <p>¿Ideas para eventos futuros? Escríbenos en Instagram.</p>
@@ -447,6 +483,9 @@ if ($upload_banned_until_iso !== '') {
     </section>
 
 
+    <?php endif; ?>
+
+    <?php if ($profile_view === 'feedback'): ?>
     <section class="cg-card cg-feedback-card" id="cg-profile-feedback">
         <h3>Ayúdanos a mejorar</h3>
         <p>Puedes enviarnos comentarios, sugerencias o reportar errores que encuentres en el juego.</p>
@@ -472,6 +511,9 @@ if ($upload_banned_until_iso !== '') {
         </form>
     </section>
 
+    <?php endif; ?>
+
+    <?php if ($profile_view === 'tags'): ?>
     <h3 id="cg-profile-tags">Mis etiquetas</h3>
     <?php if (empty($custom_tags)): ?>
         <p>No tienes etiquetas.</p>
@@ -491,6 +533,17 @@ if ($upload_banned_until_iso !== '') {
         </ul>
     <?php endif; ?>
 
+    <?php endif; ?>
+
+    <?php if ($profile_view === 'notifications'): ?>
+        <section class="cg-card cg-profile-subview-card">
+            <h3>Notificaciones</h3>
+            <p>Abre tus notificaciones desde aquí sin recargar la pantalla principal del perfil.</p>
+            <button type="button" class="secondary" data-notifications-open="1">Ver notificaciones</button>
+        </section>
+    <?php endif; ?>
+
+    <?php if ($is_profile_main_view): ?>
     <h3>Mis publicaciones</h3>
     <div class="cg-grid">
         <?php if (!$items): ?>
@@ -534,6 +587,8 @@ if ($upload_banned_until_iso !== '') {
             </article>
         <?php endforeach; ?>
     </div>
+
+    <?php endif; ?>
 
     <div class="cg-modal" id="catgame-notifications-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-notifications-title">
         <div class="cg-modal__backdrop" data-notifications-close="1"></div>

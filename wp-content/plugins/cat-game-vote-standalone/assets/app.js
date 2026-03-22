@@ -1923,7 +1923,7 @@
   const badge = document.getElementById('catgame-notif-badge');
   const modal = document.getElementById('catgame-notifications-modal');
   const list = document.getElementById('catgame-notifications-list');
-  if (!triggers.length || !badge || !modal || !list || !config.ajaxUrl || !config.nonce) {
+  if (!badge || !modal || !list || !config.ajaxUrl || !config.nonce) {
     return;
   }
 
