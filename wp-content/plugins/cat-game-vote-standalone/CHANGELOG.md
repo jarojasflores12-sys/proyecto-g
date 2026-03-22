@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.91
+- Publicaciones / UI: se revierte el marco fijo del feed que achicaba cards sanas y se limita solo el desborde visual de imágenes grandes dentro de la card.
+- Publicaciones / UI: se agrega contención del ancho útil de la card y tope de alto en escritorio, manteniendo el comportamiento móvil existente.
+
 ## 0.27.90
 - Publicaciones / UI: se unifica el marco visual de las imágenes del feed con proporción consistente para que ninguna card se vea más grande que las demás.
 - Publicaciones / UI: las fotos del feed mantienen centrado con `object-fit: cover`, sin cambios en lógica, backend ni rutas.
