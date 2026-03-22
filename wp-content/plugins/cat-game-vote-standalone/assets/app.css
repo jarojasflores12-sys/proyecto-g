@@ -2151,6 +2151,13 @@ a.cg-home-rules-btn:focus-visible {
 
 .cg-profile-menu__item--logout {
   color: #b42318;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cg-profile-logout-modal {
+  max-width: 420px;
 }
 
 .cg-profile-subview-head {

@@ -212,11 +212,7 @@ if ($upload_banned_until_iso !== '') {
                     <a class="cg-profile-menu__item" href="<?php echo esc_url(add_query_arg('profile_view', 'tags', $profile_base_url)); ?>">Mis etiquetas</a>
                     <a class="cg-profile-menu__item" href="<?php echo esc_url(add_query_arg('profile_view', 'community', $profile_base_url)); ?>">Comunidad</a>
                     <a class="cg-profile-menu__item" href="<?php echo esc_url(add_query_arg('profile_view', 'feedback', $profile_base_url)); ?>">Ayúdanos a mejorar</a>
-                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-profile-menu__logout-form">
-                        <?php wp_nonce_field('catgame_logout'); ?>
-                        <input type="hidden" name="action" value="catgame_logout">
-                        <button type="submit" class="cg-profile-menu__item cg-profile-menu__item--logout">Cerrar sesión</button>
-                    </form>
+                    <button type="button" class="cg-profile-menu__item cg-profile-menu__item--logout" data-profile-logout-open="1"><span aria-hidden="true">⏻</span><span>Cerrar sesión</span></button>
                 </div>
             </details>
         </div>
@@ -589,6 +585,23 @@ if ($upload_banned_until_iso !== '') {
     </div>
 
     <?php endif; ?>
+
+    <div class="cg-modal" id="catgame-profile-logout-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-profile-logout-title">
+        <div class="cg-modal__backdrop" data-profile-logout-close="1"></div>
+        <div class="cg-modal__content cg-profile-logout-modal" role="document">
+            <button type="button" class="cg-modal__close" data-profile-logout-close="1" aria-label="Cerrar confirmación">✕</button>
+            <h2 id="catgame-profile-logout-title">¿Estás seguro que quieres cerrar sesión?</h2>
+            <p class="cg-modal__intro">Podrás volver a entrar cuando quieras con tu cuenta actual.</p>
+            <div class="cg-confirm-actions">
+                <button type="button" class="secondary" data-profile-logout-close="1">Cancelar</button>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="cg-profile-menu__logout-form">
+                    <?php wp_nonce_field('catgame_logout'); ?>
+                    <input type="hidden" name="action" value="catgame_logout">
+                    <button type="submit">Cerrar sesión</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <div class="cg-modal" id="catgame-notifications-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catgame-notifications-title">
         <div class="cg-modal__backdrop" data-notifications-close="1"></div>

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.6
+- Perfil / UI: `Cerrar sesión` ahora abre una confirmación dentro del perfil antes de ejecutar el logout.
+- Perfil / UI: se mantiene la acción real de cierre de sesión intacta y solo se agrega una capa de confirmación visual.
+
 ## 0.28.5
 - Perfil / UI: `Mi perfil` queda enfocado en cabecera + publicaciones, y las opciones del menú hamburguesa pasan a vistas separadas del perfil vía navegación frontend.
 - Perfil / UI: se agregan vistas individuales para ubicación, notificaciones, normas, estado, estadísticas, etiquetas, comunidad y feedback sin tocar lógica interna.

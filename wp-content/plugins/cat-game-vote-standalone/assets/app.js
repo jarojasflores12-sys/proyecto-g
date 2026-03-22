@@ -2021,3 +2021,34 @@
 
   loadNotifications();
 })();
+
+(function () {
+  const modal = document.getElementById('catgame-profile-logout-modal');
+  const triggers = Array.from(document.querySelectorAll('[data-profile-logout-open="1"]'));
+  if (!modal || !triggers.length) {
+    return;
+  }
+
+  const setOpen = (open) => {
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+  };
+
+  triggers.forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+      const menu = trigger.closest('details');
+      if (menu instanceof HTMLDetailsElement) {
+        menu.open = false;
+      }
+      setOpen(true);
+    });
+  });
+
+  modal.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest('[data-profile-logout-close="1"]')) {
+      setOpen(false);
+    }
+  });
+})();
