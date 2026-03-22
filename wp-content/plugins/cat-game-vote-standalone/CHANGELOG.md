@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.98
+- Publicaciones / UI: el `<img>` del feed vuelve a renderizar con tamaño natural dentro del contenedor compartido, manteniendo proporción original y centrado sin estirarse.
+- Publicaciones / UI: se conserva un alto visual máximo del bloque para que imágenes verticales no desordenen el grid ni rompan la card.
+
 ## 0.27.97
 - Publicaciones / UI: se fuerza la contención real y centrado del `<img>` dentro del `frame` compartido del feed para evitar que siga desbordando o viéndose corrido.
 - Publicaciones / UI: se conserva el mismo marco visual y altura del bloque de imagen, sin tocar lógica de publicación, backend ni rutas.
