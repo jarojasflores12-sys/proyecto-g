@@ -13,16 +13,29 @@ $top3_positions = $data['top3_positions'] ?? [];
 $current_user_id = (int) ($data['current_user_id'] ?? 0);
 $ranking_event_name = trim((string) ($ranking_event['name'] ?? ''));
 $ranking_event_name = $ranking_event_name !== '' ? $ranking_event_name : 'Evento activo en curso';
-$ranking_event_starts = trim((string) ($ranking_event['starts_at'] ?? ''));
-$ranking_event_ends = trim((string) ($ranking_event['ends_at'] ?? ''));
-$ranking_event_period = trim($ranking_event_starts . ($ranking_event_starts !== '' && $ranking_event_ends !== '' ? ' - ' : '') . $ranking_event_ends);
+$format_ranking_date = static function (string $raw_date): string {
+    $raw_date = trim($raw_date);
+    if ($raw_date === '') {
+        return '';
+    }
+
+    $timestamp = strtotime($raw_date);
+    if ($timestamp === false) {
+        return '';
+    }
+
+    return gmdate('d-m-Y', $timestamp);
+};
+$ranking_event_starts = $format_ranking_date((string) ($ranking_event['starts_at'] ?? ''));
+$ranking_event_ends = $format_ranking_date((string) ($ranking_event['ends_at'] ?? ''));
+$ranking_event_period = trim($ranking_event_starts . ($ranking_event_starts !== '' && $ranking_event_ends !== '' ? ' → ' : '') . $ranking_event_ends);
 ?>
 <section>
     <header class="cg-ranking-hero">
         <h2 class="cg-ranking-hero__title">🏆 Ranking · La Arena</h2>
         <p class="cg-ranking-hero__event"><?php echo esc_html($has_competitive_event ? $ranking_event_name : 'Evento activo en curso'); ?></p>
         <?php if ($has_competitive_event && $ranking_event_period !== ''): ?>
-            <p class="cg-ranking-hero__period">Vigencia: <?php echo esc_html($ranking_event_period); ?></p>
+            <p class="cg-ranking-hero__period">Vigencia: <span class="cg-ranking-hero__period-chip"><?php echo esc_html($ranking_event_period); ?></span></p>
         <?php endif; ?>
     </header>
     <?php if ($has_competitive_event): ?>

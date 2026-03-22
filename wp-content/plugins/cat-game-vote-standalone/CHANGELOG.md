@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.0
+- Ranking / UI: la vigencia del evento ahora se muestra en formato `dd-mm-aaaa → dd-mm-aaaa`, sin hora y con mejor legibilidad visual.
+- Ranking / UI: se agrega un chip suave para destacar la vigencia sin alterar la lógica del ranking.
+
 ## 0.27.99
 - Ranking / UI: el header ahora muestra `🏆 Ranking · La Arena`, el nombre del evento activo y su vigencia cuando está disponible.
 - Ranking / UI: si no hay datos del evento, se muestra el fallback `Evento activo en curso` sin tocar la lógica de ranking.

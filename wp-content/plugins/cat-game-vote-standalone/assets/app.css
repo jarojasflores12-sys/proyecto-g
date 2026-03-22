@@ -168,6 +168,17 @@ a:hover {
   font-size: 0.95rem;
 }
 
+.cg-ranking-hero__period-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(199, 206, 234, 0.55);
+  color: #4a4f76;
+  font-weight: 600;
+}
+
 .cg-form {
   display: grid;
   gap: 10px;
