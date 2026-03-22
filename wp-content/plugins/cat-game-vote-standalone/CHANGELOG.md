@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.93
+- Publicaciones / UI: se ancla la imagen del feed al contenedor visual para evitar que una foto siga empujando o desbordando la card en escritorio.
+- Publicaciones / UI: en móvil se mantiene el alto actual del feed, pero la imagen ahora llena el marco desde el mismo contenedor compartido.
+
 ## 0.27.92
 - Publicaciones / UI: se fija un alto visual consistente del marco de imagen en escritorio para que la foto problemática deje de verse más grande que el resto del feed.
 - Publicaciones / UI: la imagen vuelve a llenar su contenedor con `object-fit: cover`, manteniendo el comportamiento móvil existente.

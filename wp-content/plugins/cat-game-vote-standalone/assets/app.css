@@ -668,6 +668,8 @@ body.cg-has-custom-bg .cg-main {
 }
 
 .cg-feed-img-wrap .cg-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   max-width: none;
@@ -679,11 +681,16 @@ body.cg-has-custom-bg .cg-main {
 }
 
 @media (max-width: 767px) {
+  .cg-feed-img-wrap {
+    height: min(520px, 78vw);
+    max-height: 520px;
+  }
+
   .cg-feed-img-wrap .cg-img,
   .cg-feed-img-wrap.is-tall-photo .cg-img {
     width: 100%;
-    height: min(520px, 78vw);
-    max-height: 520px;
+    height: 100%;
+    max-height: none;
     object-fit: cover;
     object-position: center;
     margin: 0;
