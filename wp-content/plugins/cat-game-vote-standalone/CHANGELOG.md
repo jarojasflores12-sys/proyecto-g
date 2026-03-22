@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.96
+- Publicaciones / UI: se recentra la imagen dentro del `frame` compartido del feed para evitar que quede corrida mientras conserva el tamaño visual logrado.
+- Publicaciones / UI: se mantiene el mismo contenedor y alto del bloque de imagen, sin tocar lógica de publicación, backend ni rutas.
+
 ## 0.27.95
 - Publicaciones / UI: se mantiene el mismo frame compartido del feed, pero las imágenes ahora se muestran completas dentro del contenedor para evitar recortes en cards que ya se veían bien.
 - Publicaciones / UI: se conserva el alto visual unificado del bloque de imagen sin tocar lógica de publicación, backend ni rutas.
